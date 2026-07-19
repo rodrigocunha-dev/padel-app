@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import posthog from "posthog-js";
 import { supabase } from "@/lib/supabase";
 
 const CATEGORIAS = [
@@ -48,6 +49,14 @@ export function ListaEsperaForm() {
       setStatus(error.code === "23505" ? "duplicado" : "erro");
       return;
     }
+
+    // LGPD: o evento de métrica NÃO leva nome nem WhatsApp — só dados
+    // agregáveis para entender de onde vem a demanda.
+    posthog.capture("cadastro_lista_espera", {
+      cidade,
+      categoria,
+      informou_clube: clube.length > 0,
+    });
 
     setStatus("sucesso");
     evento.currentTarget.reset();

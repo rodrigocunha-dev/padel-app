@@ -22,9 +22,14 @@ Página única no ar (Vercel) que apresenta o produto e coleta interessados ante
 - **Textos neutros, sem nome de marca:** finalistas (FaltaUm / Fechou) ainda em decisão.
 - **Sem backend próprio:** o formulário fala direto com o Supabase — menos peças para manter no Sprint 0.
 
+## Métricas (PostHog)
+- A cada cadastro bem-sucedido, o site dispara o evento **`cadastro_lista_espera`** com: cidade, categoria e se a pessoa informou clube. **Nome e WhatsApp nunca vão para o PostHog** (LGPD).
+- Pageviews são registrados automaticamente.
+- Onde ver: [us.posthog.com](https://us.posthog.com) → Activity (eventos individuais) ou Insights (gráficos).
+- Configuração no código: `src/instrumentation-client.ts` (inicialização) e `src/components/ListaEsperaForm.tsx` (evento). Se a variável `NEXT_PUBLIC_POSTHOG_KEY` não estiver configurada, o site funciona normalmente, só sem métricas.
+
 ## Como ver os cadastros
 Supabase → projeto → **Table Editor** → tabela `lista_espera`. Dá para exportar CSV por lá.
 
 ## Pendências conhecidas
-- Evento de métrica (PostHog) ainda não instalado — adicionar quando a conta for criada.
 - LGPD: quando houver marca definida, adicionar link de política de privacidade na página.
