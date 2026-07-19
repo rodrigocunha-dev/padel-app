@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/* Variante A — verde-quadra (padrão) */
+:root,
+:root[data-tema="verde"] {
+  --cor-primaria: #0e5c46;
+  --cor-primaria-escura: #093f30;
+  --cor-destaque: #d6f455;
+  --cor-destaque-tinta: #0e5c46;
+  --cor-fundo: #f5f8f2;
+  --cor-superficie: #ffffff;
+  --cor-tinta: #0f231c;
+  --cor-tinta-suave: #4a5a54;
+}
+
+/* Variante B — azul-quadra */
+:root[data-tema="azul"] {
+  --cor-primaria: #0b4f86;
+  --cor-primaria-escura: #08375e;
+  --cor-destaque: #d6f455;
+  --cor-destaque-tinta: #0b4f86;
+  --cor-fundo: #f2f6fa;
+  --cor-superficie: #ffffff;
+  --cor-tinta: #0c1f2e;
+  --cor-tinta-suave: #46586a;
+}
+
+@theme inline {
+  --color-primaria: var(--cor-primaria);
+  --color-primaria-escura: var(--cor-primaria-escura);
+  --color-destaque: var(--cor-destaque);
+  --color-destaque-tinta: var(--cor-destaque-tinta);
+  --color-fundo: var(--cor-fundo);
+  --color-superficie: var(--cor-superficie);
+  --color-tinta: var(--cor-tinta);
+  --color-tinta-suave: var(--cor-tinta-suave);
+
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-archivo);
+}
+
+body {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
