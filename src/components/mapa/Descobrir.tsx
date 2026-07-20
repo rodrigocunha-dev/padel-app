@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
 import {
   distanciaKm,
   menorPrecoCentavos,
   quadraLivreAgora,
+  formatarReais,
   type ClubeDescoberta,
   type Ocupacao,
 } from "@/lib/descoberta";
@@ -21,35 +23,42 @@ const MapaClubes = dynamic(() => import("@/components/mapa/MapaClubes"), {
   ),
 });
 
-const ESPORTES = [
-  { valor: "", rotulo: "Todos os esportes" },
-  { valor: "padel", rotulo: "Padel" },
-  { valor: "beach_tennis", rotulo: "Beach Tennis" },
-  { valor: "tenis", rotulo: "Tênis" },
-  { valor: "futebol_society", rotulo: "Futebol Society" },
-];
+const ROTULO_ESPORTE: Record<string, string> = {
+  padel: "Padel",
+  beach_tennis: "Beach Tennis",
+  tenis: "Tênis",
+  futebol_society: "Futebol Society",
+};
 
-const TIPOS = [
-  { valor: "", rotulo: "Qualquer piso" },
-  { valor: "vidro", rotulo: "Vidro" },
-  { valor: "alvenaria", rotulo: "Alvenaria" },
-  { valor: "areia", rotulo: "Areia" },
-  { valor: "saibro", rotulo: "Saibro" },
-  { valor: "grama", rotulo: "Grama" },
-];
+const ROTULO_TIPO: Record<string, string> = {
+  vidro: "Vidro",
+  alvenaria: "Alvenaria",
+  areia: "Areia",
+  saibro: "Saibro",
+  grama: "Grama",
+};
 
-export function Descobrir({ clubes }: { clubes: ClubeDescoberta[] }) {
-  const [esporte, setEsporte] = useState("");
-  const [tipo, setTipo] = useState("");
+function alternarNaLista(lista: string[], valor: string): string[] {
+  return lista.includes(valor)
+    ? lista.filter((v) => v !== valor)
+    : [...lista, valor];
+}
+
+type Props = { clubes: ClubeDescoberta[]; minhaCidade: string | null };
+
+export function Descobrir({ clubes, minhaCidade }: Props) {
+  const [esportesSel, setEsportesSel] = useState<string[]>([]);
+  const [tiposSel, setTiposSel] = useState<string[]>([]);
   const [soCobertas, setSoCobertas] = useState(false);
-  const [precoMax, setPrecoMax] = useState(""); // em reais
-  const [distanciaMax, setDistanciaMax] = useState(""); // km
+  const [precoMax, setPrecoMax] = useState("");
+  const [distanciaMax, setDistanciaMax] = useState(""); // km ou "cidade"
   const [minhaPosicao, setMinhaPosicao] = useState<[number, number] | null>(
     null
   );
   const [jogarAgora, setJogarAgora] = useState(false);
   const [ocupacoes, setOcupacoes] = useState<Ocupacao[] | null>(null);
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
+  const [vista, setVista] = useState<"mapa" | "lista">("mapa");
 
   useEffect(() => {
     posthog.capture("mapa_aberto", { clubes_no_mapa: clubes.length });
@@ -61,7 +70,33 @@ export function Descobrir({ clubes }: { clubes: ClubeDescoberta[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Liga o "Jogar agora": busca só horários ocupados (sem dados pessoais)
+  // Opções em cascata: só aparecem esportes/tipos que EXISTEM nos clubes
+  // cadastrados; escolher esporte(s) reduz os tipos aos compatíveis.
+  const esportesDisponiveis = useMemo(() => {
+    const conjunto = new Set<string>();
+    clubes.forEach((c) => c.quadras.forEach((q) => conjunto.add(q.esporte)));
+    return [...conjunto];
+  }, [clubes]);
+
+  const tiposDisponiveis = useMemo(() => {
+    const conjunto = new Set<string>();
+    clubes.forEach((c) =>
+      c.quadras.forEach((q) => {
+        if (esportesSel.length === 0 || esportesSel.includes(q.esporte)) {
+          conjunto.add(q.tipo);
+        }
+      })
+    );
+    return [...conjunto];
+  }, [clubes, esportesSel]);
+
+  // Tipos selecionados que ainda valem (se o esporte mudou, os
+  // incompatíveis são simplesmente ignorados — sem estado extra).
+  const tiposSelValidos = useMemo(
+    () => tiposSel.filter((t) => tiposDisponiveis.includes(t)),
+    [tiposSel, tiposDisponiveis]
+  );
+
   async function alternarJogarAgora() {
     const ligar = !jogarAgora;
     setJogarAgora(ligar);
@@ -83,8 +118,10 @@ export function Descobrir({ clubes }: { clubes: ClubeDescoberta[] }) {
   const clubesFiltrados = useMemo(() => {
     return clubes.filter((clube) => {
       let quadras = clube.quadras;
-      if (esporte) quadras = quadras.filter((q) => q.esporte === esporte);
-      if (tipo) quadras = quadras.filter((q) => q.tipo === tipo);
+      if (esportesSel.length > 0)
+        quadras = quadras.filter((q) => esportesSel.includes(q.esporte));
+      if (tiposSelValidos.length > 0)
+        quadras = quadras.filter((q) => tiposSelValidos.includes(q.tipo));
       if (soCobertas) quadras = quadras.filter((q) => q.coberta);
       if (quadras.length === 0) return false;
 
@@ -93,7 +130,14 @@ export function Descobrir({ clubes }: { clubes: ClubeDescoberta[] }) {
         if (menor === null || menor > parseFloat(precoMax) * 100) return false;
       }
 
-      if (distanciaMax && minhaPosicao) {
+      if (distanciaMax === "cidade") {
+        if (
+          !minhaCidade ||
+          clube.cidade.trim().toLowerCase() !==
+            minhaCidade.trim().toLowerCase()
+        )
+          return false;
+      } else if (distanciaMax && minhaPosicao) {
         const d = distanciaKm(
           minhaPosicao[0],
           minhaPosicao[1],
@@ -104,9 +148,7 @@ export function Descobrir({ clubes }: { clubes: ClubeDescoberta[] }) {
       }
 
       if (jogarAgora) {
-        const livre = quadras.some((q) =>
-          quadraLivreAgora(q, ocupacoes ?? [])
-        );
+        const livre = quadras.some((q) => quadraLivreAgora(q, ocupacoes ?? []));
         if (!livre) return false;
       }
 
@@ -114,25 +156,30 @@ export function Descobrir({ clubes }: { clubes: ClubeDescoberta[] }) {
     });
   }, [
     clubes,
-    esporte,
-    tipo,
+    esportesSel,
+    tiposSelValidos,
     soCobertas,
     precoMax,
     distanciaMax,
+    minhaCidade,
     minhaPosicao,
     jogarAgora,
     ocupacoes,
   ]);
 
   const filtrosAtivos =
-    (esporte ? 1 : 0) +
-    (tipo ? 1 : 0) +
+    esportesSel.length +
+    tiposSelValidos.length +
     (soCobertas ? 1 : 0) +
     (precoMax ? 1 : 0) +
     (distanciaMax ? 1 : 0);
 
-  const estiloSelect =
-    "rounded-lg border border-black/10 bg-white px-2 py-1.5 text-sm text-tinta focus:border-primaria focus:outline-none";
+  const chip = (ativo: boolean) =>
+    `rounded-full px-3 py-1.5 text-xs font-bold transition ${
+      ativo
+        ? "bg-primaria text-white"
+        : "bg-white text-tinta ring-1 ring-black/10 hover:ring-primaria/40"
+    }`;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -140,6 +187,7 @@ export function Descobrir({ clubes }: { clubes: ClubeDescoberta[] }) {
         <button
           type="button"
           onClick={alternarJogarAgora}
+          title="Mostrar só clubes com quadra livre nas próximas 3 horas"
           className={`rounded-full px-4 py-2 text-sm font-bold transition ${
             jogarAgora
               ? "bg-destaque text-destaque-tinta"
@@ -155,87 +203,193 @@ export function Descobrir({ clubes }: { clubes: ClubeDescoberta[] }) {
         >
           Filtros{filtrosAtivos > 0 ? ` (${filtrosAtivos})` : ""}
         </button>
-        <span className="ml-auto text-xs text-tinta-suave">
-          {clubesFiltrados.length}{" "}
-          {clubesFiltrados.length === 1 ? "clube" : "clubes"}
-        </span>
+
+        <div className="ml-auto flex items-center gap-1 rounded-full bg-superficie p-1 ring-1 ring-black/10">
+          <button
+            type="button"
+            onClick={() => setVista("mapa")}
+            className={`rounded-full px-3 py-1 text-xs font-bold ${
+              vista === "mapa" ? "bg-primaria text-white" : "text-tinta-suave"
+            }`}
+          >
+            🗺️ Mapa
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setVista("lista");
+              posthog.capture("mapa_vista_lista");
+            }}
+            className={`rounded-full px-3 py-1 text-xs font-bold ${
+              vista === "lista" ? "bg-primaria text-white" : "text-tinta-suave"
+            }`}
+          >
+            ☰ Lista
+          </button>
+        </div>
       </div>
 
       {mostrarFiltros && (
-        <div className="mx-4 mb-3 flex flex-wrap items-center gap-2 rounded-2xl bg-superficie p-3 shadow ring-1 ring-black/5">
-          <select
-            value={esporte}
-            onChange={(e) => {
-              setEsporte(e.target.value);
-              posthog.capture("mapa_filtro_usado", { filtro: "esporte" });
-            }}
-            className={estiloSelect}
-          >
-            {ESPORTES.map((o) => (
-              <option key={o.valor} value={o.valor}>
-                {o.rotulo}
-              </option>
+        <div className="mx-4 mb-3 rounded-2xl bg-superficie p-4 shadow ring-1 ring-black/5">
+          <p className="text-xs font-bold uppercase tracking-wide text-tinta-suave">
+            Esportes
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {esportesDisponiveis.map((e) => (
+              <button
+                key={e}
+                type="button"
+                onClick={() => {
+                  setEsportesSel(alternarNaLista(esportesSel, e));
+                  posthog.capture("mapa_filtro_usado", { filtro: "esporte" });
+                }}
+                className={chip(esportesSel.includes(e))}
+              >
+                {ROTULO_ESPORTE[e] ?? e}
+              </button>
             ))}
-          </select>
-          <select
-            value={tipo}
-            onChange={(e) => {
-              setTipo(e.target.value);
-              posthog.capture("mapa_filtro_usado", { filtro: "tipo" });
-            }}
-            className={estiloSelect}
-          >
-            {TIPOS.map((o) => (
-              <option key={o.valor} value={o.valor}>
-                {o.rotulo}
-              </option>
+          </div>
+
+          <p className="mt-3 text-xs font-bold uppercase tracking-wide text-tinta-suave">
+            Tipo de quadra
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {tiposDisponiveis.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => {
+                  setTiposSel(alternarNaLista(tiposSel, t));
+                  posthog.capture("mapa_filtro_usado", { filtro: "tipo" });
+                }}
+                className={chip(tiposSelValidos.includes(t))}
+              >
+                {ROTULO_TIPO[t] ?? t}
+              </button>
             ))}
-          </select>
-          <label className="flex items-center gap-1.5 text-sm text-tinta">
-            <input
-              type="checkbox"
-              checked={soCobertas}
-              onChange={(e) => setSoCobertas(e.target.checked)}
-            />
-            Só cobertas
-          </label>
-          <label className="flex items-center gap-1.5 text-sm text-tinta">
-            até R$
-            <input
-              type="number"
-              value={precoMax}
-              onChange={(e) => setPrecoMax(e.target.value)}
-              placeholder="150"
-              className="w-16 rounded-lg border border-black/10 bg-white px-2 py-1.5 text-sm"
-            />
-            /h
-          </label>
-          <select
-            value={distanciaMax}
-            onChange={(e) => setDistanciaMax(e.target.value)}
-            disabled={!minhaPosicao}
-            className={estiloSelect}
-            title={
-              minhaPosicao
-                ? undefined
-                : "Permita a localização no navegador para filtrar por distância"
-            }
-          >
-            <option value="">Qualquer distância</option>
-            <option value="5">Até 5 km</option>
-            <option value="10">Até 10 km</option>
-            <option value="20">Até 20 km</option>
-            <option value="50">Até 50 km</option>
-          </select>
+            {tiposDisponiveis.length === 0 && (
+              <span className="text-xs text-tinta-suave">
+                Nenhum tipo de quadra para os esportes escolhidos.
+              </span>
+            )}
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-1.5 text-sm text-tinta">
+              <input
+                type="checkbox"
+                checked={soCobertas}
+                onChange={(e) => setSoCobertas(e.target.checked)}
+              />
+              Só cobertas
+            </label>
+            <label className="flex items-center gap-1.5 text-sm text-tinta">
+              até R$
+              <input
+                type="number"
+                value={precoMax}
+                onChange={(e) => setPrecoMax(e.target.value)}
+                placeholder="150"
+                className="w-16 rounded-lg border border-black/10 bg-white px-2 py-1.5 text-sm"
+              />
+              /h
+            </label>
+            <select
+              value={distanciaMax}
+              onChange={(e) => {
+                setDistanciaMax(e.target.value);
+                posthog.capture("mapa_filtro_usado", { filtro: "distancia" });
+              }}
+              className="rounded-lg border border-black/10 bg-white px-2 py-1.5 text-sm text-tinta focus:border-primaria focus:outline-none"
+            >
+              <option value="">Qualquer distância</option>
+              {minhaCidade && (
+                <option value="cidade">Só em {minhaCidade}</option>
+              )}
+              <option value="1" disabled={!minhaPosicao}>Até 1 km</option>
+              <option value="2" disabled={!minhaPosicao}>Até 2 km</option>
+              <option value="5" disabled={!minhaPosicao}>Até 5 km</option>
+              <option value="10" disabled={!minhaPosicao}>Até 10 km</option>
+              <option value="20" disabled={!minhaPosicao}>Até 20 km</option>
+              <option value="50" disabled={!minhaPosicao}>Até 50 km</option>
+            </select>
+            {!minhaPosicao && (
+              <span className="text-xs text-tinta-suave">
+                Permita a localização para filtrar por km.
+              </span>
+            )}
+          </div>
         </div>
       )}
 
-      <div className="relative flex-1" style={{ minHeight: "60vh" }}>
-        <MapaClubes
-          clubes={clubesFiltrados}
-          minhaPosicao={minhaPosicao}
-        />
+      <div className="flex items-center justify-between px-4 pb-2">
+        <span className="text-xs text-tinta-suave">
+          {clubesFiltrados.length}{" "}
+          {clubesFiltrados.length === 1 ? "clube encontrado" : "clubes encontrados"}
+        </span>
       </div>
+
+      {vista === "mapa" ? (
+        <div className="relative flex-1" style={{ minHeight: "60vh" }}>
+          <MapaClubes clubes={clubesFiltrados} minhaPosicao={minhaPosicao} />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3 px-4 pb-8">
+          {clubesFiltrados.length === 0 && (
+            <p className="text-sm text-tinta-suave">
+              Nenhum clube com esses filtros. Tente ampliar a busca.
+            </p>
+          )}
+          {clubesFiltrados.map((clube) => {
+            const menor = menorPrecoCentavos(clube.quadras);
+            const dist = minhaPosicao
+              ? distanciaKm(
+                  minhaPosicao[0],
+                  minhaPosicao[1],
+                  clube.latitude,
+                  clube.longitude
+                )
+              : null;
+            const esportes = [...new Set(clube.quadras.map((q) => q.esporte))];
+            return (
+              <Link
+                key={clube.id}
+                href={`/app/clubes/${clube.id}`}
+                className="rounded-2xl bg-superficie p-4 shadow ring-1 ring-black/5 transition hover:ring-primaria/40"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-display font-bold text-tinta">
+                      {clube.nome}
+                    </p>
+                    <p className="mt-0.5 text-sm text-tinta-suave">
+                      {clube.cidade}
+                      {dist !== null ? ` · ${dist.toFixed(1)} km` : ""} ·{" "}
+                      {clube.quadras.length}{" "}
+                      {clube.quadras.length === 1 ? "quadra" : "quadras"}
+                    </p>
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {esportes.map((e) => (
+                        <span
+                          key={e}
+                          className="rounded-full bg-primaria/10 px-2 py-0.5 text-[11px] font-bold text-primaria"
+                        >
+                          {ROTULO_ESPORTE[e] ?? e}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  {menor !== null && (
+                    <span className="shrink-0 rounded-full bg-primaria px-3 py-1 text-sm font-bold text-white">
+                      {formatarReais(menor)}/h
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

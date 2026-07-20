@@ -25,6 +25,13 @@ export default async function PaginaDescobrir() {
     .not("latitude", "is", null)
     .not("longitude", "is", null);
 
+  // Cidade do jogador para o filtro "só na minha cidade".
+  const { data: jogador } = await supabase
+    .from("jogadores")
+    .select("cidade")
+    .eq("id", user.id)
+    .maybeSingle();
+
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo">
       <header className="flex items-center justify-between px-4 py-3">
@@ -38,7 +45,10 @@ export default async function PaginaDescobrir() {
           ← Início
         </Link>
       </header>
-      <Descobrir clubes={(clubes ?? []) as ClubeDescoberta[]} />
+      <Descobrir
+        clubes={(clubes ?? []) as ClubeDescoberta[]}
+        minhaCidade={jogador?.cidade ?? null}
+      />
     </main>
   );
 }
