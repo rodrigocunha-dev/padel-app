@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { BotaoSair } from "@/components/BotaoSair";
@@ -65,6 +66,18 @@ export default async function PaginaApp() {
             </span>
           )}
         </div>
+
+        <Link
+          href="/app/descobrir"
+          className="mt-4 block rounded-2xl bg-primaria p-6 shadow-lg transition hover:brightness-110"
+        >
+          <p className="font-display text-lg font-bold text-white">
+            🗺️ Descobrir clubes
+          </p>
+          <p className="mt-1 text-sm text-white/80">
+            Mapa com preços, filtros e quadras livres agora
+          </p>
+        </Link>
       </div>
     </main>
   );
