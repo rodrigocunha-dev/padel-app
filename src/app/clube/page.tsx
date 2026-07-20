@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { CadastroClube } from "@/components/clube/CadastroClube";
 import { GerenciarQuadras } from "@/components/clube/GerenciarQuadras";
+import { LocalizacaoClube } from "@/components/clube/LocalizacaoClube";
 import { BotaoSair } from "@/components/BotaoSair";
 
 export const metadata: Metadata = {
@@ -19,7 +20,7 @@ export default async function PaginaClube() {
 
   const { data: clube } = await supabase
     .from("clubes")
-    .select("id, nome, cidade, endereco, telefone")
+    .select("id, nome, cidade, endereco, telefone, latitude, longitude")
     .eq("dono_id", user.id)
     .maybeSingle();
 
@@ -55,6 +56,13 @@ export default async function PaginaClube() {
         </header>
 
         <GerenciarQuadras clubeId={clube.id} quadras={quadras ?? []} />
+
+        <LocalizacaoClube
+          clubeId={clube.id}
+          enderecoAtual={clube.endereco}
+          latitude={clube.latitude}
+          longitude={clube.longitude}
+        />
       </div>
     </main>
   );
