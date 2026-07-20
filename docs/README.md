@@ -8,3 +8,5 @@ Cada funcionalidade do produto tem um artigo aqui explicando **o que faz, como f
 - [Autenticação (Módulo 1.1)](autenticacao.md) — login por WhatsApp/OTP, sem senha.
 - [Perfil do jogador e calibração (Módulo 1.1)](perfil-jogador.md) — onboarding, questionário e selo "em calibração".
 - [Painel do clube e quadras (Módulo 1.1)](clube-quadras.md) — clube, quadras multiesporte e preços por faixa horária.
+- [Descoberta e mapa (Sprint 2)](descoberta-mapa.md) — mapa com preços, filtros, "Jogar agora" e página do clube.
+- [Agenda do clube v0 (Sprint 2)](agenda-clube.md) — reservas de balcão com zero overbooking garantido pelo banco.
