@@ -9,6 +9,7 @@ import {
   distanciaKm,
   menorPrecoCentavos,
   quadraLivreAgora,
+  quadraLivreNoPeriodo,
   formatarReais,
   type ClubeDescoberta,
   type Ocupacao,
@@ -38,10 +39,27 @@ const ROTULO_TIPO: Record<string, string> = {
   grama: "Grama",
 };
 
+const HORAS_DE = Array.from({ length: 18 }, (_, i) => i + 6); // 06..23
+const HORAS_ATE = Array.from({ length: 18 }, (_, i) => i + 7); // 07..24
+
 function alternarNaLista(lista: string[], valor: string): string[] {
   return lista.includes(valor)
     ? lista.filter((v) => v !== valor)
     : [...lista, valor];
+}
+
+function hojeISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// Janela de busca a partir da data + horas escolhidas ("24" = fim do dia)
+function montarJanela(data: string, deHora: number, ateHora: number) {
+  const inicio = new Date(`${data}T${String(deHora).padStart(2, "0")}:00:00`);
+  const fim = new Date(`${data}T00:00:00`);
+  if (ateHora >= 24) fim.setDate(fim.getDate() + 1);
+  else fim.setHours(ateHora);
+  return { inicio, fim };
 }
 
 type Props = { clubes: ClubeDescoberta[]; minhaCidade: string | null };
@@ -51,7 +69,9 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
   const [tiposSel, setTiposSel] = useState<string[]>([]);
   const [soCobertas, setSoCobertas] = useState(false);
   const [precoMax, setPrecoMax] = useState("");
-  const [distanciaMax, setDistanciaMax] = useState(""); // km ou "cidade"
+  const [distanciaMax, setDistanciaMax] = useState(""); // km
+  const [cidadeSel, setCidadeSel] = useState(""); // "" | "atual" | nome
+  const [cidadeAtual, setCidadeAtual] = useState<string | null>(null);
   const [minhaPosicao, setMinhaPosicao] = useState<[number, number] | null>(
     null
   );
@@ -60,18 +80,43 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [vista, setVista] = useState<"mapa" | "lista">("mapa");
 
+  // Busca por período futuro (viagem, planejamento)
+  const [dataSel, setDataSel] = useState("");
+  const [deHora, setDeHora] = useState(6);
+  const [ateHora, setAteHora] = useState(24);
+  const [somenteLivres, setSomenteLivres] = useState(false);
+  const [ocupacoesJanela, setOcupacoesJanela] = useState<Ocupacao[] | null>(
+    null
+  );
+
   useEffect(() => {
     posthog.capture("mapa_aberto", { clubes_no_mapa: clubes.length });
     navigator.geolocation?.getCurrentPosition(
-      (p) => setMinhaPosicao([p.coords.latitude, p.coords.longitude]),
+      async (p) => {
+        setMinhaPosicao([p.coords.latitude, p.coords.longitude]);
+        // Descobre a cidade em que a pessoa está (para o filtro "onde estou")
+        try {
+          const resposta = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${p.coords.latitude}&lon=${p.coords.longitude}`,
+            { headers: { "Accept-Language": "pt-BR" } }
+          );
+          const dados = await resposta.json();
+          const cidade =
+            dados?.address?.city ??
+            dados?.address?.town ??
+            dados?.address?.municipality ??
+            null;
+          if (cidade) setCidadeAtual(cidade);
+        } catch {
+          // Sem reverse geocode: cai no plano B (cidade do perfil)
+        }
+      },
       () => setMinhaPosicao(null),
       { timeout: 5000 }
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Opções em cascata: só aparecem esportes/tipos que EXISTEM nos clubes
-  // cadastrados; escolher esporte(s) reduz os tipos aos compatíveis.
   const esportesDisponiveis = useMemo(() => {
     const conjunto = new Set<string>();
     clubes.forEach((c) => c.quadras.forEach((q) => conjunto.add(q.esporte)));
@@ -90,11 +135,20 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
     return [...conjunto];
   }, [clubes, esportesSel]);
 
-  // Tipos selecionados que ainda valem (se o esporte mudou, os
-  // incompatíveis são simplesmente ignorados — sem estado extra).
+  const cidadesDisponiveis = useMemo(() => {
+    const conjunto = new Set<string>();
+    clubes.forEach((c) => conjunto.add(c.cidade.trim()));
+    return [...conjunto].sort();
+  }, [clubes]);
+
   const tiposSelValidos = useMemo(
     () => tiposSel.filter((t) => tiposDisponiveis.includes(t)),
     [tiposSel, tiposDisponiveis]
+  );
+
+  const todasQuadrasIds = useMemo(
+    () => clubes.flatMap((c) => c.quadras.map((q) => q.id)),
+    [clubes]
   );
 
   async function alternarJogarAgora() {
@@ -102,16 +156,48 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
     setJogarAgora(ligar);
     if (ligar && ocupacoes === null) {
       const supabase = criarClienteNavegador();
-      const todasQuadras = clubes.flatMap((c) => c.quadras.map((q) => q.id));
       const agora = new Date();
       const daqui3h = new Date(agora.getTime() + 3 * 60 * 60 * 1000);
       const { data } = await supabase.rpc("horarios_ocupados", {
-        p_quadras: todasQuadras,
+        p_quadras: todasQuadrasIds,
         p_de: agora.toISOString(),
         p_ate: daqui3h.toISOString(),
       });
       setOcupacoes((data as Ocupacao[]) ?? []);
       posthog.capture("jogar_agora_ativado");
+    }
+  }
+
+  // Busca os horários ocupados da janela escolhida (data + horas).
+  async function buscarOcupacoesJanela(
+    data: string,
+    de: number,
+    ate: number
+  ) {
+    if (!data) return;
+    const { inicio, fim } = montarJanela(data, de, ate);
+    const supabase = criarClienteNavegador();
+    const { data: resultado } = await supabase.rpc("horarios_ocupados", {
+      p_quadras: todasQuadrasIds,
+      p_de: inicio.toISOString(),
+      p_ate: fim.toISOString(),
+    });
+    setOcupacoesJanela((resultado as Ocupacao[]) ?? []);
+  }
+
+  function aoMudarPeriodo(
+    novaData: string,
+    novoDe: number,
+    novoAte: number,
+    novoSomenteLivres: boolean
+  ) {
+    setDataSel(novaData);
+    setDeHora(novoDe);
+    setAteHora(novoAte);
+    setSomenteLivres(novoSomenteLivres);
+    if (novoSomenteLivres && novaData) {
+      buscarOcupacoesJanela(novaData, novoDe, novoAte);
+      posthog.capture("mapa_filtro_usado", { filtro: "disponibilidade" });
     }
   }
 
@@ -130,14 +216,17 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
         if (menor === null || menor > parseFloat(precoMax) * 100) return false;
       }
 
-      if (distanciaMax === "cidade") {
+      if (cidadeSel) {
+        const alvo =
+          cidadeSel === "atual" ? (cidadeAtual ?? minhaCidade) : cidadeSel;
         if (
-          !minhaCidade ||
-          clube.cidade.trim().toLowerCase() !==
-            minhaCidade.trim().toLowerCase()
+          !alvo ||
+          clube.cidade.trim().toLowerCase() !== alvo.trim().toLowerCase()
         )
           return false;
-      } else if (distanciaMax && minhaPosicao) {
+      }
+
+      if (distanciaMax && minhaPosicao) {
         const d = distanciaKm(
           minhaPosicao[0],
           minhaPosicao[1],
@@ -152,6 +241,14 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
         if (!livre) return false;
       }
 
+      if (somenteLivres && dataSel) {
+        const { inicio, fim } = montarJanela(dataSel, deHora, ateHora);
+        const livre = quadras.some((q) =>
+          quadraLivreNoPeriodo(q, ocupacoesJanela ?? [], inicio, fim)
+        );
+        if (!livre) return false;
+      }
+
       return true;
     });
   }, [
@@ -160,11 +257,18 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
     tiposSelValidos,
     soCobertas,
     precoMax,
-    distanciaMax,
+    cidadeSel,
+    cidadeAtual,
     minhaCidade,
+    distanciaMax,
     minhaPosicao,
     jogarAgora,
     ocupacoes,
+    somenteLivres,
+    dataSel,
+    deHora,
+    ateHora,
+    ocupacoesJanela,
   ]);
 
   const filtrosAtivos =
@@ -172,7 +276,9 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
     tiposSelValidos.length +
     (soCobertas ? 1 : 0) +
     (precoMax ? 1 : 0) +
-    (distanciaMax ? 1 : 0);
+    (cidadeSel ? 1 : 0) +
+    (distanciaMax ? 1 : 0) +
+    (somenteLivres && dataSel ? 1 : 0);
 
   const chip = (ativo: boolean) =>
     `rounded-full px-3 py-1.5 text-xs font-bold transition ${
@@ -180,6 +286,9 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
         ? "bg-primaria text-white"
         : "bg-white text-tinta ring-1 ring-black/10 hover:ring-primaria/40"
     }`;
+
+  const estiloSelect =
+    "rounded-lg border border-black/10 bg-white px-2 py-1.5 text-sm text-tinta focus:border-primaria focus:outline-none";
 
   return (
     <div className="flex flex-1 flex-col">
@@ -274,6 +383,125 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
             )}
           </div>
 
+          <p className="mt-3 text-xs font-bold uppercase tracking-wide text-tinta-suave">
+            Onde
+          </p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <select
+              value={cidadeSel}
+              onChange={(e) => {
+                setCidadeSel(e.target.value);
+                posthog.capture("mapa_filtro_usado", { filtro: "cidade" });
+              }}
+              className={estiloSelect}
+            >
+              <option value="">Qualquer cidade</option>
+              {(cidadeAtual ?? minhaCidade) && (
+                <option value="atual">
+                  📍 Onde estou{cidadeAtual ? ` (${cidadeAtual})` : ""}
+                </option>
+              )}
+              {cidadesDisponiveis.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            <select
+              value={distanciaMax}
+              onChange={(e) => {
+                setDistanciaMax(e.target.value);
+                posthog.capture("mapa_filtro_usado", { filtro: "distancia" });
+              }}
+              disabled={!minhaPosicao}
+              className={estiloSelect}
+            >
+              <option value="">Qualquer distância</option>
+              <option value="1">Até 1 km</option>
+              <option value="2">Até 2 km</option>
+              <option value="5">Até 5 km</option>
+              <option value="10">Até 10 km</option>
+              <option value="20">Até 20 km</option>
+              <option value="50">Até 50 km</option>
+            </select>
+            {!minhaPosicao && (
+              <span className="text-xs text-tinta-suave">
+                Permita a localização para usar distância e “onde estou”.
+              </span>
+            )}
+          </div>
+
+          <p className="mt-3 text-xs font-bold uppercase tracking-wide text-tinta-suave">
+            Quando você quer jogar?
+          </p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <input
+              type="date"
+              value={dataSel}
+              min={hojeISO()}
+              onChange={(e) =>
+                aoMudarPeriodo(e.target.value, deHora, ateHora, somenteLivres)
+              }
+              className={estiloSelect}
+            />
+            <label className="flex items-center gap-1.5 text-sm text-tinta">
+              das
+              <select
+                value={deHora}
+                onChange={(e) => {
+                  const de = Number(e.target.value);
+                  aoMudarPeriodo(
+                    dataSel,
+                    de,
+                    ateHora > de ? ateHora : de + 1,
+                    somenteLivres
+                  );
+                }}
+                className={estiloSelect}
+              >
+                {HORAS_DE.map((h) => (
+                  <option key={h} value={h}>
+                    {String(h).padStart(2, "0")}h
+                  </option>
+                ))}
+              </select>
+              às
+              <select
+                value={ateHora}
+                onChange={(e) =>
+                  aoMudarPeriodo(
+                    dataSel,
+                    deHora,
+                    Number(e.target.value),
+                    somenteLivres
+                  )
+                }
+                className={estiloSelect}
+              >
+                {HORAS_ATE.filter((h) => h > deHora).map((h) => (
+                  <option key={h} value={h}>
+                    {h >= 24 ? "24h" : `${String(h).padStart(2, "0")}h`}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex items-center gap-1.5 text-sm font-medium text-tinta">
+              <input
+                type="checkbox"
+                checked={somenteLivres}
+                onChange={(e) =>
+                  aoMudarPeriodo(
+                    dataSel || hojeISO(),
+                    deHora,
+                    ateHora,
+                    e.target.checked
+                  )
+                }
+              />
+              Só clubes com horário livre nesse período
+            </label>
+          </div>
+
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-1.5 text-sm text-tinta">
               <input
@@ -294,30 +522,6 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
               />
               /h
             </label>
-            <select
-              value={distanciaMax}
-              onChange={(e) => {
-                setDistanciaMax(e.target.value);
-                posthog.capture("mapa_filtro_usado", { filtro: "distancia" });
-              }}
-              className="rounded-lg border border-black/10 bg-white px-2 py-1.5 text-sm text-tinta focus:border-primaria focus:outline-none"
-            >
-              <option value="">Qualquer distância</option>
-              {minhaCidade && (
-                <option value="cidade">Só em {minhaCidade}</option>
-              )}
-              <option value="1" disabled={!minhaPosicao}>Até 1 km</option>
-              <option value="2" disabled={!minhaPosicao}>Até 2 km</option>
-              <option value="5" disabled={!minhaPosicao}>Até 5 km</option>
-              <option value="10" disabled={!minhaPosicao}>Até 10 km</option>
-              <option value="20" disabled={!minhaPosicao}>Até 20 km</option>
-              <option value="50" disabled={!minhaPosicao}>Até 50 km</option>
-            </select>
-            {!minhaPosicao && (
-              <span className="text-xs text-tinta-suave">
-                Permita a localização para filtrar por km.
-              </span>
-            )}
           </div>
         </div>
       )}
@@ -325,7 +529,9 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
       <div className="flex items-center justify-between px-4 pb-2">
         <span className="text-xs text-tinta-suave">
           {clubesFiltrados.length}{" "}
-          {clubesFiltrados.length === 1 ? "clube encontrado" : "clubes encontrados"}
+          {clubesFiltrados.length === 1
+            ? "clube encontrado"
+            : "clubes encontrados"}
         </span>
       </div>
 

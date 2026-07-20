@@ -13,7 +13,10 @@ Em `/app/descobrir`, o jogador vê os clubes no mapa, cada um com um pin mostran
 Escolha do fundador (20/07/2026): OpenStreetMap é gratuito, sem conta e sem cartão de crédito. O Google Maps exigiria conta de faturamento desde o 1º dia. A troca futura, se necessária, fica contida nos componentes de mapa. A busca de endereço (clube) usa o serviço gratuito Nominatim.
 
 ## Filtros
-Esporte, tipo de piso, só cobertas, preço máximo/h e distância. O filtro de distância usa a localização do navegador (se a pessoa permitir) e a distância em linha reta.
+Esporte e tipo de quadra em multi-seleção com opções em cascata (só aparece o que existe nos clubes cadastrados); só cobertas; preço máximo/h; cidade (qualquer cidade com clube, ou "onde estou" — detectada por GPS com plano B na cidade do perfil); distância em km (linha reta, usa a localização do navegador).
+
+## Busca por data futura ("planejando uma viagem")
+Em "Quando você quer jogar?", a pessoa escolhe data e janela de horário (ex.: sexta, das 18h às 22h) e marca **"Só clubes com horário livre nesse período"** — um "Jogar agora" sob medida: aplica a mesma regra de 1h contínua livre, mas na janela escolhida. Candidata a recurso Premium no futuro (decisão pendente do fundador).
 
 ## "Jogar agora"
 Mostra só clubes com **pelo menos 1 hora contínua livre nas próximas 3 horas**, dentro do horário de funcionamento (as faixas de preço cadastradas valem como horário de funcionamento). A checagem consulta a função `horarios_ocupados` do banco, que devolve apenas quadra + horários — **nunca nome ou telefone de quem reservou** (LGPD).

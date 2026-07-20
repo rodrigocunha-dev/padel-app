@@ -62,21 +62,17 @@ function minutosDoDia(hora: string): number {
   return h * 60 + m;
 }
 
-// "Jogar agora": a quadra tem pelo menos 1h contínua livre nas próximas
-// 3 horas, dentro de uma faixa de preço do dia de hoje (faixa cadastrada
-// = clube funcionando naquele horário).
-export function quadraLivreAgora(
+// A quadra tem pelo menos 1h contínua livre dentro da janela pedida,
+// dentro de uma faixa de preço do dia (faixa cadastrada = clube
+// funcionando naquele horário) e sem cruzar reservas confirmadas.
+export function quadraLivreNoPeriodo(
   quadra: QuadraDescoberta,
   ocupacoes: Ocupacao[],
-  agora: Date = new Date()
+  inicioJanela: Date,
+  fimJanela: Date
 ): boolean {
   const DURACAO_MIN = 60; // 1 hora de jogo
-  const JANELA_MIN = 180; // próximas 3 horas
   const PASSO_MIN = 30; // testa a cada meia hora
-
-  const diaHoje = agora.getDay();
-  const inicioJanela = agora.getTime();
-  const fimJanela = inicioJanela + JANELA_MIN * 60_000;
 
   const ocupadasDaQuadra = ocupacoes
     .filter((o) => o.quadra_id === quadra.id)
@@ -85,24 +81,23 @@ export function quadraLivreAgora(
       fim: new Date(o.fim).getTime(),
     }));
 
-  const faixasHoje = quadra.quadra_precos.filter((f) =>
-    f.dias.includes(diaHoje)
-  );
-
-  const meiaNoite = new Date(agora);
-  meiaNoite.setHours(0, 0, 0, 0);
-
   for (
-    let slotInicio = inicioJanela;
-    slotInicio + DURACAO_MIN * 60_000 <= fimJanela;
+    let slotInicio = inicioJanela.getTime();
+    slotInicio + DURACAO_MIN * 60_000 <= fimJanela.getTime();
     slotInicio += PASSO_MIN * 60_000
   ) {
     const slotFim = slotInicio + DURACAO_MIN * 60_000;
 
-    // O slot precisa caber inteiro numa faixa de funcionamento de hoje
+    // O slot precisa caber inteiro numa faixa do dia da semana dele
+    const dataSlot = new Date(slotInicio);
+    const meiaNoite = new Date(dataSlot);
+    meiaNoite.setHours(0, 0, 0, 0);
     const slotInicioMin = (slotInicio - meiaNoite.getTime()) / 60_000;
     const slotFimMin = (slotFim - meiaNoite.getTime()) / 60_000;
-    const dentroDeFaixa = faixasHoje.some(
+    const faixasDoDia = quadra.quadra_precos.filter((f) =>
+      f.dias.includes(dataSlot.getDay())
+    );
+    const dentroDeFaixa = faixasDoDia.some(
       (f) =>
         minutosDoDia(f.hora_inicio) <= slotInicioMin &&
         minutosDoDia(f.hora_fim) >= slotFimMin
@@ -116,6 +111,20 @@ export function quadraLivreAgora(
     if (!ocupado) return true;
   }
   return false;
+}
+
+// "Jogar agora" = caso particular: janela das próximas 3 horas.
+export function quadraLivreAgora(
+  quadra: QuadraDescoberta,
+  ocupacoes: Ocupacao[],
+  agora: Date = new Date()
+): boolean {
+  return quadraLivreNoPeriodo(
+    quadra,
+    ocupacoes,
+    agora,
+    new Date(agora.getTime() + 180 * 60_000)
+  );
 }
 
 export function formatarReais(centavos: number): string {
