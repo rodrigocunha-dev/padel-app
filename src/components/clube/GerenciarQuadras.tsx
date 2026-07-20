@@ -146,6 +146,25 @@ export function GerenciarQuadras({
       return;
     }
 
+    // Impede duas faixas de preço cruzadas na mesma quadra (mesmo dia
+    // e horários que se sobrepõem). O banco também bloqueia (trigger),
+    // aqui é só para avisar de forma amigável.
+    const quadra = quadras.find((q) => q.id === quadraId);
+    const conflito = quadra?.quadra_precos.find(
+      (p) =>
+        p.dias.some((d) => dias.includes(d)) &&
+        horaInicio < p.hora_fim.slice(0, 5) &&
+        horaFim > p.hora_inicio.slice(0, 5)
+    );
+    if (conflito) {
+      setErro(
+        `Essa faixa cruza com a existente (${formatarDias(conflito.dias)} · ` +
+          `${conflito.hora_inicio.slice(0, 5)}–${conflito.hora_fim.slice(0, 5)}). ` +
+          `Remova ou ajuste uma delas.`
+      );
+      return;
+    }
+
     setSalvando(true);
     const supabase = criarClienteNavegador();
     const { error } = await supabase.from("quadra_precos").insert({
