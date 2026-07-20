@@ -46,8 +46,10 @@ Todos os comandos de retomada, sprint a sprint e módulo a módulo, estão no do
 Site no ar em https://padel-app-liart.vercel.app/. Formulário salva no Supabase (tabela `lista_espera`, RLS só-INSERT) e dispara evento `cadastro_lista_espera` no PostHog.
 Pendências deste sprint (não bloqueiam o Sprint 1): decidir variante de cor (verde vs. azul) e remover a perdedora; política de privacidade LGPD assim que a marca for decidida.
 
-**Sprint 1 — Módulo 1.1: Contas e Onboarding: 🔜 PRÓXIMO.**
-Objetivo: infraestrutura de autenticação (login por WhatsApp/OTP); cadastro de jogador (nome, foto, cidade, telefone, categoria 1ª–7ª, posição, disponibilidade, raio de deslocamento) com fluxo de calibração inicial (questionário curto + selo "em calibração"); cadastro de clube com quadras multiesporte (esporte, tipo vidro/alvenaria/areia/saibro/grama, coberta ou não, preço por faixa horária). Comando de abertura no Comandos_de_Retomada_Sprints.md.
+**Sprint 1 — Módulo 1.1: Contas e Onboarding: ✅ CONCLUÍDO (20/07/2026), testado pelo fundador no celular.**
+Entregue: login por telefone/OTP (fase A com número de teste `5551999998888`/código `123456` até 31/10/2026; fase B = Twilio real antes do lançamento); onboarding do jogador com calibração (5 perguntas, teto de sugestão na 2ª, selo "em calibração") em /app; painel do clube com quadras multiesporte e preços por faixa horária em /clube. Scripts: `supabase/sql/002` e `003`.
+Pendências do módulo: **elaborar perguntas de calibração melhores** (fundador achou as atuais fracas — refinar antes do lançamento); fase B da autenticação (Twilio).
+Próximo: aguardando comando do próximo módulo do Comandos_de_Retomada_Sprints.md.
 
 ## Convenções de trabalho
 - Commits pequenos e frequentes com mensagens em PT-BR descrevendo o "porquê".
