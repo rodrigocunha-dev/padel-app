@@ -37,7 +37,7 @@ Notebook i3 11ª gen, 8 GB RAM, pouco disco. Portanto: nada de emulador Android,
 - **Fase 3 (11–18):** professores como vertical, beach tennis no lado do jogador, marketplace, vídeo, IA, expansão.
 
 ## Sprint atual
-**Sprint 0 — Landing + lista de espera.** Objetivo: página no ar (Vercel) coletando nome, WhatsApp, cidade, clube onde joga e categoria, salvando no Supabase. Identidade provisória: verde-quadra `#0E5C46` + amarelo-bola `#D6F455`, fontes Archivo (títulos) e Inter (texto). Nome da marca ainda não decidido (finalistas: FaltaUm, Fechou) — usar textos neutros e fáceis de trocar.
+**Sprint 0 — Landing + lista de espera: ✅ CONCLUÍDO (19/07/2026).** Site no ar em https://padel-app-liart.vercel.app/ (repo: github.com/rodrigocunha-dev/padel-app, deploy automático no push). Formulário salva no Supabase (tabela `lista_espera`, RLS só-INSERT) e dispara evento `cadastro_lista_espera` no PostHog (US Cloud). Identidade provisória: verde-quadra `#0E5C46` + amarelo-bola `#D6F455`, fontes Archivo (títulos) e Inter (texto); há uma segunda variante azul-quadra `#0B4F86` alternável na página — remover a perdedora quando o fundador decidir. Nome da marca ainda não decidido (finalistas: FaltaUm, Fechou) — textos seguem neutros. Pendências: política de privacidade (LGPD) quando houver marca; decidir variante de cor.
 
 ## Convenções de trabalho
 - Commits pequenos e frequentes com mensagens em PT-BR descrevendo o "porquê".
