@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { AvaliarClube } from "@/components/AvaliarClube";
+import { ClubeMiniMapa } from "@/components/mapa/ClubeMiniMapa";
+import { mascararTelefoneBr } from "@/lib/telefone";
 
 export const metadata: Metadata = {
   title: "Clube — padel",
@@ -32,6 +34,32 @@ function formatarReais(centavos: number) {
   });
 }
 
+type FaixaHorario = { dias: number[]; hora_inicio: string; hora_fim: string };
+
+// Horário de funcionamento derivado das faixas de preço de todas as
+// quadras: o clube "abre" do início da faixa mais cedo ao fim da mais
+// tarde de cada dia. Sem faixa no dia = fechado.
+function horariosPorDia(faixas: FaixaHorario[]) {
+  // Ordem de exibição: seg (1) ... dom (0)
+  const ordem = [1, 2, 3, 4, 5, 6, 0];
+  return ordem.map((dia) => {
+    const doDia = faixas.filter((f) => f.dias.includes(dia));
+    if (doDia.length === 0) return { dia: DIAS_ROTULO[dia], horario: null };
+    const abre = doDia.reduce(
+      (min, f) => (f.hora_inicio < min ? f.hora_inicio : min),
+      doDia[0].hora_inicio
+    );
+    const fecha = doDia.reduce(
+      (max, f) => (f.hora_fim > max ? f.hora_fim : max),
+      doDia[0].hora_fim
+    );
+    return {
+      dia: DIAS_ROTULO[dia],
+      horario: `${abre.slice(0, 5)}–${fecha.slice(0, 5)}`,
+    };
+  });
+}
+
 export default async function PaginaClubeJogador({
   params,
 }: {
@@ -47,7 +75,7 @@ export default async function PaginaClubeJogador({
   const { data: clube } = await supabase
     .from("clubes")
     .select(
-      "id, nome, cidade, endereco, telefone, clube_fotos ( id, url ), quadras ( id, nome, esporte, tipo, coberta, quadra_precos ( id, dias, hora_inicio, hora_fim, preco_centavos ) )"
+      "id, nome, cidade, endereco, telefone, latitude, longitude, clube_fotos ( id, url ), quadras ( id, nome, esporte, tipo, coberta, quadra_precos ( id, dias, hora_inicio, hora_fim, preco_centavos ) )"
     )
     .eq("id", id)
     .maybeSingle();
@@ -70,6 +98,17 @@ export default async function PaginaClubeJogador({
   const whatsappLink = clube.telefone
     ? `https://wa.me/55${clube.telefone.replace(/\D/g, "")}`
     : null;
+
+  const esportes = [...new Set(clube.quadras.map((q) => q.esporte))];
+  const cobertas = clube.quadras.filter((q) => q.coberta).length;
+  const horarios = horariosPorDia(
+    clube.quadras.flatMap((q) => q.quadra_precos as FaixaHorario[])
+  );
+  const temHorarios = horarios.some((h) => h.horario !== null);
+  const comoChegarLink =
+    clube.latitude != null && clube.longitude != null
+      ? `https://www.google.com/maps/dir/?api=1&destination=${clube.latitude},${clube.longitude}`
+      : null;
 
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-8">
@@ -124,6 +163,92 @@ export default async function PaginaClubeJogador({
             💬 Chamar no WhatsApp
           </a>
         )}
+
+        <section className="mt-6">
+          <h2 className="font-display text-lg font-bold text-tinta">
+            Informações
+          </h2>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {esportes.map((e) => (
+              <span
+                key={e}
+                className="rounded-full bg-primaria/10 px-3 py-1 text-xs font-bold text-primaria"
+              >
+                {ROTULO_ESPORTE[e] ?? e}
+              </span>
+            ))}
+            <span className="rounded-full bg-primaria/10 px-3 py-1 text-xs font-bold text-primaria">
+              {clube.quadras.length}{" "}
+              {clube.quadras.length === 1 ? "quadra" : "quadras"}
+              {cobertas > 0 ? ` · ${cobertas} coberta${cobertas > 1 ? "s" : ""}` : ""}
+            </span>
+          </div>
+
+          {temHorarios && (
+            <div className="mt-3 rounded-2xl bg-superficie p-4 shadow ring-1 ring-black/5">
+              <p className="text-xs font-bold uppercase tracking-wide text-tinta-suave">
+                🕐 Horário de funcionamento
+              </p>
+              <ul className="mt-2 grid grid-cols-1 gap-y-0.5 text-sm sm:grid-cols-2 sm:gap-x-6">
+                {horarios.map((h) => (
+                  <li
+                    key={h.dia}
+                    className="flex justify-between text-tinta"
+                  >
+                    <span className="text-tinta-suave">{h.dia}</span>
+                    <span className={h.horario ? "font-medium" : "text-tinta-suave/60"}>
+                      {h.horario ?? "Fechado"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {clube.latitude != null && clube.longitude != null && (
+            <div className="mt-3 rounded-2xl bg-superficie p-4 shadow ring-1 ring-black/5">
+              <p className="text-xs font-bold uppercase tracking-wide text-tinta-suave">
+                📍 Como chegar
+              </p>
+              {clube.endereco && (
+                <p className="mt-1 text-sm text-tinta">
+                  {clube.endereco} · {clube.cidade}
+                </p>
+              )}
+              <div className="mt-2">
+                <ClubeMiniMapa
+                  latitude={clube.latitude}
+                  longitude={clube.longitude}
+                />
+              </div>
+              {comoChegarLink && (
+                <a
+                  href={comoChegarLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-sm font-bold text-primaria hover:underline"
+                >
+                  Traçar rota →
+                </a>
+              )}
+            </div>
+          )}
+
+          {clube.telefone && (
+            <div className="mt-3 rounded-2xl bg-superficie p-4 shadow ring-1 ring-black/5">
+              <p className="text-xs font-bold uppercase tracking-wide text-tinta-suave">
+                📞 Contato
+              </p>
+              <a
+                href={`tel:+55${clube.telefone.replace(/\D/g, "")}`}
+                className="mt-1 block text-sm font-medium text-tinta hover:text-primaria"
+              >
+                {mascararTelefoneBr(clube.telefone)}
+              </a>
+            </div>
+          )}
+        </section>
 
         <section className="mt-6">
           <h2 className="font-display text-lg font-bold text-tinta">
