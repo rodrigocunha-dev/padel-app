@@ -44,12 +44,14 @@ Todos os comandos de retomada, sprint a sprint e módulo a módulo, estão no do
 ## Sprint atual
 **Sprint 0 — Landing + lista de espera: ✅ CONCLUÍDO (19/07/2026).**
 Site no ar em https://padel-app-liart.vercel.app/. Formulário salva no Supabase (tabela `lista_espera`, RLS só-INSERT) e dispara evento `cadastro_lista_espera` no PostHog.
-Pendências deste sprint (não bloqueiam o Sprint 1): decidir variante de cor (verde vs. azul) e remover a perdedora; política de privacidade LGPD assim que a marca for decidida.
 
-**Sprint 1 — Módulo 1.1: Contas e Onboarding: ✅ CONCLUÍDO (20/07/2026), testado pelo fundador no celular.**
-Entregue: login por telefone/OTP (fase A com número de teste `5551999998888`/código `123456` até 31/10/2026; fase B = Twilio real antes do lançamento); onboarding do jogador com calibração (5 perguntas, teto de sugestão na 2ª, selo "em calibração") em /app; painel do clube com quadras multiesporte e preços por faixa horária em /clube. Scripts: `supabase/sql/002` e `003`.
-Pendências do módulo: **elaborar perguntas de calibração melhores** (fundador achou as atuais fracas — refinar antes do lançamento); fase B da autenticação (Twilio).
-Próximo: aguardando comando do próximo módulo do Comandos_de_Retomada_Sprints.md.
+**Sprint 1 — Contas e Onboarding: ✅ CONCLUÍDO (20/07/2026), testado pelo fundador no celular.**
+Implementado: login por telefone/OTP com máscara `(DD) 99999-9999` (fase A com número de teste `5551999998888`/código `123456` até 31/10/2026); onboarding do jogador em /app (nome, foto no Storage, cidade, questionário de calibração com teto de sugestão na 2ª, selo "em calibração", posição, disponibilidade dia×turno, raio); painel do clube em /clube (clube + quadras multiesporte com piso compatível por esporte + preços por faixa horária em centavos, com trava dupla contra sobreposição — tela e trigger no banco). Rotas protegidas por proxy com sessão em cookies. Scripts SQL: `002` e `003`. Artigos em /docs e eventos PostHog em todos os passos-chave.
+
+**Pendências acumuladas (não bloqueiam o Sprint 2):** decidir variante de cor (verde vs. azul) e remover a perdedora; política de privacidade LGPD quando a marca for decidida; elaborar perguntas de calibração melhores (as atuais são provisórias); fase B da autenticação (Twilio real — credenciais são SECRETAS, nunca no chat/commit).
+
+**Sprint 2 — 🔜 PRÓXIMO.**
+Escopo e comando de abertura no Comandos_de_Retomada_Sprints.md (fundador cola no início da sessão).
 
 ## Convenções de trabalho
 - Commits pequenos e frequentes com mensagens em PT-BR descrevendo o "porquê".
