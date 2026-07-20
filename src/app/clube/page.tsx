@@ -6,6 +6,7 @@ import { CadastroClube } from "@/components/clube/CadastroClube";
 import { GerenciarQuadras } from "@/components/clube/GerenciarQuadras";
 import { LocalizacaoClube } from "@/components/clube/LocalizacaoClube";
 import { FotosClube } from "@/components/clube/FotosClube";
+import { EditarClube } from "@/components/clube/EditarClube";
 import { BotaoSair } from "@/components/BotaoSair";
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export default async function PaginaClube() {
   const { data: clube } = await supabase
     .from("clubes")
     .select(
-      "id, nome, cidade, endereco, telefone, latitude, longitude, clube_fotos ( id, url )"
+      "id, nome, cidade, endereco, telefone, descricao, politica_cancelamento, latitude, longitude, clube_fotos ( id, url )"
     )
     .eq("dono_id", user.id)
     .maybeSingle();
@@ -58,6 +59,8 @@ export default async function PaginaClube() {
           </div>
           <BotaoSair />
         </header>
+
+        <EditarClube clube={clube} />
 
         <Link
           href="/clube/agenda"

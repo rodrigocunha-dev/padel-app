@@ -75,7 +75,7 @@ export default async function PaginaClubeJogador({
   const { data: clube } = await supabase
     .from("clubes")
     .select(
-      "id, nome, cidade, endereco, telefone, latitude, longitude, clube_fotos ( id, url ), quadras ( id, nome, esporte, tipo, coberta, quadra_precos ( id, dias, hora_inicio, hora_fim, preco_centavos ) )"
+      "id, nome, cidade, endereco, telefone, descricao, politica_cancelamento, latitude, longitude, clube_fotos ( id, url ), quadras ( id, nome, esporte, tipo, coberta, quadra_precos ( id, dias, hora_inicio, hora_fim, preco_centavos ) )"
     )
     .eq("id", id)
     .maybeSingle();
@@ -169,6 +169,10 @@ export default async function PaginaClubeJogador({
             Informações
           </h2>
 
+          {clube.descricao && (
+            <p className="mt-2 text-sm text-tinta-suave">{clube.descricao}</p>
+          )}
+
           <div className="mt-3 flex flex-wrap gap-2">
             {esportes.map((e) => (
               <span
@@ -246,6 +250,17 @@ export default async function PaginaClubeJogador({
               >
                 {mascararTelefoneBr(clube.telefone)}
               </a>
+            </div>
+          )}
+
+          {clube.politica_cancelamento && (
+            <div className="mt-3 rounded-2xl bg-superficie p-4 shadow ring-1 ring-black/5">
+              <p className="text-xs font-bold uppercase tracking-wide text-tinta-suave">
+                📋 Política de cancelamento
+              </p>
+              <p className="mt-1 text-sm text-tinta">
+                {clube.politica_cancelamento}
+              </p>
             </div>
           )}
         </section>

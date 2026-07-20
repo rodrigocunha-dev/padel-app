@@ -20,38 +20,51 @@ export function FotosClube({
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  async function enviar(arquivo: File) {
+  // Aceita várias fotos de uma vez (pedido do fundador) — envia uma a
+  // uma e avisa se alguma falhar, sem travar as demais.
+  async function enviarVarias(arquivos: File[]) {
     setErro(null);
     setEnviando(true);
     const supabase = criarClienteNavegador();
+    let falhas = 0;
 
-    const caminho = `${donoId}/clube-${clubeId}-${Date.now()}.jpg`;
-    const { error: erroUpload } = await supabase.storage
-      .from("fotos")
-      .upload(caminho, arquivo);
+    for (const arquivo of arquivos) {
+      const caminho = `${donoId}/clube-${clubeId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+      const { error: erroUpload } = await supabase.storage
+        .from("fotos")
+        .upload(caminho, arquivo);
 
-    if (erroUpload) {
-      console.error("Erro no upload:", erroUpload.message);
-      setErro("Não conseguimos enviar a foto. Tente de novo.");
-      setEnviando(false);
-      return;
+      if (erroUpload) {
+        console.error("Erro no upload:", erroUpload.message);
+        falhas++;
+        continue;
+      }
+
+      const url = supabase.storage.from("fotos").getPublicUrl(caminho)
+        .data.publicUrl;
+      const { error } = await supabase
+        .from("clube_fotos")
+        .insert({ clube_id: clubeId, url });
+      if (error) {
+        console.error("Erro ao registrar foto:", error.message);
+        falhas++;
+      }
     }
 
-    const url = supabase.storage.from("fotos").getPublicUrl(caminho)
-      .data.publicUrl;
-    const { error } = await supabase
-      .from("clube_fotos")
-      .insert({ clube_id: clubeId, url });
     setEnviando(false);
-
-    if (error) {
-      console.error("Erro ao registrar foto:", error.message);
-      setErro("Foto enviada mas não registrada. Tente de novo.");
-      return;
+    if (falhas > 0) {
+      setErro(
+        falhas === arquivos.length
+          ? "Não conseguimos enviar as fotos. Tente de novo."
+          : `${falhas} de ${arquivos.length} fotos falharam — tente enviá-las de novo.`
+      );
     }
-
-    posthog.capture("clube_foto_adicionada");
-    router.refresh();
+    if (falhas < arquivos.length) {
+      posthog.capture("clube_foto_adicionada", {
+        quantidade: arquivos.length - falhas,
+      });
+      router.refresh();
+    }
   }
 
   async function remover(fotoId: string) {
@@ -95,16 +108,17 @@ export function FotosClube({
         <label className="flex h-28 w-40 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-primaria/30 bg-primaria/5 text-center">
           <span className="text-2xl">📷</span>
           <span className="px-2 text-xs font-medium text-primaria">
-            {enviando ? "Enviando..." : "Adicionar foto"}
+            {enviando ? "Enviando..." : "Adicionar fotos"}
           </span>
           <input
             type="file"
             accept="image/*"
+            multiple
             className="hidden"
             disabled={enviando}
             onChange={(e) => {
-              const arquivo = e.target.files?.[0];
-              if (arquivo) enviar(arquivo);
+              const arquivos = Array.from(e.target.files ?? []);
+              if (arquivos.length > 0) enviarVarias(arquivos);
               e.target.value = "";
             }}
           />
