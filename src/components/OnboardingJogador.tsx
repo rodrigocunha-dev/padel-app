@@ -87,7 +87,7 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
       const caminho = `${usuarioId}/perfil-${Date.now()}.jpg`;
       const { error: erroUpload } = await supabase.storage
         .from("fotos")
-        .upload(caminho, foto, { upsert: true });
+        .upload(caminho, foto);
       if (erroUpload) {
         console.error("Erro no upload da foto:", erroUpload.message);
         // Foto é opcional: segue sem ela em vez de travar o cadastro.

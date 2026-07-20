@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { CadastroClube } from "@/components/clube/CadastroClube";
 import { GerenciarQuadras } from "@/components/clube/GerenciarQuadras";
 import { LocalizacaoClube } from "@/components/clube/LocalizacaoClube";
+import { FotosClube } from "@/components/clube/FotosClube";
 import { BotaoSair } from "@/components/BotaoSair";
 
 export const metadata: Metadata = {
@@ -20,7 +22,9 @@ export default async function PaginaClube() {
 
   const { data: clube } = await supabase
     .from("clubes")
-    .select("id, nome, cidade, endereco, telefone, latitude, longitude")
+    .select(
+      "id, nome, cidade, endereco, telefone, latitude, longitude, clube_fotos ( id, url )"
+    )
     .eq("dono_id", user.id)
     .maybeSingle();
 
@@ -55,6 +59,18 @@ export default async function PaginaClube() {
           <BotaoSair />
         </header>
 
+        <Link
+          href="/clube/agenda"
+          className="mt-4 block rounded-2xl bg-primaria p-5 shadow-lg transition hover:brightness-110"
+        >
+          <p className="font-display text-lg font-bold text-white">
+            📅 Agenda do dia
+          </p>
+          <p className="mt-1 text-sm text-white/80">
+            Veja as reservas e anote reservas de balcão
+          </p>
+        </Link>
+
         <GerenciarQuadras clubeId={clube.id} quadras={quadras ?? []} />
 
         <LocalizacaoClube
@@ -62,6 +78,12 @@ export default async function PaginaClube() {
           enderecoAtual={clube.endereco}
           latitude={clube.latitude}
           longitude={clube.longitude}
+        />
+
+        <FotosClube
+          clubeId={clube.id}
+          donoId={user.id}
+          fotos={clube.clube_fotos}
         />
       </div>
     </main>
