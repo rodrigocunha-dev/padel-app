@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
+import { mascararTelefoneBr } from "@/lib/telefone";
 
 type Etapa = "telefone" | "codigo";
 
@@ -24,6 +25,7 @@ export function LoginOtp() {
   const parametros = useSearchParams();
   const [etapa, setEtapa] = useState<Etapa>("telefone");
   const [telefone, setTelefone] = useState("");
+  const [telefoneDigitado, setTelefoneDigitado] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -148,6 +150,10 @@ export function LoginOtp() {
           type="tel"
           autoComplete="tel"
           required
+          value={telefoneDigitado}
+          onChange={(e) =>
+            setTelefoneDigitado(mascararTelefoneBr(e.target.value))
+          }
           placeholder="(51) 99999-8888"
           className="w-full rounded-lg border border-black/10 bg-white px-4 py-2.5 text-tinta placeholder:text-tinta-suave/60 focus:border-primaria focus:outline-none focus:ring-2 focus:ring-primaria/30"
         />
