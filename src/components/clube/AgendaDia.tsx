@@ -4,8 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
 import { mascararTelefoneBr } from "@/lib/telefone";
+import { AgendaOcupacao } from "@/components/clube/AgendaOcupacao";
+import type { QuadraComFaixas } from "@/lib/ocupacao";
 
-type Quadra = { id: string; nome: string; esporte: string };
+type Quadra = QuadraComFaixas & { esporte: string };
 
 type Reserva = {
   id: string;
@@ -38,6 +40,7 @@ export function AgendaDia({
   quadras: Quadra[];
   usuarioId: string;
 }) {
+  const [visao, setVisao] = useState<"dia" | "semana" | "mes">("dia");
   const [dia, setDia] = useState(() => dataISO(new Date()));
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -144,9 +147,12 @@ export function AgendaDia({
     }
   }
 
-  function mudarDia(delta: number) {
+  // Avança/volta conforme a visão: 1 dia, 1 semana ou 1 mês.
+  function mudarPeriodo(direcao: number) {
     const d = new Date(`${dia}T12:00:00`);
-    d.setDate(d.getDate() + delta);
+    if (visao === "dia") d.setDate(d.getDate() + direcao);
+    else if (visao === "semana") d.setDate(d.getDate() + direcao * 7);
+    else d.setMonth(d.getMonth() + direcao);
     setCarregando(true);
     setDia(dataISO(d));
     setSlotAberto(null);
@@ -159,27 +165,74 @@ export function AgendaDia({
 
   return (
     <div className="mt-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="flex items-center gap-1 rounded-full bg-superficie p-1 ring-1 ring-black/10">
+          {(
+            [
+              ["dia", "Dia"],
+              ["semana", "Semana"],
+              ["mes", "Mês"],
+            ] as const
+          ).map(([valor, rotulo]) => (
+            <button
+              key={valor}
+              type="button"
+              onClick={() => setVisao(valor)}
+              className={`rounded-full px-4 py-1.5 text-sm font-bold ${
+                visao === valor
+                  ? "bg-primaria text-white"
+                  : "text-tinta-suave hover:text-tinta"
+              }`}
+            >
+              {rotulo}
+            </button>
+          ))}
+        </div>
+
+        {/* Seletor de data com calendário (pedido do fundador) */}
+        <input
+          type="date"
+          value={dia}
+          onChange={(e) => {
+            if (!e.target.value) return;
+            setCarregando(true);
+            setDia(e.target.value);
+            setSlotAberto(null);
+          }}
+          className="rounded-full bg-superficie px-4 py-2 text-sm font-bold text-tinta ring-1 ring-black/10 focus:outline-none focus:ring-primaria"
+        />
+      </div>
+
+      <div className="mt-3 flex items-center justify-between">
         <button
           type="button"
-          onClick={() => mudarDia(-1)}
+          onClick={() => mudarPeriodo(-1)}
           className="rounded-full bg-superficie px-4 py-2 text-sm font-bold text-tinta ring-1 ring-black/10"
         >
           ← Anterior
         </button>
         <p className="font-display font-bold capitalize text-tinta">
-          {rotuloDia(new Date(`${dia}T12:00:00`))}
+          {visao === "dia"
+            ? rotuloDia(new Date(`${dia}T12:00:00`))
+            : visao === "semana"
+              ? "Semana"
+              : new Date(`${dia}T12:00:00`).toLocaleDateString("pt-BR", {
+                  month: "long",
+                  year: "numeric",
+                })}
         </p>
         <button
           type="button"
-          onClick={() => mudarDia(1)}
+          onClick={() => mudarPeriodo(1)}
           className="rounded-full bg-superficie px-4 py-2 text-sm font-bold text-tinta ring-1 ring-black/10"
         >
           Próximo →
         </button>
       </div>
 
-      {quadras.length === 0 ? (
+      {visao !== "dia" ? (
+        <AgendaOcupacao quadras={quadras} visao={visao} dataBase={dia} />
+      ) : quadras.length === 0 ? (
         <p className="mt-6 text-sm text-tinta-suave">
           Cadastre quadras no painel para ver a agenda.
         </p>

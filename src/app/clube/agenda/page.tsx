@@ -17,7 +17,9 @@ export default async function PaginaAgenda() {
 
   const { data: clube } = await supabase
     .from("clubes")
-    .select("id, nome, quadras ( id, nome, esporte )")
+    .select(
+      "id, nome, quadras ( id, nome, esporte, quadra_precos ( dias, hora_inicio, hora_fim ) )"
+    )
     .eq("dono_id", user.id)
     .maybeSingle();
 
