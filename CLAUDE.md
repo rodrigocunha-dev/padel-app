@@ -23,25 +23,35 @@ Fundador não programa: explique decisões técnicas em português simples, sem 
 ## Stack (decidida — não trocar sem discutir)
 - App do jogador: **PWA primeiro** (Next.js), Flutter só na fase de lojas (builds via Codemagic, nunca Android Studio local).
 - Painel do clube: **Next.js**.
-- Backend/banco/auth/realtime: **Supabase (PostgreSQL)** — banco sport-agnostic: toda quadra tem campo `esporte`; jogador poderá ter perfis por esporte no futuro.
+- Backend/banco/auth/realtime: **Supabase (PostgreSQL)** — banco sport-agnostic: toda quadra tem campo `esporte`; jogador poderá ter perfis por esporte no futuro. RLS ativado em todas as tabelas desde a primeira.
 - Pagamentos: **Asaas ou Pagar.me** (split de PIX).
 - Mensageria: WhatsApp Business API via BSP (ex.: Z-API).
-- Mapas: Google Maps Platform. Métricas: PostHog. Deploy: Vercel. Código: GitHub.
+- Mapas: Google Maps Platform. Métricas: **PostHog (US Cloud)**. Deploy: **Vercel (deploy automático a cada push)**. Código: **GitHub — github.com/rodrigocunha-dev/padel-app**.
 
 ## Restrições da máquina de desenvolvimento
 Notebook i3 11ª gen, 8 GB RAM, pouco disco. Portanto: nada de emulador Android, nada de Docker pesado, preferir serviços na nuvem (Supabase remoto, não local). Testes mobile no celular real / navegador.
+
+## Identidade visual (provisória)
+Verde-quadra `#0E5C46` + amarelo-bola `#D6F455`, fontes Archivo (títulos) e Inter (texto). Existe uma segunda variante azul-quadra `#0B4F86` alternável na landing, criada para comparação — **pendente**: fundador decidir qual variante fica e remover a perdedora. Nome da marca ainda não decidido (finalistas: FaltaUm, Fechou) — todo texto do produto deve seguir neutro até a decisão, fácil de trocar.
 
 ## Fases (resumo)
 - **Fase 1 (MVP, meses 1–4):** onboarding, mapa de quadras, partidas abertas, reserva + PIX split, resultados + rating + categorias, chat da partida, painel do clube com agenda multiesporte. Critério de pronto do MVP: jogador descobre clube → entra/cria partida → reserva e paga dividido → registra resultado → vê categoria evoluir; clube opera 100% da agenda sem caderno.
 - **Fase 2 (5–10):** torneios com chaveamento automático, ligas/rachões, gamificação completa (temporadas trimestrais), Premium do jogador, comanda de bar, mensalistas, CRM, aulas.
 - **Fase 3 (11–18):** professores como vertical, beach tennis no lado do jogador, marketplace, vídeo, IA, expansão.
 
+Todos os comandos de retomada, sprint a sprint e módulo a módulo, estão no documento **Comandos_de_Retomada_Sprints.md** (Projeto do Claude.ai e Drive do fundador). Use-os para abrir cada sessão.
+
 ## Sprint atual
-**Sprint 0 — Landing + lista de espera: ✅ CONCLUÍDO (19/07/2026).** Site no ar em https://padel-app-liart.vercel.app/ (repo: github.com/rodrigocunha-dev/padel-app, deploy automático no push). Formulário salva no Supabase (tabela `lista_espera`, RLS só-INSERT) e dispara evento `cadastro_lista_espera` no PostHog (US Cloud). Identidade provisória: verde-quadra `#0E5C46` + amarelo-bola `#D6F455`, fontes Archivo (títulos) e Inter (texto); há uma segunda variante azul-quadra `#0B4F86` alternável na página — remover a perdedora quando o fundador decidir. Nome da marca ainda não decidido (finalistas: FaltaUm, Fechou) — textos seguem neutros. Pendências: política de privacidade (LGPD) quando houver marca; decidir variante de cor.
+**Sprint 0 — Landing + lista de espera: ✅ CONCLUÍDO (19/07/2026).**
+Site no ar em https://padel-app-liart.vercel.app/. Formulário salva no Supabase (tabela `lista_espera`, RLS só-INSERT) e dispara evento `cadastro_lista_espera` no PostHog.
+Pendências deste sprint (não bloqueiam o Sprint 1): decidir variante de cor (verde vs. azul) e remover a perdedora; política de privacidade LGPD assim que a marca for decidida.
+
+**Sprint 1 — Módulo 1.1: Contas e Onboarding: 🔜 PRÓXIMO.**
+Objetivo: infraestrutura de autenticação (login por WhatsApp/OTP); cadastro de jogador (nome, foto, cidade, telefone, categoria 1ª–7ª, posição, disponibilidade, raio de deslocamento) com fluxo de calibração inicial (questionário curto + selo "em calibração"); cadastro de clube com quadras multiesporte (esporte, tipo vidro/alvenaria/areia/saibro/grama, coberta ou não, preço por faixa horária). Comando de abertura no Comandos_de_Retomada_Sprints.md.
 
 ## Convenções de trabalho
 - Commits pequenos e frequentes com mensagens em PT-BR descrevendo o "porquê".
 - Antes de qualquer mudança grande, explicar o plano em 3–5 linhas e aguardar ok do fundador.
 - Toda funcionalidade nova nasce com: teste no celular real + evento de métrica (PostHog) + **artigo correspondente na base de conhecimento em `/docs`** (ver `docs/README.md`).
 - Segurança: nunca commitar chaves/segredos (usar variáveis de ambiente); RLS ativado em todas as tabelas do Supabase; antes de ligar pagamentos reais, revisão externa de segurança é obrigatória.
-- Documentos de referência completos (escopo, plano de execução, protótipo) estão no Projeto do Claude.ai e no Google Drive do fundador.
+- Documentos de referência completos (escopo, plano de execução, protótipo, diagrama de fluxo, comandos de retomada) estão no Projeto do Claude.ai e no Google Drive do fundador.
