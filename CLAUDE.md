@@ -42,16 +42,22 @@ Verde-quadra `#0E5C46` + amarelo-bola `#D6F455`, fontes Archivo (títulos) e Int
 Todos os comandos de retomada, sprint a sprint e módulo a módulo, estão no documento **Comandos_de_Retomada_Sprints.md** (Projeto do Claude.ai e Drive do fundador). Use-os para abrir cada sessão.
 
 ## Sprint atual
+
 **Sprint 0 — Landing + lista de espera: ✅ CONCLUÍDO (19/07/2026).**
 Site no ar em https://padel-app-liart.vercel.app/. Formulário salva no Supabase (tabela `lista_espera`, RLS só-INSERT) e dispara evento `cadastro_lista_espera` no PostHog.
 
 **Sprint 1 — Contas e Onboarding: ✅ CONCLUÍDO (20/07/2026), testado pelo fundador no celular.**
 Implementado: login por telefone/OTP com máscara `(DD) 99999-9999` (fase A com número de teste `5551999998888`/código `123456` até 31/10/2026); onboarding do jogador em /app (nome, foto no Storage, cidade, questionário de calibração com teto de sugestão na 2ª, selo "em calibração", posição, disponibilidade dia×turno, raio); painel do clube em /clube (clube + quadras multiesporte com piso compatível por esporte + preços por faixa horária em centavos, com trava dupla contra sobreposição — tela e trigger no banco). Rotas protegidas por proxy com sessão em cookies. Scripts SQL: `002` e `003`. Artigos em /docs e eventos PostHog em todos os passos-chave.
 
-**Pendências acumuladas (não bloqueiam o Sprint 2):** decidir variante de cor (verde vs. azul) e remover a perdedora; política de privacidade LGPD quando a marca for decidida; elaborar perguntas de calibração melhores (as atuais são provisórias); fase B da autenticação (Twilio real — credenciais são SECRETAS, nunca no chat/commit).
+**Pendências acumuladas (não bloqueiam o Sprint 2, mas têm prazo):**
+- Decidir variante de cor (verde vs. azul) e remover a perdedora.
+- Política de privacidade LGPD quando a marca for decidida.
+- Elaborar perguntas de calibração melhores (as atuais são provisórias).
+- ⚠️ **Fase B da autenticação (Twilio real) antes de 31/10/2026** — o número de teste expira nessa data; sem isso, ninguém mais consegue logar. Credenciais do Twilio são SECRETAS: nunca colar no chat nem commitar — sempre em variável de ambiente, e o próprio fundador cadastra a chave direto no painel da hospedagem (Vercel), sem passar pelo Claude Code.
+- Definir o escopo do Premium do jogador (Fase 2). Candidata já identificada pelo fundador: busca de quadra por cidade + data futura ("planejando viagem"), hoje liberada para todos.
 
-**Sprint 2 — 🔜 PRÓXIMO.**
-Escopo e comando de abertura no Comandos_de_Retomada_Sprints.md (fundador cola no início da sessão).
+**Sprint 2 — Módulo 1.2: Descoberta e Mapa + Painel do Clube v0 — 🔜 PRÓXIMO.**
+Objetivo: mapa com clubes geolocalizados e preço no pin; filtros (esporte, tipo de quadra, coberta, distância, preço); modo "Jogar agora" (livres nas próximas 3h); página do clube com fotos e avaliações. Junto, avançar o painel do clube (Módulo 1.7 parcial): agenda visível e reserva manual pelo dono do clube. Comando de abertura completo no Comandos_de_Retomada_Sprints.md.
 
 ## Convenções de trabalho
 - Commits pequenos e frequentes com mensagens em PT-BR descrevendo o "porquê".
