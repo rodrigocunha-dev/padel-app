@@ -49,17 +49,26 @@ Site no ar em https://padel-app-liart.vercel.app/. Formulário salva no Supabase
 **Sprint 1 — Contas e Onboarding: ✅ CONCLUÍDO (20/07/2026), testado pelo fundador no celular.**
 Implementado: login por telefone/OTP com máscara `(DD) 99999-9999` (fase A com número de teste `5551999998888`/código `123456` até 31/10/2026); onboarding do jogador em /app (nome, foto no Storage, cidade, questionário de calibração com teto de sugestão na 2ª, selo "em calibração", posição, disponibilidade dia×turno, raio); painel do clube em /clube (clube + quadras multiesporte com piso compatível por esporte + preços por faixa horária em centavos, com trava dupla contra sobreposição — tela e trigger no banco). Rotas protegidas por proxy com sessão em cookies. Scripts SQL: `002` e `003`. Artigos em /docs e eventos PostHog em todos os passos-chave.
 
-**Pendências acumuladas (não bloqueiam o Sprint 2, mas têm prazo):**
+**Pendências acumuladas (não bloqueiam o próximo sprint, mas têm prazo):**
 - Decidir variante de cor (verde vs. azul) e remover a perdedora.
 - Política de privacidade LGPD quando a marca for decidida.
 - Elaborar perguntas de calibração melhores (as atuais são provisórias).
 - ⚠️ **Fase B da autenticação (Twilio real) antes de 31/10/2026** — o número de teste expira nessa data; sem isso, ninguém mais consegue logar. Credenciais do Twilio são SECRETAS: nunca colar no chat nem commitar — sempre em variável de ambiente, e o próprio fundador cadastra a chave direto no painel da hospedagem (Vercel), sem passar pelo Claude Code.
 - Definir o escopo do Premium do jogador (Fase 2). Candidata já identificada pelo fundador: busca de quadra por cidade + data futura ("planejando viagem"), hoje liberada para todos.
 
-**Sprint 2 — Módulo 1.2: Descoberta e Mapa + Painel do Clube v0 — 🔜 PRÓXIMO.**
-Objetivo: mapa com clubes geolocalizados e preço no pin; filtros (esporte, tipo de quadra, coberta, distância, preço); modo "Jogar agora" (livres nas próximas 3h); página do clube com fotos e avaliações. Junto, avançar o painel do clube (Módulo 1.7 parcial): agenda visível e reserva manual pelo dono do clube. Comando de abertura completo no Comandos_de_Retomada_Sprints.md.
+**Sprint 2 — Módulo 1.2: Descoberta e Mapa + Painel do Clube v0: ✅ CONCLUÍDO (20/07/2026), testado pelo fundador no celular.**
+Implementado:
+- **Mapa e descoberta (/app/descobrir):** Leaflet + **OpenStreetMap** (decisão do fundador: gratuito, sem conta nem cartão — Google Maps fica como troca futura, contida nos componentes de mapa). Pin mostra o menor preço/h. Alternador **Mapa | Lista**. Filtros: esporte e tipo de quadra em multi-seleção **com opções em cascata** (só aparece o que existe nos clubes); só cobertas; preço máx.; cidade ("onde estou" por GPS, ou qualquer cidade com clube); distância de 1 a 50 km. **"Jogar agora"** = clubes com 1h contínua livre nas próximas 3h. **Busca por data futura** (data + janela de horário + "só clubes com horário livre nesse período") — pensada para quem planeja viagem.
+- **Página do clube (/app/clubes/[id]):** fotos, descrição, esportes/quadras, **horário de funcionamento derivado das faixas de preço**, mini-mapa com rota, telefone, política de cancelamento, avaliações 1–5 com comentário e botão de WhatsApp.
+- **Painel do clube:** edição das informações (nome, telefone, descrição, política de cancelamento), **cidade não editável — sempre derivada do endereço no mapa** (falha achada em teste: "NH" vs "Novo Hamburgo" quebrava o filtro por cidade), localização com busca de endereço e pin ajustável, upload de **várias fotos de uma vez**.
+- **Agenda (/clube/agenda):** visões **Dia | Semana | Mês** com seletor de calendário; dia = grade quadra×hora com reserva de balcão (nome, WhatsApp, duração) e cancelamento; semana/mês = mapa de calor de **ocupação × capacidade ociosa**. **Zero overbooking garantido pelo banco** (exclusion constraint, testado por fora da interface) e reservas de terceiros invisíveis para jogadores (LGPD, via função `horarios_ocupados`).
+- Scripts SQL: `004` (coordenadas, fotos, avaliações, reservas) e `005` (descrição e política de cancelamento). Artigos em /docs e eventos PostHog em todos os passos-chave.
+
+**Sprint 3 — 🔜 PRÓXIMO.**
+Aguardando o comando de abertura do Comandos_de_Retomada_Sprints.md (o fundador cola no início da sessão). Pelo plano de fases, o caminho natural é o Módulo de partidas abertas + reserva com PIX dividido.
 
 ## Convenções de trabalho
+- **Ao concluir cada sprint, sempre fazer os dois passos (sem esperar o fundador pedir):** (1) atualizar este CLAUDE.md com o que foi feito, o que ficou pendente e qual o próximo passo; (2) confirmar explicitamente ao fundador que está tudo salvo no GitHub (nada de commit local pendente).
 - Commits pequenos e frequentes com mensagens em PT-BR descrevendo o "porquê".
 - Antes de qualquer mudança grande, explicar o plano em 3–5 linhas e aguardar ok do fundador.
 - Toda funcionalidade nova nasce com: teste no celular real + evento de métrica (PostHog) + **artigo correspondente na base de conhecimento em `/docs`** (ver `docs/README.md`).
