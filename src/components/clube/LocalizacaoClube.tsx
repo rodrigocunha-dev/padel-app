@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
+import { buscarEndereco, localPorCoordenadas } from "@/lib/geo";
 
 // O mapa só funciona no navegador (usa window), por isso o import dinâmico.
 const MapaPin = dynamic(() => import("@/components/mapa/MapaPin"), {
@@ -19,6 +20,7 @@ const MapaPin = dynamic(() => import("@/components/mapa/MapaPin"), {
 type Props = {
   clubeId: string;
   enderecoAtual: string | null;
+  cidadeAtual: string;
   latitude: number | null;
   longitude: number | null;
 };
@@ -29,6 +31,7 @@ const CENTRO_PADRAO: [number, number] = [-29.6783, -51.1309];
 export function LocalizacaoClube({
   clubeId,
   enderecoAtual,
+  cidadeAtual,
   latitude,
   longitude,
 }: Props) {
@@ -37,11 +40,13 @@ export function LocalizacaoClube({
   const [posicao, setPosicao] = useState<[number, number] | null>(
     latitude != null && longitude != null ? [latitude, longitude] : null
   );
+  // Cidade detectada pelo mapa — é ela que vai para o banco.
+  const [cidadeDetectada, setCidadeDetectada] = useState<string | null>(null);
   const [buscando, setBuscando] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
 
-  async function buscarEndereco() {
+  async function procurar() {
     if (!endereco.trim()) {
       setMensagem("Digite o endereço antes de buscar.");
       return;
@@ -49,20 +54,14 @@ export function LocalizacaoClube({
     setMensagem(null);
     setBuscando(true);
     try {
-      const resposta = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${encodeURIComponent(endereco)}`,
-        { headers: { "Accept-Language": "pt-BR" } }
-      );
-      const resultados = await resposta.json();
-      if (resultados.length === 0) {
+      const local = await buscarEndereco(endereco);
+      if (!local) {
         setMensagem(
           "Endereço não encontrado. Tente incluir cidade e estado, ou arraste o pin no mapa."
         );
       } else {
-        setPosicao([
-          parseFloat(resultados[0].lat),
-          parseFloat(resultados[0].lon),
-        ]);
+        setPosicao([local.latitude, local.longitude]);
+        setCidadeDetectada(local.cidade);
         setMensagem("Confira o pin no mapa e arraste para ajustar se precisar.");
       }
     } catch {
@@ -71,12 +70,37 @@ export function LocalizacaoClube({
     setBuscando(false);
   }
 
+  // Ao mover o pin, a cidade é redescoberta pelas novas coordenadas.
+  async function moverPin(lat: number, lng: number) {
+    setPosicao([lat, lng]);
+    setMensagem(null);
+    setCidadeDetectada(null);
+    try {
+      const local = await localPorCoordenadas(lat, lng);
+      if (local?.cidade) setCidadeDetectada(local.cidade);
+    } catch {
+      // Sem conexão com o serviço: a cidade é resolvida ao salvar.
+    }
+  }
+
   async function salvar() {
     if (!posicao) {
       setMensagem("Busque o endereço ou posicione o pin antes de salvar.");
       return;
     }
     setSalvando(true);
+
+    // Garante a cidade oficial mesmo se o pin foi movido sem resposta antes.
+    let cidade = cidadeDetectada;
+    if (!cidade) {
+      try {
+        const local = await localPorCoordenadas(posicao[0], posicao[1]);
+        cidade = local?.cidade ?? null;
+      } catch {
+        cidade = null;
+      }
+    }
+
     const supabase = criarClienteNavegador();
     const { error } = await supabase
       .from("clubes")
@@ -84,6 +108,9 @@ export function LocalizacaoClube({
         endereco: endereco.trim() || null,
         latitude: posicao[0],
         longitude: posicao[1],
+        // Cidade nunca é digitada: vem sempre do mapa (evita "NH" vs
+        // "Novo Hamburgo" quebrando o filtro por cidade do jogador).
+        ...(cidade ? { cidade } : {}),
       })
       .eq("id", clubeId);
     setSalvando(false);
@@ -93,8 +120,12 @@ export function LocalizacaoClube({
       setMensagem("Não conseguimos salvar. Tente de novo.");
       return;
     }
-    posthog.capture("clube_localizacao_salva");
-    setMensagem("Localização salva! Seu clube já aparece no mapa dos jogadores.");
+    posthog.capture("clube_localizacao_salva", { cidade_detectada: !!cidade });
+    setMensagem(
+      cidade
+        ? `Localização salva! Cidade do clube: ${cidade}.`
+        : "Localização salva! Não conseguimos identificar a cidade — ajuste o pin e salve de novo."
+    );
     router.refresh();
   }
 
@@ -105,7 +136,7 @@ export function LocalizacaoClube({
       </h2>
       <p className="mt-1 text-sm text-tinta-suave">
         É assim que os jogadores encontram seu clube. Busque o endereço e
-        ajuste o pin se necessário.
+        ajuste o pin se necessário — a cidade do clube é definida aqui.
       </p>
 
       <div className="mt-3 rounded-2xl bg-superficie p-5 shadow-lg ring-1 ring-black/5">
@@ -119,7 +150,7 @@ export function LocalizacaoClube({
           />
           <button
             type="button"
-            onClick={buscarEndereco}
+            onClick={procurar}
             disabled={buscando}
             className="shrink-0 rounded-full bg-primaria px-4 py-2 text-sm font-bold text-white transition hover:brightness-110 disabled:opacity-60"
           >
@@ -127,14 +158,23 @@ export function LocalizacaoClube({
           </button>
         </div>
 
+        <p className="mt-2 text-sm text-tinta-suave">
+          Cidade:{" "}
+          <strong className="text-tinta">
+            {cidadeDetectada ?? cidadeAtual}
+          </strong>
+          {cidadeDetectada && cidadeDetectada !== cidadeAtual && (
+            <span className="ml-1 text-primaria">
+              (será atualizada ao salvar)
+            </span>
+          )}
+        </p>
+
         <div className="mt-3">
           <MapaPin
             centro={posicao ?? CENTRO_PADRAO}
             pin={posicao}
-            aoMoverPin={(lat, lng) => {
-              setPosicao([lat, lng]);
-              setMensagem(null);
-            }}
+            aoMoverPin={moverPin}
           />
         </div>
 

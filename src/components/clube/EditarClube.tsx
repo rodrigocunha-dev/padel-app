@@ -33,22 +33,22 @@ export function EditarClube({ clube }: { clube: Clube }) {
 
     const dados = new FormData(evento.currentTarget);
     const nome = String(dados.get("nome") ?? "").trim();
-    const cidade = String(dados.get("cidade") ?? "").trim();
     const descricao = String(dados.get("descricao") ?? "").trim();
     const politica = String(dados.get("politica") ?? "").trim();
 
-    if (!nome || !cidade) {
-      setErro("Nome e cidade são obrigatórios.");
+    if (!nome) {
+      setErro("O nome do clube é obrigatório.");
       return;
     }
 
     setSalvando(true);
     const supabase = criarClienteNavegador();
+    // A cidade não é editada aqui de propósito: ela vem da localização no
+    // mapa, para ser sempre o nome oficial (evita "NH" vs "Novo Hamburgo").
     const { error } = await supabase
       .from("clubes")
       .update({
         nome,
-        cidade,
         telefone: telefone.replace(/\D/g, "") || null,
         descricao: descricao || null,
         politica_cancelamento: politica || null,
@@ -102,16 +102,16 @@ export function EditarClube({ clube }: { clube: Clube }) {
         />
       </label>
 
-      <label className="mt-3 flex flex-col gap-1.5">
+      <div className="mt-3 flex flex-col gap-1.5">
         <span className="text-sm font-medium text-tinta">Cidade</span>
-        <input
-          name="cidade"
-          type="text"
-          required
-          defaultValue={clube.cidade}
-          className={estiloInput}
-        />
-      </label>
+        <p className="rounded-lg bg-fundo px-3 py-2 text-sm text-tinta">
+          {clube.cidade}
+        </p>
+        <span className="text-xs text-tinta-suave">
+          Definida automaticamente pelo endereço em “Localização no mapa” —
+          assim os jogadores encontram seu clube ao filtrar por cidade.
+        </span>
+      </div>
 
       <label className="mt-3 flex flex-col gap-1.5">
         <span className="text-sm font-medium text-tinta">

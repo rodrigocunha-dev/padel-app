@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
+import { localPorCoordenadas } from "@/lib/geo";
 import {
   distanciaKm,
   menorPrecoCentavos,
@@ -96,17 +97,11 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
         setMinhaPosicao([p.coords.latitude, p.coords.longitude]);
         // Descobre a cidade em que a pessoa está (para o filtro "onde estou")
         try {
-          const resposta = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${p.coords.latitude}&lon=${p.coords.longitude}`,
-            { headers: { "Accept-Language": "pt-BR" } }
+          const local = await localPorCoordenadas(
+            p.coords.latitude,
+            p.coords.longitude
           );
-          const dados = await resposta.json();
-          const cidade =
-            dados?.address?.city ??
-            dados?.address?.town ??
-            dados?.address?.municipality ??
-            null;
-          if (cidade) setCidadeAtual(cidade);
+          if (local?.cidade) setCidadeAtual(local.cidade);
         } catch {
           // Sem reverse geocode: cai no plano B (cidade do perfil)
         }

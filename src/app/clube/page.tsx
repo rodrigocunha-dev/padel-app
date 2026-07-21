@@ -79,6 +79,7 @@ export default async function PaginaClube() {
         <LocalizacaoClube
           clubeId={clube.id}
           enderecoAtual={clube.endereco}
+          cidadeAtual={clube.cidade}
           latitude={clube.latitude}
           longitude={clube.longitude}
         />
