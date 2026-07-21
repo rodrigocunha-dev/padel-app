@@ -78,6 +78,18 @@ export default async function PaginaApp() {
             Mapa com preços, filtros e quadras livres agora
           </p>
         </Link>
+
+        <Link
+          href="/app/reservas"
+          className="mt-3 block rounded-2xl bg-superficie p-6 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"
+        >
+          <p className="font-display text-lg font-bold text-tinta">
+            🎾 Minhas reservas
+          </p>
+          <p className="mt-1 text-sm text-tinta-suave">
+            Seus próximos jogos, com opção de cancelar ou remarcar
+          </p>
+        </Link>
       </div>
     </main>
   );

@@ -75,7 +75,7 @@ export default async function PaginaClubeJogador({
   const { data: clube } = await supabase
     .from("clubes")
     .select(
-      "id, nome, cidade, endereco, telefone, descricao, politica_cancelamento, latitude, longitude, clube_fotos ( id, url ), quadras ( id, nome, esporte, tipo, coberta, quadra_precos ( id, dias, hora_inicio, hora_fim, preco_centavos ) )"
+      "id, nome, cidade, endereco, telefone, descricao, politica_cancelamento, horas_limite_cancelamento, latitude, longitude, clube_fotos ( id, url ), quadras ( id, nome, esporte, tipo, coberta, quadra_precos ( id, dias, hora_inicio, hora_fim, preco_centavos ) )"
     )
     .eq("id", id)
     .maybeSingle();
@@ -153,12 +153,21 @@ export default async function PaginaClubeJogador({
           </div>
         )}
 
+        {clube.quadras.length > 0 && (
+          <Link
+            href={`/app/clubes/${clube.id}/reservar`}
+            className="mt-4 block rounded-full bg-destaque px-6 py-3 text-center font-display font-bold text-destaque-tinta transition hover:brightness-95"
+          >
+            🎾 Reservar quadra
+          </Link>
+        )}
+
         {whatsappLink && (
           <a
             href={whatsappLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 block rounded-full bg-destaque px-6 py-3 text-center font-display font-bold text-destaque-tinta transition hover:brightness-95"
+            className="mt-3 block rounded-full bg-superficie px-6 py-3 text-center font-display font-bold text-tinta ring-1 ring-black/10 transition hover:ring-primaria/40"
           >
             💬 Chamar no WhatsApp
           </a>
@@ -253,16 +262,21 @@ export default async function PaginaClubeJogador({
             </div>
           )}
 
-          {clube.politica_cancelamento && (
-            <div className="mt-3 rounded-2xl bg-superficie p-4 shadow ring-1 ring-black/5">
-              <p className="text-xs font-bold uppercase tracking-wide text-tinta-suave">
-                📋 Política de cancelamento
-              </p>
-              <p className="mt-1 text-sm text-tinta">
+          <div className="mt-3 rounded-2xl bg-superficie p-4 shadow ring-1 ring-black/5">
+            <p className="text-xs font-bold uppercase tracking-wide text-tinta-suave">
+              📋 Política de cancelamento
+            </p>
+            <p className="mt-1 text-sm text-tinta">
+              {(clube.horas_limite_cancelamento ?? 12) === 0
+                ? "Cancelamento livre até a hora do jogo."
+                : `Cancelamento ou remarcação pelo app até ${clube.horas_limite_cancelamento ?? 12}h antes do jogo.`}
+            </p>
+            {clube.politica_cancelamento && (
+              <p className="mt-1 text-sm text-tinta-suave">
                 {clube.politica_cancelamento}
               </p>
-            </div>
-          )}
+            )}
+          </div>
         </section>
 
         <section className="mt-6">

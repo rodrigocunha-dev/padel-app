@@ -24,7 +24,7 @@ export default async function PaginaClube() {
   const { data: clube } = await supabase
     .from("clubes")
     .select(
-      "id, nome, cidade, endereco, telefone, descricao, politica_cancelamento, latitude, longitude, clube_fotos ( id, url )"
+      "id, nome, cidade, endereco, telefone, descricao, politica_cancelamento, horas_limite_cancelamento, latitude, longitude, clube_fotos ( id, url )"
     )
     .eq("dono_id", user.id)
     .maybeSingle();

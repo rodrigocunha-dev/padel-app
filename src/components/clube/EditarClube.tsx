@@ -13,7 +13,10 @@ type Clube = {
   telefone: string | null;
   descricao: string | null;
   politica_cancelamento: string | null;
+  horas_limite_cancelamento: number | null;
 };
+
+const HORAS_CANCELAMENTO = [0, 2, 6, 12, 24, 48];
 
 const estiloInput =
   "w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm text-tinta placeholder:text-tinta-suave/60 focus:border-primaria focus:outline-none focus:ring-2 focus:ring-primaria/30";
@@ -35,6 +38,7 @@ export function EditarClube({ clube }: { clube: Clube }) {
     const nome = String(dados.get("nome") ?? "").trim();
     const descricao = String(dados.get("descricao") ?? "").trim();
     const politica = String(dados.get("politica") ?? "").trim();
+    const horasLimite = Number(dados.get("horas_limite") ?? 12);
 
     if (!nome) {
       setErro("O nome do clube é obrigatório.");
@@ -52,6 +56,7 @@ export function EditarClube({ clube }: { clube: Clube }) {
         telefone: telefone.replace(/\D/g, "") || null,
         descricao: descricao || null,
         politica_cancelamento: politica || null,
+        horas_limite_cancelamento: horasLimite,
       })
       .eq("id", clube.id);
     setSalvando(false);
@@ -65,6 +70,7 @@ export function EditarClube({ clube }: { clube: Clube }) {
     posthog.capture("clube_editado", {
       tem_descricao: !!descricao,
       tem_politica: !!politica,
+      horas_limite_cancelamento: horasLimite,
     });
     setAberto(false);
     router.refresh();
@@ -145,7 +151,28 @@ export function EditarClube({ clube }: { clube: Clube }) {
 
       <label className="mt-3 flex flex-col gap-1.5">
         <span className="text-sm font-medium text-tinta">
-          Política de cancelamento{" "}
+          Cancelamento livre até quantas horas antes?
+        </span>
+        <select
+          name="horas_limite"
+          defaultValue={String(clube.horas_limite_cancelamento ?? 12)}
+          className={estiloInput}
+        >
+          {HORAS_CANCELAMENTO.map((h) => (
+            <option key={h} value={h}>
+              {h === 0 ? "Sem prazo (pode cancelar até a hora do jogo)" : `${h}h antes`}
+            </option>
+          ))}
+        </select>
+        <span className="text-xs text-tinta-suave">
+          Esta é a regra que o sistema faz valer: depois desse prazo, o
+          jogador não consegue mais cancelar nem remarcar sozinho pelo app.
+        </span>
+      </label>
+
+      <label className="mt-3 flex flex-col gap-1.5">
+        <span className="text-sm font-medium text-tinta">
+          Detalhes da política{" "}
           <span className="text-tinta-suave">(opcional)</span>
         </span>
         <textarea
@@ -156,8 +183,7 @@ export function EditarClube({ clube }: { clube: Clube }) {
           className={estiloInput}
         />
         <span className="text-xs text-tinta-suave">
-          Será exibida ao jogador ANTES de pagar, quando as reservas pelo app
-          chegarem.
+          Aparece na página do clube e antes do jogador confirmar a reserva.
         </span>
       </label>
 

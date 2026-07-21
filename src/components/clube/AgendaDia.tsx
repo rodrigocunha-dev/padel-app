@@ -76,6 +76,23 @@ export function AgendaDia({
     carregar();
   }, [carregar]);
 
+  // Tempo real: reserva feita pelo app (ou em outro dispositivo do clube)
+  // aparece na agenda sozinha, sem atualizar a página.
+  useEffect(() => {
+    const supabase = criarClienteNavegador();
+    const canal = supabase
+      .channel("agenda-clube")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "reservas" },
+        () => carregar()
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(canal);
+    };
+  }, [carregar]);
+
   function reservaNoSlot(quadraId: string, hora: number): Reserva | null {
     const slotInicio = new Date(`${dia}T${String(hora).padStart(2, "0")}:00:00`).getTime();
     const slotFim = slotInicio + 60 * 60_000;
