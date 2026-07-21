@@ -33,10 +33,12 @@ export function AgendaOcupacao({
   quadras,
   visao,
   dataBase,
+  aoEscolherDia,
 }: {
   quadras: QuadraComFaixas[];
   visao: Visao;
   dataBase: string; // YYYY-MM-DD
+  aoEscolherDia: (dia: string) => void; // abre a agenda daquele dia
 }) {
   const [reservas, setReservas] = useState<ReservaPeriodo[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -102,12 +104,19 @@ export function AgendaOcupacao({
             <tr>
               <th className="text-left text-sm font-bold text-tinta">Quadra</th>
               {dias.map((d) => (
-                <th key={d.getTime()} className="pb-1 text-xs font-bold text-tinta">
-                  {DIAS_CURTOS[d.getDay()]}
-                  <br />
-                  <span className="font-normal text-tinta-suave">
-                    {d.getDate()}/{d.getMonth() + 1}
-                  </span>
+                <th key={d.getTime()} className="pb-1">
+                  <button
+                    type="button"
+                    onClick={() => aoEscolherDia(dataISO(d))}
+                    title="Abrir a agenda deste dia"
+                    className="w-full rounded-lg px-1 py-0.5 text-xs font-bold text-tinta transition hover:bg-primaria/10 hover:text-primaria"
+                  >
+                    {DIAS_CURTOS[d.getDay()]}
+                    <br />
+                    <span className="font-normal text-tinta-suave">
+                      {d.getDate()}/{d.getMonth() + 1}
+                    </span>
+                  </button>
                 </th>
               ))}
             </tr>
@@ -124,20 +133,22 @@ export function AgendaOcupacao({
                   const pct = cap > 0 ? Math.min(100, (res / cap) * 100) : null;
                   return (
                     <td key={d.getTime()}>
-                      <div
-                        className="rounded-lg px-1 py-2 text-xs font-bold"
+                      <button
+                        type="button"
+                        onClick={() => aoEscolherDia(dataISO(d))}
+                        className="w-full rounded-lg px-1 py-2 text-xs font-bold transition hover:ring-2 hover:ring-primaria"
                         style={{
                           background: corOcupacao(pct),
                           color: textoContraste(pct),
                         }}
                         title={
                           pct === null
-                            ? "Fechado"
-                            : `${res.toFixed(1)}h reservadas de ${cap.toFixed(1)}h`
+                            ? "Fechado — abrir a agenda deste dia"
+                            : `${res.toFixed(1)}h reservadas de ${cap.toFixed(1)}h — abrir a agenda deste dia`
                         }
                       >
                         {pct === null ? "—" : `${Math.round(pct)}%`}
-                      </div>
+                      </button>
                     </td>
                   );
                 })}
@@ -148,7 +159,7 @@ export function AgendaOcupacao({
         <p className="mt-2 text-xs text-tinta-suave">
           {carregando
             ? "Atualizando..."
-            : "% do horário de funcionamento já reservado. Quanto mais escuro, mais cheio. “—” = fechado."}
+            : "% do horário de funcionamento já reservado. Quanto mais escuro, mais cheio. “—” = fechado. Toque num dia para abrir a agenda dele."}
         </p>
       </div>
     );
@@ -176,31 +187,33 @@ export function AgendaOcupacao({
             reservas
           );
           return (
-            <div
+            <button
               key={d.getTime()}
-              className="rounded-lg px-1 py-2"
+              type="button"
+              onClick={() => aoEscolherDia(dataISO(d))}
+              className="rounded-lg px-1 py-2 transition hover:ring-2 hover:ring-primaria"
               style={{
                 background: corOcupacao(percentual),
                 color: textoContraste(percentual),
               }}
               title={
                 percentual === null
-                  ? "Fechado"
-                  : `${reservado.toFixed(1)}h de ${capacidade.toFixed(1)}h reservadas`
+                  ? "Fechado — abrir a agenda deste dia"
+                  : `${reservado.toFixed(1)}h de ${capacidade.toFixed(1)}h reservadas — abrir a agenda deste dia`
               }
             >
               <div className="text-xs font-bold">{d.getDate()}</div>
               <div className="text-[10px] font-medium">
                 {percentual === null ? "—" : `${Math.round(percentual)}%`}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
       <p className="mt-2 text-xs text-tinta-suave">
         {carregando
           ? "Atualizando..."
-          : "Ocupação de todas as quadras somadas, dia a dia. Ideal para achar horários ociosos."}
+          : "Ocupação de todas as quadras somadas, dia a dia. Ideal para achar horários ociosos. Toque num dia para abrir a agenda dele."}
       </p>
     </div>
   );

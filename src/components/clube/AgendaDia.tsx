@@ -231,7 +231,18 @@ export function AgendaDia({
       </div>
 
       {visao !== "dia" ? (
-        <AgendaOcupacao quadras={quadras} visao={visao} dataBase={dia} />
+        <AgendaOcupacao
+          quadras={quadras}
+          visao={visao}
+          dataBase={dia}
+          aoEscolherDia={(novoDia) => {
+            setCarregando(true);
+            setDia(novoDia);
+            setVisao("dia");
+            setSlotAberto(null);
+            posthog.capture("agenda_dia_aberto_pela_visao", { visao });
+          }}
+        />
       ) : quadras.length === 0 ? (
         <p className="mt-6 text-sm text-tinta-suave">
           Cadastre quadras no painel para ver a agenda.
