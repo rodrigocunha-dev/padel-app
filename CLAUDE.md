@@ -64,7 +64,7 @@ Implementado:
 - Elaborar perguntas de calibração melhores (as atuais são provisórias).
 - ⚠️ **Fase B da autenticação (Twilio real) antes de 31/10/2026** — o número de teste expira nessa data; sem isso, ninguém mais consegue logar. Credenciais do Twilio são SECRETAS: nunca colar no chat nem commitar — sempre em variável de ambiente, e o próprio fundador cadastra a chave direto no painel da hospedagem (Vercel), sem passar pelo Claude Code.
 - Definir o escopo do Premium do jogador (Fase 2). Candidata já identificada pelo fundador: busca de quadra por cidade + data futura ("planejando viagem"), hoje liberada para todos.
-- **Artigos para o cliente ainda não existem.** Em 22/07/2026 o fundador trouxe o padrão editorial (`docs/Guia_Tom_Estilo_Artigos.md`, `Rubrica_Revisao_Artigos.md`, `Checklist_Sprint_Artigos.md`): artigos com frontmatter, resposta curta no topo, linguagem de padelista e pasta `/docs/[publico]/[categoria]/`. Os artigos atuais em `/docs` são **documentação técnica interna** e não seguem esse padrão. A partir do Sprint 4, cada sprint deve gerar também os artigos no formato do guia; avaliar converter os antigos.
+- **Rodapé dos artigos de cliente está com `[DEFINIR]`** no lugar do WhatsApp de suporte (13 artigos). Quando o número existir, substituir em todos.
 - **Evoluir a agenda do clube** (ideias para adiante): bloqueios recorrentes/mensalistas, arrastar para remarcar, filtro por esporte/quadra.
 - **Botão de troca de modo (jogador ↔ painel do clube)** para donos e funcionários de clube, que hoje precisam navegar entre `/app` e `/clube` na mão. Ligado a isto: na tela do jogador a política de cancelamento vale para todos, inclusive o dono (no servidor o dono é isento). Decisão de 22/07/2026: **manter assim**; se mudar, tratar junto com o botão de troca de modo.
 
@@ -89,6 +89,8 @@ Implementado:
 - **Ao concluir cada sprint, SEMPRE fazer os dois passos (sem esperar o fundador pedir):** (1) atualizar este CLAUDE.md com o que foi feito, o que ficou pendente e qual o próximo passo; (2) confirmar explicitamente ao fundador que está tudo salvo no GitHub (nada de commit local pendente).
 - Commits pequenos e frequentes com mensagens em PT-BR descrevendo o "porquê".
 - Antes de qualquer mudança grande, explicar o plano em 3–5 linhas e aguardar ok do fundador.
-- Toda funcionalidade nova nasce com: teste no celular real + evento de métrica (PostHog) + **artigo correspondente na base de conhecimento em `/docs`** (ver `docs/README.md`).
+- Toda funcionalidade nova nasce com: teste no celular real + evento de métrica (PostHog) + **os DOIS documentos da base de conhecimento** (ver `docs/README.md`):
+  1. **Documentação técnica** em `/docs/interno/` — o que foi construído, como funciona por dentro, decisões e porquês. Pode citar código, banco e LGPD.
+  2. **Artigo(s) para o cliente** em `/docs/[publico]/[categoria]/` — uma pergunta por artigo, no padrão do `docs/Guia_Tom_Estilo_Artigos.md`: frontmatter, resposta curta no topo, passos imperativos, sem jargão, sem citar "LGPD", nome do arquivo em kebab-case. Cada um passa pela `docs/Rubrica_Revisao_Artigos.md` (mínimo 9/10) antes de ir para o fundador.
 - Segurança: nunca commitar chaves/segredos (usar variáveis de ambiente); RLS ativado em todas as tabelas do Supabase; antes de ligar pagamentos reais, revisão externa de segurança é obrigatória.
 - Documentos de referência completos (escopo, plano de execução, protótipo, diagrama de fluxo, comandos de retomada) estão no Projeto do Claude.ai e no Google Drive do fundador.
