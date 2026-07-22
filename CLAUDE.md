@@ -77,7 +77,8 @@ Implementado:
 - **Política de cancelamento que o sistema faz valer:** clube escolhe "cancelamento livre até X horas antes" (padrão 12h) + texto livre de detalhes. O jogador vê o prazo exato; passado o prazo, cancelar/remarcar é bloqueado **no servidor** (gatilho). O dono do clube não é limitado pela política.
 - **Minhas reservas** (`/app/reservas`): próximos jogos, cancelar e **remarcar**. Remarcar move a MESMA reserva (não cria outra). Testado: 14:00→16:00–17:30 com preço recalculado de R$150 para R$225, sem duplicar; e mover para horário que encosta no atual (16:00–17:30 → 17:00–18:00), que é justamente o caso que quebraria se remarcar fosse "criar nova + cancelar antiga".
 - Agenda do clube mostra reservas do app com 📱 e o **nome do jogador**.
-- Scripts SQL `006` (política em horas, espelho público, preço na reserva, `reservar_quadra`, realtime) e `007` (`remarcar_reserva`) — **ambos já rodados no Supabase**. Artigo em `/docs/reserva-app.md` e eventos PostHog.
+- Scripts SQL `006` (política em horas, espelho público, preço na reserva, `reservar_quadra`, realtime) e `007` (`remarcar_reserva`) — **ambos já rodados no Supabase**. Eventos PostHog em todos os passos-chave.
+- **Documentação em dia (22/07/2026):** doc técnica em `/docs/interno/reserva-app.md` + os artigos de cliente dos Sprints 0–3 em `/docs/jogadores/` e `/docs/clubes/` (13 artigos, todos 9/10+ na rubrica e aprovados na revisão final do fundador).
 
 **Contas de teste (Supabase → Auth → Phone → Test Numbers, válidas até 31/10/2026):**
 - `5551999998888` / código `123456` — "Rodrigo Teste", **dono do Clube Teste** (usar para o painel `/clube`).
