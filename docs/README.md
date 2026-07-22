@@ -2,6 +2,16 @@
 
 Cada funcionalidade do produto tem um artigo aqui explicando **o que faz, como funciona e por quê**, em linguagem simples. A convenção do projeto (ver `CLAUDE.md`) é: toda funcionalidade nova nasce com um artigo correspondente nesta pasta.
 
+## Como escrever e revisar artigos
+
+Estes três documentos definem o padrão. **Releia antes de escrever ou revisar qualquer artigo:**
+
+- [Guia de tom e estilo](Guia_Tom_Estilo_Artigos.md) — o padrão que todo artigo segue: resposta curta no topo, linguagem de padelista (nada de jargão), passos numerados, privacidade implícita e frontmatter obrigatório.
+- [Rubrica de revisão](Rubrica_Revisao_Artigos.md) — os 10 critérios da auto-revisão que o Claude Code faz **antes** de mandar qualquer artigo para aprovação, com a régua de nota (10/10 pronto, abaixo de 7 reescreve).
+- [Checklist de fim de sprint](Checklist_Sprint_Artigos.md) — o ritual antes de fechar um sprint: conferir se toda funcionalidade entregue tem artigo e listá-los para aprovação.
+
+> ⚠️ Os artigos abaixo foram escritos **antes** deste padrão existir: são documentação técnica interna (o que foi construído e por quê), não artigos voltados ao cliente no formato do guia. Ver pendência no `CLAUDE.md`.
+
 ## Artigos
 
 - [Lista de espera (Sprint 0)](lista-espera.md) — landing page que coleta interessados antes do lançamento.
