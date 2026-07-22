@@ -48,7 +48,7 @@ Todos os comandos de retomada, sprint a sprint e módulo a módulo, estão no do
 Site no ar em https://padel-app-liart.vercel.app/. Formulário salva no Supabase (tabela `lista_espera`, RLS só-INSERT) e dispara evento `cadastro_lista_espera` no PostHog.
 
 **Sprint 1 — Contas e Onboarding: ✅ CONCLUÍDO (20/07/2026), testado pelo fundador no celular.**
-Implementado: login por telefone/OTP com máscara `(DD) 99999-9999` (fase A com número de teste `5551999998888`/código `123456` até 31/10/2026); onboarding do jogador em /app (nome, foto no Storage, cidade, questionário de calibração com teto de sugestão na 2ª, selo "em calibração", posição, disponibilidade dia×turno, raio); painel do clube em /clube (clube + quadras multiesporte com piso compatível por esporte + preços por faixa horária em centavos, com trava dupla contra sobreposição — tela e trigger no banco). Rotas protegidas por proxy com sessão em cookies. Scripts SQL: `002` e `003`. Artigos em /docs e eventos PostHog em todos os passos-chave.
+Implementado: login por telefone/OTP com máscara `(DD) 99999-9999` (fase A com número de teste `5551999998888`/código `123456` até 31/10/2026); onboarding do jogador em /app (nome, foto no Storage, cidade, questionário de calibração com teto de sugestão na 2ª, selo "em calibração", posição, disponibilidade dia×turno, raio); painel do clube em /clube (clube + quadras multiesporte com piso compatível por esporte + preços por faixa horária em centavos, com trava dupla contra sobreposição — tela e trigger no banco). Rotas protegidas por proxy com sessão em cookies. Scripts SQL: `002` e `003`. Documentação técnica em `/docs/interno/` (autenticacao, perfil-jogador, clube-quadras), artigos de cliente em `/docs/jogadores/` e `/docs/clubes/`, eventos PostHog em todos os passos-chave.
 
 **Sprint 2 — Descoberta, Mapa e Painel do Clube v0: ✅ CONCLUÍDO (20/07/2026), testado pelo fundador no celular.**
 Implementado:
@@ -56,17 +56,7 @@ Implementado:
 - **Página do clube (/app/clubes/[id]):** fotos, descrição, esportes/quadras, horário de funcionamento derivado das faixas de preço, mini-mapa com rota, telefone, política de cancelamento, avaliações 1–5 com comentário e botão de WhatsApp.
 - **Painel do clube:** edição de informações (nome, telefone, descrição, política de cancelamento), **cidade não editável — sempre derivada do endereço no mapa** (proteção descoberta no teste: "NH" vs "Novo Hamburgo" quebrava o filtro), localização com busca de endereço e pin ajustável, upload de várias fotos de uma vez.
 - **Agenda (/clube/agenda):** visões **Dia | Semana | Mês** com seletor de calendário; dia = grade quadra×hora com reserva de balcão (nome, WhatsApp, duração) e cancelamento; semana/mês = mapa de calor de ocupação com cada dia clicável levando à agenda daquele dia. **Zero overbooking garantido pelo banco** (exclusion constraint, testado por fora da interface) e reservas de terceiros invisíveis para jogadores (LGPD).
-- Scripts SQL: `004` (coordenadas, fotos, avaliações, reservas) e `005` (descrição e política de cancelamento). Artigos em /docs e eventos PostHog em todos os passos-chave.
-
-**Pendências acumuladas (não bloqueiam o próximo sprint, mas têm prazo):**
-- Decidir variante de cor (verde vs. azul) e remover a perdedora.
-- Política de privacidade LGPD quando a marca for decidida.
-- Elaborar perguntas de calibração melhores (as atuais são provisórias).
-- ⚠️ **Fase B da autenticação (Twilio real) antes de 31/10/2026** — o número de teste expira nessa data; sem isso, ninguém mais consegue logar. Credenciais do Twilio são SECRETAS: nunca colar no chat nem commitar — sempre em variável de ambiente, e o próprio fundador cadastra a chave direto no painel da hospedagem (Vercel), sem passar pelo Claude Code.
-- Definir o escopo do Premium do jogador (Fase 2). Candidata já identificada pelo fundador: busca de quadra por cidade + data futura ("planejando viagem"), hoje liberada para todos.
-- **Rodapé dos artigos de cliente está com `[DEFINIR]`** no lugar do WhatsApp de suporte (13 artigos). Quando o número existir, substituir em todos.
-- **Evoluir a agenda do clube** (ideias para adiante): bloqueios recorrentes/mensalistas, arrastar para remarcar, filtro por esporte/quadra.
-- **Botão de troca de modo (jogador ↔ painel do clube)** para donos e funcionários de clube, que hoje precisam navegar entre `/app` e `/clube` na mão. Ligado a isto: na tela do jogador a política de cancelamento vale para todos, inclusive o dono (no servidor o dono é isento). Decisão de 22/07/2026: **manter assim**; se mudar, tratar junto com o botão de troca de modo.
+- Scripts SQL: `004` (coordenadas, fotos, avaliações, reservas) e `005` (descrição e política de cancelamento). Documentação técnica em `/docs/interno/` (descoberta-mapa, agenda-clube), artigos de cliente em `/docs/jogadores/` e `/docs/clubes/`, eventos PostHog em todos os passos-chave.
 
 **Sprint 3 — Módulo 1.4 (parte 1): Agenda em Tempo Real: ✅ CONCLUÍDO (22/07/2026), testado pelo fundador no celular.**
 Implementado:
@@ -83,6 +73,16 @@ Implementado:
 **Contas de teste (Supabase → Auth → Phone → Test Numbers, válidas até 31/10/2026):**
 - `5551999998888` / código `123456` — "Rodrigo Teste", **dono do Clube Teste** (usar para o painel `/clube`).
 - `5551999997777` / código `654321` — "Carlos Teste", jogador comum de Porto Alegre (usar para testar o que é exclusivo do jogador, como o bloqueio da política de cancelamento — o dono é isento no servidor).
+
+**Pendências acumuladas dos Sprints 0–3 (não bloqueiam o Sprint 4, mas têm prazo):**
+- Decidir variante de cor (verde vs. azul) e remover a perdedora.
+- Política de privacidade LGPD quando a marca for decidida.
+- Elaborar perguntas de calibração melhores (as atuais são provisórias).
+- ⚠️ **Fase B da autenticação (Twilio real) antes de 31/10/2026** — o número de teste expira nessa data; sem isso, ninguém mais consegue logar. Credenciais do Twilio são SECRETAS: nunca colar no chat nem commitar — sempre em variável de ambiente, e o próprio fundador cadastra a chave direto no painel da hospedagem (Vercel), sem passar pelo Claude Code.
+- Definir o escopo do Premium do jogador (Fase 2). Candidata já identificada pelo fundador: busca de quadra por cidade + data futura ("planejando viagem"), hoje liberada para todos.
+- **Rodapé dos artigos de cliente está com `[DEFINIR]`** no lugar do WhatsApp de suporte (13 artigos). Quando o número existir, substituir em todos.
+- **Evoluir a agenda do clube** (ideias para adiante): bloqueios recorrentes/mensalistas, arrastar para remarcar, filtro por esporte/quadra.
+- **Botão de troca de modo (jogador ↔ painel do clube)** para donos e funcionários de clube, que hoje precisam navegar entre `/app` e `/clube` na mão. Ligado a isto: na tela do jogador a política de cancelamento vale para todos, inclusive o dono (no servidor o dono é isento). Decisão de 22/07/2026: **manter assim**; se mudar, tratar junto com o botão de troca de modo.
 
 **Sprint 4 — 🔜 PRÓXIMO.** Comando de abertura no Comandos_de_Retomada_Sprints.md. Pelo plano de fases, o caminho natural é reserva com **PIX dividido** (regra nº 7) e/ou partidas abertas.
 
