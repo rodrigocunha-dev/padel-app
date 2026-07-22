@@ -67,22 +67,20 @@ Implementado:
 - **Evoluir a agenda do clube** (ideias para adiante): bloqueios recorrentes/mensalistas, arrastar para remarcar, filtro por esporte/quadra.
 - **Botão de troca de modo (jogador ↔ painel do clube)** para donos e funcionários de clube, que hoje precisam navegar entre `/app` e `/clube` na mão. Ligado a isto: na tela do jogador a política de cancelamento vale para todos, inclusive o dono (no servidor o dono é isento). Decisão de 22/07/2026: **manter assim**; se mudar, tratar junto com o botão de troca de modo.
 
-**Sprint 3 — Módulo 1.4 (parte 1): Agenda em Tempo Real: ✅ CÓDIGO PRONTO E TESTADO (21/07/2026) — falta o teste do fundador no celular.**
+**Sprint 3 — Módulo 1.4 (parte 1): Agenda em Tempo Real: ✅ CONCLUÍDO (22/07/2026), testado pelo fundador no celular.**
 Implementado:
 - **Reserva pelo app em 3 toques** (`/app/clubes/[id]/reservar`): "Reservar quadra" → toca no horário livre → confirma. Dia (Hoje/Amanhã/calendário), quadra e duração (1h/1h30/2h) com grade de horários e preço em cada um.
 - **Zero overbooking comprovado:** duas reservas idênticas disparadas no mesmo instante — uma entrou, a outra recusada pelo banco (`23P01`). Também recusa sobreposição parcial, horário fora do funcionamento e horário no passado. A garantia é a exclusion constraint + a função `reservar_quadra` (valida funcionamento, calcula preço e grava de uma vez).
 - **Tempo real** (Supabase Realtime): a grade do jogador e a agenda do clube se atualizam sozinhas, sem recarregar a página (verificado).
 - **LGPD:** o jogador nunca lê reservas alheias. Para saber o que está ocupado, lê `agenda_publica` — espelho mantido por gatilho com **só quadra, início e fim** (4 colunas, sem dado pessoal).
 - **Política de cancelamento que o sistema faz valer:** clube escolhe "cancelamento livre até X horas antes" (padrão 12h) + texto livre de detalhes. O jogador vê o prazo exato; passado o prazo, cancelar/remarcar é bloqueado **no servidor** (gatilho). O dono do clube não é limitado pela política.
-- **Minhas reservas** (`/app/reservas`): próximos jogos, cancelar e **remarcar** (move a mesma reserva — preço recalculado no servidor, permite mover para horário encostado, e se o novo horário for tomado a reserva original continua de pé).
+- **Minhas reservas** (`/app/reservas`): próximos jogos, cancelar e **remarcar**. Remarcar move a MESMA reserva (não cria outra). Testado: 14:00→16:00–17:30 com preço recalculado de R$150 para R$225, sem duplicar; e mover para horário que encosta no atual (16:00–17:30 → 17:00–18:00), que é justamente o caso que quebraria se remarcar fosse "criar nova + cancelar antiga".
 - Agenda do clube mostra reservas do app com 📱 e o **nome do jogador**.
-- Scripts SQL: `006` (política em horas, espelho público, preço na reserva, `reservar_quadra`, realtime) e **`007` (remarcar) — ⚠️ ainda não rodado pelo fundador**. Artigo em `/docs/reserva-app.md` e eventos PostHog.
+- Scripts SQL `006` (política em horas, espelho público, preço na reserva, `reservar_quadra`, realtime) e `007` (`remarcar_reserva`) — **ambos já rodados no Supabase**. Artigo em `/docs/reserva-app.md` e eventos PostHog.
 
-**Para fechar o Sprint 3 (depende do fundador):**
-1. Rodar o script `supabase/sql/007_remarcar_reserva.sql` — sem ele o botão "Remarcar" não funciona.
-2. Autorizar o push (commits prontos localmente).
-3. Testar no celular.
-4. **Testar o bloqueio da política exige uma segunda conta**: hoje a conta de teste é dona do clube, e o dono é isento da política de propósito. Para ver o bloqueio, adicionar outro número de teste no Supabase (ex.: `5551999997777` = `654321`) e entrar como jogador comum.
+**Contas de teste (Supabase → Auth → Phone → Test Numbers, válidas até 31/10/2026):**
+- `5551999998888` / código `123456` — "Rodrigo Teste", **dono do Clube Teste** (usar para o painel `/clube`).
+- `5551999997777` / código `654321` — "Carlos Teste", jogador comum de Porto Alegre (usar para testar o que é exclusivo do jogador, como o bloqueio da política de cancelamento — o dono é isento no servidor).
 
 **Sprint 4 — 🔜 PRÓXIMO.** Comando de abertura no Comandos_de_Retomada_Sprints.md. Pelo plano de fases, o caminho natural é reserva com **PIX dividido** (regra nº 7) e/ou partidas abertas.
 
