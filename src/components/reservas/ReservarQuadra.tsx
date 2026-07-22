@@ -51,11 +51,13 @@ export function ReservarQuadra({
   quadras,
   horasLimiteCancelamento,
   politicaTexto,
+  remarcarId,
 }: {
   clubeNome: string;
   quadras: Quadra[];
   horasLimiteCancelamento: number;
   politicaTexto: string | null;
+  remarcarId: string | null;
 }) {
   const router = useRouter();
   const [quadraId, setQuadraId] = useState(quadras[0]?.id ?? "");
@@ -118,17 +120,30 @@ export function ReservarQuadra({
 
   const livres = horarios.filter((h) => h.livre);
 
+  // Distingue "clube fechado" de "não cabe nessa duração" e de "tudo cheio".
+  const abreNesteDia = useMemo(() => {
+    if (!quadra) return false;
+    const diaSemana = new Date(`${dia}T12:00:00`).getDay();
+    return quadra.quadra_precos.some((f) => f.dias.includes(diaSemana));
+  }, [quadra, dia]);
+
   async function confirmar() {
     if (!escolhido || !quadra) return;
     setErro(null);
     setConfirmando(true);
 
     const supabase = criarClienteNavegador();
-    const { data, error } = await supabase.rpc("reservar_quadra", {
-      p_quadra_id: quadra.id,
-      p_inicio: escolhido.inicio.toISOString(),
-      p_fim: escolhido.fim.toISOString(),
-    });
+    const { data, error } = remarcarId
+      ? await supabase.rpc("remarcar_reserva", {
+          p_reserva_id: remarcarId,
+          p_inicio: escolhido.inicio.toISOString(),
+          p_fim: escolhido.fim.toISOString(),
+        })
+      : await supabase.rpc("reservar_quadra", {
+          p_quadra_id: quadra.id,
+          p_inicio: escolhido.inicio.toISOString(),
+          p_fim: escolhido.fim.toISOString(),
+        });
     setConfirmando(false);
 
     if (error) {
@@ -143,18 +158,22 @@ export function ReservarQuadra({
         setErro("O clube não está aberto nesse horário.");
       } else if (error.message.includes("HORARIO_PASSADO")) {
         setErro("Esse horário já passou. Escolha outro.");
+      } else if (error.message.includes("FORA_DO_PRAZO")) {
+        setErro(
+          `O prazo para remarcar (${horasLimiteCancelamento}h antes) já passou. Fale com o clube.`
+        );
       } else {
         setErro("Não conseguimos concluir a reserva. Tente de novo.");
       }
       return;
     }
 
-    posthog.capture("reserva_app_criada", {
+    posthog.capture(remarcarId ? "reserva_app_remarcada" : "reserva_app_criada", {
       duracao_min: duracao,
       preco_centavos: escolhido.precoCentavos,
       esporte: quadra.esporte,
     });
-    router.push(`/app/reservas?nova=${data}`);
+    router.push(`/app/reservas?nova=${remarcarId ?? data}`);
   }
 
   if (quadras.length === 0) {
@@ -246,9 +265,11 @@ export function ReservarQuadra({
           <p className="mt-3 text-sm text-tinta-suave">Carregando...</p>
         ) : livres.length === 0 ? (
           <p className="mt-3 rounded-2xl bg-superficie p-4 text-sm text-tinta-suave shadow ring-1 ring-black/5">
-            {horarios.length === 0
-              ? "O clube não abre neste dia."
-              : "Nenhum horário livre com essa duração. Tente outro dia ou uma duração menor."}
+            {!abreNesteDia
+              ? "Esta quadra não abre neste dia."
+              : horarios.length === 0
+                ? "Nenhum horário cabe nessa duração neste dia. Tente uma duração menor."
+                : "Todos os horários deste dia já estão reservados. Tente outro dia."}
           </p>
         ) : (
           <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
@@ -283,7 +304,7 @@ export function ReservarQuadra({
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
           <div className="w-full max-w-sm rounded-2xl bg-superficie p-5 shadow-xl">
             <h2 className="font-display text-lg font-bold text-tinta">
-              Confirmar reserva
+              {remarcarId ? "Confirmar novo horário" : "Confirmar reserva"}
             </h2>
             <div className="mt-3 space-y-1 text-sm text-tinta">
               <p>
@@ -336,7 +357,11 @@ export function ReservarQuadra({
                 disabled={confirmando}
                 className="flex-1 rounded-full bg-destaque px-4 py-3 font-display font-bold text-destaque-tinta transition hover:brightness-95 disabled:opacity-60"
               >
-                {confirmando ? "Reservando..." : "Confirmar reserva"}
+                {confirmando
+                  ? "Salvando..."
+                  : remarcarId
+                    ? "Mover minha reserva"
+                    : "Confirmar reserva"}
               </button>
               <button
                 type="button"

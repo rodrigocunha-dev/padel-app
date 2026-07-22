@@ -185,7 +185,7 @@ export function MinhasReservas({
             {podeMexer && (
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
-                  href={`/app/clubes/${clube.id}/reservar`}
+                  href={`/app/clubes/${clube.id}/reservar?remarcar=${reserva.id}`}
                   className="rounded-full bg-superficie px-4 py-2 text-sm font-bold text-tinta ring-1 ring-black/10 transition hover:ring-primaria/40"
                 >
                   Remarcar

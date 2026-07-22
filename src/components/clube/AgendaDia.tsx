@@ -16,6 +16,8 @@ type Reserva = {
   fim: string;
   cliente_nome: string | null;
   origem: string;
+  jogador_id: string | null;
+  jogador_nome?: string | null;
 };
 
 const HORA_INICIAL = 6;
@@ -57,7 +59,7 @@ export function AgendaDia({
     const fimDia = new Date(`${dia}T23:59:59`);
     const { data } = await supabase
       .from("reservas")
-      .select("id, quadra_id, inicio, fim, cliente_nome, origem")
+      .select("id, quadra_id, inicio, fim, cliente_nome, origem, jogador_id")
       .in(
         "quadra_id",
         quadras.map((q) => q.id)
@@ -65,7 +67,28 @@ export function AgendaDia({
       .eq("status", "confirmada")
       .lt("inicio", fimDia.toISOString())
       .gt("fim", inicioDia.toISOString());
-    setReservas((data as Reserva[]) ?? []);
+
+    const lista = (data as Reserva[]) ?? [];
+
+    // Reserva feita pelo app não tem "cliente_nome": o clube precisa saber
+    // quem é o jogador, então buscamos os nomes em seguida.
+    const idsJogadores = [
+      ...new Set(lista.filter((r) => r.jogador_id).map((r) => r.jogador_id!)),
+    ];
+    if (idsJogadores.length > 0) {
+      const { data: jogadores } = await supabase
+        .from("jogadores")
+        .select("id, nome")
+        .in("id", idsJogadores);
+      const nomePorId = new Map(
+        (jogadores ?? []).map((j) => [j.id as string, j.nome as string])
+      );
+      lista.forEach((r) => {
+        if (r.jogador_id) r.jogador_nome = nomePorId.get(r.jogador_id) ?? null;
+      });
+    }
+
+    setReservas(lista);
     setCarregando(false);
   }, [dia, quadras]);
 
@@ -296,7 +319,12 @@ export function AgendaDia({
                           <div className="rounded-lg bg-primaria/90 px-2 py-1.5 text-xs font-medium text-white">
                             {ehInicio ? (
                               <>
-                                {reserva.cliente_nome ?? "Reservado"}
+                                {reserva.origem === "app" && (
+                                  <span title="Reserva feita pelo app">📱 </span>
+                                )}
+                                {reserva.cliente_nome ??
+                                  reserva.jogador_nome ??
+                                  "Reservado"}
                                 <button
                                   type="button"
                                   onClick={() => cancelarReserva(reserva.id)}

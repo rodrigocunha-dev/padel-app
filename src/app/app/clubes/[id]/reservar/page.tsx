@@ -10,10 +10,13 @@ export const metadata: Metadata = {
 
 export default async function PaginaReservar({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ remarcar?: string }>;
 }) {
   const { id } = await params;
+  const { remarcar } = await searchParams;
   const supabase = await criarClienteServidor();
   const {
     data: { user },
@@ -40,14 +43,20 @@ export default async function PaginaReservar({
           ← Voltar ao clube
         </Link>
         <h1 className="mt-3 font-display text-2xl font-extrabold text-tinta">
-          Reservar em {clube.nome}
+          {remarcar ? "Remarcar" : "Reservar"} em {clube.nome}
         </h1>
+        {remarcar && (
+          <p className="mt-1 text-sm text-tinta-suave">
+            Escolha o novo horário — sua reserva atual é movida para ele.
+          </p>
+        )}
 
         <ReservarQuadra
           clubeNome={clube.nome}
           quadras={clube.quadras}
           horasLimiteCancelamento={clube.horas_limite_cancelamento ?? 12}
           politicaTexto={clube.politica_cancelamento}
+          remarcarId={remarcar ?? null}
         />
       </div>
     </main>

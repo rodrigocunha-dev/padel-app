@@ -10,3 +10,4 @@ Cada funcionalidade do produto tem um artigo aqui explicando **o que faz, como f
 - [Painel do clube e quadras (Módulo 1.1)](clube-quadras.md) — clube, quadras multiesporte e preços por faixa horária.
 - [Descoberta e mapa (Sprint 2)](descoberta-mapa.md) — mapa com preços, filtros, "Jogar agora" e página do clube.
 - [Agenda do clube v0 (Sprint 2)](agenda-clube.md) — reservas de balcão com zero overbooking garantido pelo banco.
+- [Reserva pelo app (Sprint 3)](reserva-app.md) — reserva em 3 toques, tempo real, cancelamento e remarcação dentro da política do clube.
