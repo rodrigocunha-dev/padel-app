@@ -1,6 +1,6 @@
 # GUIA DE TOM E ESTILO PARA ARTIGOS DA BASE DE CONHECIMENTO
 ### Padrão que todos os artigos devem seguir — para clientes usarem + IA de atendimento aprender
-*Cole isto na raiz do repositório em `/docs/GUIA_TOM_ESTILO.md`. Releia antes de cada sprint.*
+*Salvo no repositório em `/docs/Guia_Tom_Estilo_Artigos.md`. Releia antes de cada sprint.*
 
 ---
 

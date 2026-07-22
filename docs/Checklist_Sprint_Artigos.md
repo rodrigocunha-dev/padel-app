@@ -1,6 +1,6 @@
 # CHECKLIST DE ARTIGOS DO SPRINT
 ### Ritual de fechamento: garantir que toda funcionalidade tem documentação pronta para clientes e IA
-*Cole isto no Claude Code ao final de cada sprint, antes de marcar como "concluído".*
+*Salvo no repositório em `/docs/Checklist_Sprint_Artigos.md`. Cole o comando abaixo no Claude Code ao final de cada sprint, antes de marcar como "concluído".*
 
 ---
 
@@ -8,7 +8,7 @@
 
 Cole isto quando o sprint estiver tecnicamente pronto (código testado, commits feitos):
 
-> **Antes de marcar este sprint como concluído, vamos garantir a documentação.** Releia o `docs/README.md` e o `Guia_de_Tom_e_Estilo_Artigos.md` (ambos na raiz do repo). Agora, para cada funcionalidade implementada neste sprint, verifique se existe artigo em `/docs` e liste aqui:
+> **Antes de marcar este sprint como concluído, vamos garantir a documentação.** Releia o `docs/README.md`, o `docs/Guia_Tom_Estilo_Artigos.md` e a `docs/Rubrica_Revisao_Artigos.md`. Agora, para cada funcionalidade implementada neste sprint, verifique se existe artigo em `/docs` e liste aqui:
 >
 > **Para cada artigo:**
 > 1. Nome do arquivo (ex.: `/docs/jogadores/reservas-pagamentos/como-dividir-pix.md`)

@@ -1,6 +1,6 @@
 # RUBRICA DE REVISÃO PARA ARTIGOS
 ### Auto-revisão que o Claude Code faz antes de enviar para aprovação
-*Cole isto no repositório em `/docs/RUBRICA_REVISAO.md`. Releia antes de cada revisão.*
+*Salvo no repositório em `/docs/Rubrica_Revisao_Artigos.md`. Releia antes de cada revisão.*
 
 ---
 
