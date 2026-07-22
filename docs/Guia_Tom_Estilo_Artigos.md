@@ -208,12 +208,12 @@ Para cada artigo novo, o Claude Code deve:
 
 ---
 
-## Exemplos de artigos já aprovados
+## Exemplos de artigos a escrever
 
-Quando o sprint 4+ chegar, esses artigos estarão em `/docs/` como referência:
-- ✅ `jogar_agora.md` (Sprint 2)
-- ✅ `criar_partida.md` (Sprint 5+)
-- ✅ `como-remarcar.md` (Sprint 3)
+Quando os sprints chegarem, esses artigos serão exemplos de padrão correto e ficarão em `/docs/` como referência:
+- 🔜 `como-jogar-agora.md` (Sprint 2)
+- 🔜 `como-criar-partida.md` (Sprint 5+)
+- 🔜 `como-remarcar-jogo.md` (Sprint 3)
 
 Copie o tom, a estrutura e o nível de detalhe deles.
 

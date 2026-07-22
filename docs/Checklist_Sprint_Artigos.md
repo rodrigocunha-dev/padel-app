@@ -39,6 +39,8 @@ Cole isto quando o sprint estiver tecnicamente pronto (código testado, commits 
    - Copie cada artigo aprovado e me mande para eu salvar em `/mnt/user-data/outputs/docs/[categoria]/[nome].md`.
    - Isso cria um backup versionado e um histórico para a IA de atendimento aprender depois.
 
+   *Obs.: o caminho `/mnt/user-data/outputs/` é interno do Claude.ai; no seu repositório local, os artigos já estão sincronizados em `/docs`.*
+
 ---
 
 ## Exemplo de como um artigo DEVE sair
