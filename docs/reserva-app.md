@@ -27,7 +27,10 @@ O jogador **não** pode ler as reservas dos outros. Para saber o que está ocupa
 - O clube escolhe **"cancelamento livre até X horas antes"** (0, 2, 6, 12, 24 ou 48h; padrão 12h) no painel, e pode complementar com um texto livre de detalhes.
 - O jogador vê o prazo exato ("dá para cancelar até 23/07 às 20:00") na confirmação e em Minhas reservas.
 - Passado o prazo, o app bloqueia cancelar e remarcar — e **a trava vale no servidor** (gatilho no banco), não só na tela.
-- **O dono do clube não é limitado pela política:** ele precisa poder mexer na própria agenda a qualquer momento.
+- **Servidor × tela — a diferença é proposital:**
+  - No **servidor**, o dono do clube é isento da política (verificado: cancelou uma reserva faltando 8,5h para o jogo, com limite de 12h). Isso existe porque o clube precisa poder mexer na própria agenda a qualquer momento.
+  - Na **tela do jogador** (`/app/reservas`), a política vale para todos, inclusive para quem é dono de clube — ali a pessoa está agindo como jogador. Para operar como clube, use o painel `/clube/agenda`, que não tem trava.
+  - Decisão do fundador em 22/07/2026: manter assim. Se um dia mudar, ver a pendência do "botão de troca de modo" no CLAUDE.md.
 
 ## Remarcar
 Remarcar **move a mesma reserva** para outro horário (não cria uma nova). Isso importa porque: o preço é recalculado pelo servidor, dá para mover para um horário que encosta no atual, e se o novo horário for tomado no meio do caminho a reserva original continua de pé.

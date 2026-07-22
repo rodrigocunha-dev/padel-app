@@ -64,7 +64,8 @@ Implementado:
 - Elaborar perguntas de calibração melhores (as atuais são provisórias).
 - ⚠️ **Fase B da autenticação (Twilio real) antes de 31/10/2026** — o número de teste expira nessa data; sem isso, ninguém mais consegue logar. Credenciais do Twilio são SECRETAS: nunca colar no chat nem commitar — sempre em variável de ambiente, e o próprio fundador cadastra a chave direto no painel da hospedagem (Vercel), sem passar pelo Claude Code.
 - Definir o escopo do Premium do jogador (Fase 2). Candidata já identificada pelo fundador: busca de quadra por cidade + data futura ("planejando viagem"), hoje liberada para todos.
-- **Evoluir a agenda do clube** (ideias para adiante): editar reserva sem cancelar/recriar, bloqueios recorrentes/mensalistas, arrastar para remarcar, filtro por esporte/quadra.
+- **Evoluir a agenda do clube** (ideias para adiante): bloqueios recorrentes/mensalistas, arrastar para remarcar, filtro por esporte/quadra.
+- **Botão de troca de modo (jogador ↔ painel do clube)** para donos e funcionários de clube, que hoje precisam navegar entre `/app` e `/clube` na mão. Ligado a isto: na tela do jogador a política de cancelamento vale para todos, inclusive o dono (no servidor o dono é isento). Decisão de 22/07/2026: **manter assim**; se mudar, tratar junto com o botão de troca de modo.
 
 **Sprint 3 — Módulo 1.4 (parte 1): Agenda em Tempo Real: ✅ CÓDIGO PRONTO E TESTADO (21/07/2026) — falta o teste do fundador no celular.**
 Implementado:
