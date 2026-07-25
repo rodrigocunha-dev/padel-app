@@ -9,6 +9,7 @@ import {
   ROTULO_SEXO_JOGO,
   ROTULO_CATEGORIA,
 } from "@/lib/partidas";
+import { PagamentoPartida } from "@/components/partidas/PagamentoPartida";
 
 type Jogador = {
   jogador_id: string;
@@ -240,6 +241,26 @@ export function PartidaDetalhe({
             ))}
           </div>
         </section>
+      )}
+
+      {/* Divisão do pagamento (só quando a partida não foi cancelada) */}
+      {!cancelada && total > 0 && (
+        <PagamentoPartida
+          partidaId={partida.id}
+          meuId={meuId}
+          souOrganizador={souOrganizador}
+          totalCentavos={total}
+          maxJogadores={partida.max_jogadores}
+          jogadores={jogadores.map((j) => ({
+            jogador_id: j.jogador_id,
+            nome: j.perfil?.nome ?? "Jogador",
+            ehOrganizador: j.jogador_id === partida.organizador_id,
+          }))}
+          resumoPartida={`${partida.quadras.nome}, ${inicio.toLocaleDateString(
+            "pt-BR",
+            { weekday: "short", hour: "2-digit", minute: "2-digit" }
+          )} — ${partida.quadras.clubes.nome}`}
+        />
       )}
 
       {erro && (

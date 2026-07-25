@@ -23,6 +23,21 @@ export function faixaCategoria(min: number, max: number): string {
     : `${ROTULO_CATEGORIA[min]} a ${ROTULO_CATEGORIA[max]}`;
 }
 
+// Divisão do valor da quadra entre os jogadores: partes iguais, e a sobra
+// de centavos vai para os primeiros da lista (jogador nunca paga taxa —
+// regra nº 1). Devolve um array com o valor de cada posição (1..total).
+export function dividirValor(
+  totalCentavos: number,
+  quantidade: number
+): number[] {
+  if (quantidade <= 0) return [];
+  const base = Math.floor(totalCentavos / quantidade);
+  const sobra = totalCentavos - base * quantidade;
+  return Array.from({ length: quantidade }, (_, i) =>
+    i < sobra ? base + 1 : base
+  );
+}
+
 // O jogador cabe na partida? (mesma regra do banco, para o feed já filtrar)
 export function jogadorCompativel(
   partida: {
