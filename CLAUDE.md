@@ -13,9 +13,9 @@ Fundador não programa: explique decisões técnicas em português simples, sem 
 2. **Agenda multiesporte, alma padel:** o painel do clube aceita quadras de qualquer esporte desde o dia 1; matchmaking/ranking/comunidade são 100% padel no lançamento.
 3. **Categorias brasileiras:** 7 categorias (1ª = elite … 7ª = iniciante) × 3 níveis (Forte / Médio / Fraco) = 21 degraus. Nada de nível decimal.
 4. **Rating:** motor interno tipo Elo/Glicko para duplas + índice de confiabilidade. Pesos: nível dos adversários; tipo de jogo (amistoso ranqueado 1x, liga 1,5x, torneio 2–3x); placar. Transparência total: após cada jogo, mostrar quanto mudou e por quê. Proteção de rebaixamento (janela de 10 partidas). Calibração: questionário + validação por 2 pares + 5 primeiras partidas com peso maior.
-5. **Só partidas de 4 jogadores em modo competitivo afetam o rating.** Partidas com revezamento (5–8 jogadores) contam para estatísticas e conquistas, não para rating.
+5. **Só partidas de 4 jogadores em modo competitivo afetam o rating.** Partidas com revezamento (5–8 jogadores) contam para estatísticas e conquistas, não para rating. **⚠️ Regra em reavaliação pelo fundador — ver "Ideias Futuras" abaixo. Vale continuar seguindo esta regra até uma decisão nova ser registrada aqui.**
 6. **Partidas abertas:** faixa de categoria aceita; sexo do jogo (masculino/feminino/mista); 4 a 8 jogadores (5+ = modo revezamento, valor da quadra dividido entre todos); fila de substitutos automática quando alguém sai.
-7. **Pagamentos:** PIX com split automático entre os jogadores via gateway (Asaas ou Pagar.me); repasse direto ao clube; cobrança de pendentes via WhatsApp; políticas de cancelamento definidas por clube e exibidas ANTES do pagamento.
+7. **Pagamentos:** PIX com split automático entre os jogadores via **gateway único contratado pela plataforma** (clubes entram como recebedores/subcontas dentro dele — não cada clube com seu próprio gateway; ver decisão em "Arquitetura de pagamento" abaixo); repasse direto ao clube; cobrança de pendentes via WhatsApp; políticas de cancelamento definidas por clube e exibidas ANTES do pagamento.
 8. **Zero overbooking:** trava de concorrência na agenda em tempo real. Reserva editável dentro da política do clube.
 9. **WhatsApp é canal nativo:** notificações push com fallback para WhatsApp.
 10. **LGPD desde o dia 1:** consentimento, exportação e exclusão de dados.
@@ -25,9 +25,20 @@ Fundador não programa: explique decisões técnicas em português simples, sem 
 - Painel do clube: **Next.js**.
 - Backend/banco/auth/realtime: **Supabase (PostgreSQL)** — banco sport-agnostic: toda quadra tem campo `esporte`; jogador poderá ter perfis por esporte no futuro. RLS ativado em todas as tabelas desde a primeira.
 - Mapas: **OpenStreetMap + Leaflet** (decisão do fundador: gratuito, sem conta nem cartão). Google Maps fica como opção futura.
-- Pagamentos: **Asaas ou Pagar.me** (split de PIX).
+- Pagamentos: **arquitetura decidida, fornecedor ainda EM ABERTO.** Ver "Arquitetura de pagamento" logo abaixo.
 - Mensageria: WhatsApp Business API via BSP (ex.: Z-API).
 - Métricas: **PostHog (US Cloud)**. Deploy: **Vercel (deploy automático a cada push)**. Código: **GitHub — github.com/rodrigocunha-dev/padel-app**.
+
+### Arquitetura de pagamento (decidido em 22/07/2026)
+**Modelo:** gateway único contratado pela plataforma (não pelo clube). O clube entra como recebedor/subconta dentro dessa conta — é o mesmo modelo usado por Uber, iFood e a maioria dos marketplaces brasileiros. Isso permite que o jogador pague um PIX só, dividido automaticamente entre o clube e o spread da plataforma, sem fricção. Integrar múltiplos gateways (um por clube) foi avaliado e descartado por ora — ver "Ideias Futuras" abaixo.
+
+**Fornecedor ainda não escolhido.** Favoritos em avaliação, por taxa percentual baixa (melhor para os valores pequenos do rateio, R$ 15–30/jogador) e split self-service (sem precisar negociar com time comercial para habilitar):
+- **Iugu** — taxa PIX ~0,99%, split nativo desenhado para marketplace, API documentada em PT-BR.
+- **Mercado Pago** — taxa PIX ~0,99%, marca já conhecida do jogador final (pode gerar mais confiança na hora de pagar).
+
+Descartados por ora (taxa fixa pesa demais em valores pequenos, ou split trava em plano negociado): Asaas, Pagar.me. Taxas mudam com frequência — confirmar direto no site de cada um antes de decidir.
+
+**Enquanto o fornecedor não é decidido:** Sprint 4 usa **PIX simulado** (mock) — mesma lógica de divisão, cobrança e confirmação, mas sem gateway real por trás. Ver Sprint 4 abaixo.
 
 ## Restrições da máquina de desenvolvimento
 Notebook i3 11ª gen, 8 GB RAM, pouco disco. Portanto: nada de emulador Android, nada de Docker pesado, preferir serviços na nuvem (Supabase remoto, não local). Testes mobile no celular real / navegador.
@@ -41,6 +52,19 @@ Verde-quadra `#0E5C46` + amarelo-bola `#D6F455`, fontes Archivo (títulos) e Int
 - **Fase 3 (11–18):** professores como vertical, beach tennis no lado do jogador, marketplace, vídeo, IA, expansão.
 
 Todos os comandos de retomada, sprint a sprint e módulo a módulo, estão no documento **Comandos_de_Retomada_Sprints.md** (Projeto do Claude.ai e Drive do fundador). Use-os para abrir cada sessão.
+
+## Ideias Futuras (banco de ideias — fora do escopo atual, não iniciar sem o fundador puxar)
+*Categorizado por área. Cada ideia tem um status:*
+- 💡 **Não convencido** — fundador ouviu o argumento, não descartou, mas também não está convencido da necessidade (ou, no caso de uma regra já existente, não está mais satisfeito com ela). Não iniciar sem revisitar com mais contexto.
+- 🔍 **Em avaliação** — pesquisa ativa em andamento.
+- ✅ **Aprovada** — decidido incluir, falta só definir a fase.
+- ❌ **Descartada** — decidido não fazer, motivo registrado.
+
+### Pagamentos
+- 💡 **Não convencido** — Deixar cada clube escolher e contratar seu próprio gateway de pagamento, negociando sua própria taxa, em vez da plataforma usar um gateway único com clubes como recebedores. Prós levantados: mais autonomia financeira para o clube. Contras levantados: exigiria integrar e manter múltiplos gateways (APIs, webhooks e formatos de erro diferentes cada um), complicaria a cobrança automática do spread da plataforma, e quebraria a experiência de "um PIX só, dividido na hora" que é a promessa central do produto. Grandes marketplaces (Uber, iFood) usam o modelo de gateway único — mas o fundador ainda não está 100% convencido de que esse é o caminho certo pro seu caso e quer reavaliar com mais escala/contexto antes de decidir definitivamente contra.
+
+### Rating e Categorias
+- 💡 **Não convencido** — (23/07/2026) O fundador quer reconsiderar a regra nº 5 ("só partidas de 4 jogadores em modo competitivo afetam o rating"), que hoje exclui partidas com revezamento (5–8 jogadores) do cálculo. Ainda sem direção definida de como mudar. Ponto técnico a considerar quando essa conversa avançar: partidas com revezamento têm menos jogo por pessoa e mais entra-e-sai, o que deixa o resultado "menos limpo" para atribuir a uma dupla específica — incluir essas partidas no rating provavelmente exige uma lógica própria (ex.: peso menor, ou considerar só os sets que cada dupla específica jogou dentro da partida maior), não é só remover a trava atual. **Até essa ideia virar decisão, a regra nº 5 continua valendo como está.**
 
 ## Sprint atual
 
@@ -83,8 +107,20 @@ Implementado:
 - **Rodapé dos artigos de cliente está com `[DEFINIR]`** no lugar do WhatsApp de suporte (13 artigos). Quando o número existir, substituir em todos.
 - **Evoluir a agenda do clube** (ideias para adiante): bloqueios recorrentes/mensalistas, arrastar para remarcar, filtro por esporte/quadra.
 - **Botão de troca de modo (jogador ↔ painel do clube)** para donos e funcionários de clube, que hoje precisam navegar entre `/app` e `/clube` na mão. Ligado a isto: na tela do jogador a política de cancelamento vale para todos, inclusive o dono (no servidor o dono é isento). Decisão de 22/07/2026: **manter assim**; se mudar, tratar junto com o botão de troca de modo.
+- **Decidir o fornecedor do gateway de pagamento** (Iugu vs. Mercado Pago são os favoritos atuais) antes de trocar o PIX simulado do Sprint 4 pelo real.
 
-**Sprint 4 — 🔜 PRÓXIMO.** Comando de abertura no Comandos_de_Retomada_Sprints.md. Pelo plano de fases, o caminho natural é reserva com **PIX dividido** (regra nº 7) e/ou partidas abertas.
+**Sprint 4 — 🔄 EM ANDAMENTO (23/07/2026) — reformulado com o fundador.**
+Gateway de pagamento ainda não decidido → **PIX simulado** (mock isolado no código para troca fácil depois — a "costura" fica em `src/lib/pagamentos/`: `tipos.ts` = contrato, `index.ts` = chave de troca por variável de ambiente, `simulado.ts` = peça descartável, endpoint `/api/pagamentos/confirmar` = o mesmo que o gateway real vai chamar). Escopo:
+- **Partidas abertas:** criar (faixa de categoria, competitiva/amistosa, sexo do jogo, 4–8 jogadores; competitiva só com 4 — regra nº 5), feed de compatíveis, entrar em 1 toque, fila de substitutos automática.
+- **Modelo de pagamento decidido (corrige o escopo antigo):** a quadra é confirmada NA HORA (reserva na confiança, reusa Sprint 3) e o pagamento é um "caderninho" por cima que **NÃO trava a reserva** — porque no mundo real o clube reserva na confiança e o dinheiro se acerta depois. O split (divisão igual, sobra de centavos distribuída, jogador nunca paga taxa — regra nº 1) é dentro do app; botão de WhatsApp por jogador para o organizador cobrar os pendentes (abre a conversa com mensagem pronta — resolve o organizador não ter o número de todos).
+- **Regra anti-calote deste sprint:** jogador com parte vencida em aberto não cria nem entra em nova partida.
+- **Privacidade (script 008):** o telefone do jogador sai da leitura geral (era lista de contatos à solta); volta só por função controlada para o organizador da partida.
+Scripts `008` (partidas, sexo, telefone privado) e `009` (pagamentos). Entrega em duas partes testáveis: A = partidas+feed+entrar; B = pagamento+cobrança.
+
+## Ideias Futuras (decisões registradas, fora do escopo atual)
+- **Reputação de conduta** (paga? aparece? comportamento tóxico/violento?) via múltiplos indicadores, incluindo avaliação entre jogadores — estava no escopo inicial do fundador. É um **eixo SEPARADO do rating de habilidade** (nunca misturar: o índice de confiabilidade do rating mede só a certeza do NÍVEL de jogo, não o caráter). Amarrar ao módulo de resultados/rating (Sprint 5+).
+- **Política de pagamento configurável por clube** (quando/como o dinheiro se acerta; ex.: pagar no balcão via clube-recebedor, modelo iFood/Uber de netear a taxa contra a conta do clube) → decisão do **sprint do gateway real**, quando o dinheiro for real e o spread entrar em jogo.
+- **Bloqueio total do app por inadimplência** (jogador só vê o valor em aberto até pagar) → exige **revisão jurídica (CDC)** — a dívida costuma ser entre jogadores, não com a plataforma — e o gateway real.
 
 ## Convenções de trabalho
 - **Ao concluir cada sprint, SEMPRE fazer os dois passos (sem esperar o fundador pedir):** (1) atualizar este CLAUDE.md com o que foi feito, o que ficou pendente e qual o próximo passo; (2) confirmar explicitamente ao fundador que está tudo salvo no GitHub (nada de commit local pendente).
