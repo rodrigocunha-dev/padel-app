@@ -25,12 +25,15 @@ export default async function PaginaApp() {
 
   const { data: jogador } = await supabase
     .from("jogadores")
-    .select("nome, foto_url, categoria, nivel_categoria, em_calibracao")
+    .select("nome, foto_url, categoria, nivel_categoria, em_calibracao, sexo")
     .eq("id", user.id)
     .maybeSingle();
 
   // Logou mas ainda não tem perfil → onboarding.
   if (!jogador) redirect("/app/onboarding");
+
+  // Perfil criado antes do campo "sexo" existir → completar antes de seguir.
+  if (!jogador.sexo) redirect("/app/completar-perfil");
 
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-10">
@@ -76,6 +79,18 @@ export default async function PaginaApp() {
           </p>
           <p className="mt-1 text-sm text-white/80">
             Mapa com preços, filtros e quadras livres agora
+          </p>
+        </Link>
+
+        <Link
+          href="/app/partidas"
+          className="mt-3 block rounded-2xl bg-superficie p-6 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"
+        >
+          <p className="font-display text-lg font-bold text-tinta">
+            👥 Partidas abertas
+          </p>
+          <p className="mt-1 text-sm text-tinta-suave">
+            Entre em jogos do seu nível ou monte o seu
           </p>
         </Link>
 

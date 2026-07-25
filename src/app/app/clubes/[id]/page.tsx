@@ -162,6 +162,15 @@ export default async function PaginaClubeJogador({
           </Link>
         )}
 
+        {clube.quadras.some((q) => q.esporte === "padel") && (
+          <Link
+            href={`/app/clubes/${clube.id}/criar-partida`}
+            className="mt-3 block rounded-full bg-primaria px-6 py-3 text-center font-display font-bold text-white transition hover:brightness-110"
+          >
+            👥 Criar partida aberta
+          </Link>
+        )}
+
         {whatsappLink && (
           <a
             href={whatsappLink}

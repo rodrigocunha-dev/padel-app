@@ -48,6 +48,7 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
 
   const [nome, setNome] = useState("");
   const [cidade, setCidade] = useState("");
+  const [sexo, setSexo] = useState<string | null>(null);
   const [foto, setFoto] = useState<File | null>(null);
   const [respostas, setRespostas] = useState<Record<string, number>>({});
   const [categoria, setCategoria] = useState<number | null>(null);
@@ -102,6 +103,7 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
       nome: nome.trim(),
       foto_url: fotoUrl,
       cidade: cidade.trim(),
+      sexo,
       telefone,
       categoria,
       posicao,
@@ -190,9 +192,34 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
               className={estiloInput}
             />
           </label>
+          <div className="mt-4 flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-tinta">Sexo</span>
+            <span className="text-xs text-tinta-suave">
+              Usado para os jogos masculinos, femininos ou mistos.
+            </span>
+            <div className="mt-1 flex gap-2">
+              {[
+                { id: "masculino", rotulo: "Masculino" },
+                { id: "feminino", rotulo: "Feminino" },
+              ].map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSexo(s.id)}
+                  className={`flex-1 rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                    sexo === s.id
+                      ? "border-primaria bg-primaria/10 text-primaria"
+                      : "border-black/10 bg-white text-tinta hover:border-primaria/40"
+                  }`}
+                >
+                  {s.rotulo}
+                </button>
+              ))}
+            </div>
+          </div>
           <button
             type="button"
-            disabled={!nome.trim() || !cidade.trim()}
+            disabled={!nome.trim() || !cidade.trim() || !sexo}
             onClick={() => {
               posthog.capture("onboarding_iniciado");
               setEtapa(1);
