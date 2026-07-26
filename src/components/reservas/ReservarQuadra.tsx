@@ -162,6 +162,10 @@ export function ReservarQuadra({
         setErro(
           `O prazo para remarcar (${horasLimiteCancelamento}h antes) já passou. Fale com o clube.`
         );
+      } else if (error.message.includes("PENDENCIA")) {
+        setErro(
+          "Você tem uma partida já jogada com pagamento em aberto. Acerte esse valor para voltar a reservar quadras."
+        );
       } else {
         setErro("Não conseguimos concluir a reserva. Tente de novo.");
       }

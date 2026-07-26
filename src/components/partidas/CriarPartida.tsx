@@ -133,6 +133,10 @@ export function CriarPartida({
         setErro("Partida competitiva é só com 4 jogadores.");
       } else if (error.message.includes("ORGANIZADOR_INCOMPATIVEL")) {
         setErro("Sua categoria ou sexo não cabem nas regras que você escolheu.");
+      } else if (error.message.includes("PENDENCIA")) {
+        setErro(
+          "Você tem uma partida já jogada com pagamento em aberto. Acerte esse valor para voltar a criar partidas."
+        );
       } else {
         setErro("Não conseguimos criar a partida. Tente de novo.");
       }
