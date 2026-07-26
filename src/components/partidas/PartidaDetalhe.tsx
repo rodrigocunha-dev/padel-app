@@ -107,6 +107,10 @@ export function PartidaDetalhe({
         setErro(
           "Você é o organizador. Para sair, cancele a partida (isso libera a quadra)."
         );
+      } else if (error.message.includes("PENDENCIA")) {
+        setErro(
+          "Você tem uma parte em aberto de outra partida. Acerte antes de entrar em uma nova."
+        );
       } else {
         setErro("Não conseguimos concluir. Tente de novo.");
       }
