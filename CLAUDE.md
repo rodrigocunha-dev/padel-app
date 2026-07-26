@@ -126,7 +126,9 @@ Gateway de pagamento ainda não decidido → **PIX simulado** (mock isolado para
 
 **Contas de teste adicionadas neste sprint** (Supabase, até 31/10/2026): `5551999996666`=`111111` (Bruno), `5551999995555`=`222222` (Diego), `5551999994444`=`333333` (Eduardo) — jogadores comuns masculinos, para testar 4+ jogadores e a fila.
 
-**⚠️ Dados de teste no banco** (limpar antes do lançamento): partida "de 3 dias atrás" do fixture de inadimplência (Bruno), jogadores Bruno/Diego/Eduardo, pagamentos de teste, partida 31/07 do Rodrigo.
+**⚠️ Dados de teste no banco** (limpar antes do lançamento): jogadores Bruno/Diego/Eduardo, e os clubes de teste. Há um script único `supabase/sql/seed_dados_teste.sql` que **limpa** reservas/partidas/pagamentos, deixa o **Bruno inadimplente** (partida de 3 dias atrás não paga) e cria clubes de teste. **⚠️ o passo de limpeza apaga TODAS as reservas — só rodar em teste.**
+
+**Clubes de teste** (criados pelo seed): Clube Teste (Novo Hamburgo, dono Rodrigo) · Arena Padel Sinos (Novo Hamburgo, dono Carlos) · Padel Club Porto Alegre (Porto Alegre, dono Diego) · Vale Padel (São Leopoldo, dono Eduardo). Nota: as contas de jogador viram donas de clube só para ter mais clubes no mapa — quando a navegação/troca de modo evoluir, revisar.
 
 **Sprint 5 — 🔜 PRÓXIMO.** Comando de abertura no Comandos_de_Retomada_Sprints.md. Pelo plano de fases, o caminho natural é resultados + rating + categorias (o motor de habilidade e o eixo de reputação de conduta).
 
