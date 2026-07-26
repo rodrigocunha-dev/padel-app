@@ -175,10 +175,12 @@ export function PagamentoPartida({
     const msg =
       `Oi ${nome.split(" ")[0]}! Falta a sua parte de ${formatarReais(parte)} ` +
       `da nossa partida (${resumoPartida}). Consegue acertar pelo app? Valeu!`;
+    // O telefone do jogador já vem com o código do país (55), pois vem do
+    // login por telefone. Não prefixar outro 55.
     const numero = contato.telefone.replace(/\D/g, "");
     posthog.capture("cobranca_whatsapp_aberta");
     window.open(
-      `https://wa.me/55${numero}?text=${encodeURIComponent(msg)}`,
+      `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`,
       "_blank"
     );
   }

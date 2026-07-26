@@ -82,6 +82,9 @@ export function PartidaDetalhe({
 
   const souOrganizador = meuId === partida.organizador_id;
   const jaEstou = partida.jogadores.some((j) => j.jogador_id === meuId);
+  const ehSubstituto = partida.jogadores.some(
+    (j) => j.jogador_id === meuId && j.papel === "substituto"
+  );
   const vagas = partida.max_jogadores - jogadores.length;
   const inicio = new Date(partida.inicio);
   const fim = new Date(partida.fim);
@@ -243,8 +246,9 @@ export function PartidaDetalhe({
         </section>
       )}
 
-      {/* Divisão do pagamento (só quando a partida não foi cancelada) */}
-      {!cancelada && total > 0 && (
+      {/* Divisão do pagamento — só para quem está JOGANDO (não substitutos,
+          não quem apenas visita a partida). */}
+      {!cancelada && total > 0 && jaEstou && !ehSubstituto && (
         <PagamentoPartida
           partidaId={partida.id}
           meuId={meuId}

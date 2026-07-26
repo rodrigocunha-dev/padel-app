@@ -26,10 +26,15 @@ Releia antes de escrever ou revisar qualquer artigo:
 - [Como encontrar um clube perto de mim](jogadores/comecando/como-encontrar-um-clube.md)
 - [Como ver quais clubes têm quadra livre agora](jogadores/comecando/como-jogar-agora.md)
 
+### Partidas
+- [Como criar uma partida aberta](jogadores/partidas/como-criar-uma-partida.md)
+- [Como entrar em uma partida aberta](jogadores/partidas/como-entrar-em-uma-partida.md)
+
 ### Reservas e pagamentos
 - [Como reservar uma quadra](jogadores/reservas-pagamentos/como-reservar-uma-quadra.md)
 - [Como remarcar um jogo sem perder a reserva](jogadores/reservas-pagamentos/como-remarcar-jogo.md)
 - [Como cancelar uma reserva](jogadores/reservas-pagamentos/como-cancelar-uma-reserva.md)
+- [Como dividir e pagar minha parte da quadra](jogadores/reservas-pagamentos/como-dividir-e-pagar-a-quadra.md)
 
 ## Artigos para clubes
 
@@ -53,6 +58,7 @@ Releia antes de escrever ou revisar qualquer artigo:
 - [Descoberta e mapa (Sprint 2)](interno/descoberta-mapa.md) — mapa, filtros, "Jogar agora" e página do clube.
 - [Agenda do clube (Sprint 2)](interno/agenda-clube.md) — reservas de balcão e zero overbooking pelo banco.
 - [Reserva pelo app (Sprint 3)](interno/reserva-app.md) — reserva em 3 toques, tempo real e política de cancelamento.
+- [Partidas abertas e pagamento simulado (Sprint 4)](interno/partidas-abertas.md) — criar/entrar em partidas, fila de substitutos, split, PIX simulado e bloqueio de inadimplente.
 
 ---
 
