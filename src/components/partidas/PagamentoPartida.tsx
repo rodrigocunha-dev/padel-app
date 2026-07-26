@@ -46,6 +46,7 @@ export function PagamentoPartida({
   const router = useRouter();
   const supabase = criarClienteNavegador();
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
+  const [telefones, setTelefones] = useState<Record<string, string>>({});
   const [gerando, setGerando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [cobranca, setCobranca] = useState<{
@@ -83,6 +84,28 @@ export function PagamentoPartida({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partidaId]);
+
+  // Organizador: pré-carrega os telefones dos jogadores para o botão de
+  // cobrança abrir o WhatsApp NA HORA do toque (se buscasse o contato só no
+  // clique, o celular bloquearia a aba nova por não vir direto do gesto).
+  useEffect(() => {
+    if (!souOrganizador) return;
+    let ativo = true;
+    supabase
+      .rpc("contato_jogadores_partida", { p_partida_id: partidaId })
+      .then(({ data }) => {
+        if (!ativo || !data) return;
+        const mapa: Record<string, string> = {};
+        (data as { jogador_id: string; telefone: string }[]).forEach((c) => {
+          if (c.telefone) mapa[c.jogador_id] = c.telefone;
+        });
+        setTelefones(mapa);
+      });
+    return () => {
+      ativo = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partidaId, souOrganizador]);
 
   const statusDe = (jid: string) =>
     pagamentos.find((p) => p.jogador_id === jid)?.status ?? "sem";
@@ -155,34 +178,17 @@ export function PagamentoPartida({
     router.refresh();
   }
 
-  // Organizador cobra um jogador pelo WhatsApp: busca o contato (só o
-  // organizador pode) e abre a conversa com a mensagem pronta.
-  async function cobrarNoWhatsapp(jid: string, nome: string, parte: number) {
-    const { data, error } = await supabase.rpc("contato_jogadores_partida", {
-      p_partida_id: partidaId,
-    });
-    if (error || !data) {
-      setErro("Não conseguimos abrir o WhatsApp agora.");
-      return;
-    }
-    const contato = (data as { jogador_id: string; telefone: string }[]).find(
-      (c) => c.jogador_id === jid
-    );
-    if (!contato?.telefone) {
-      setErro("Esse jogador não tem WhatsApp cadastrado.");
-      return;
-    }
+  // Monta o link do WhatsApp para o organizador cobrar um jogador. Usa o
+  // telefone já pré-carregado, então o link é um <a> que abre no toque.
+  // O telefone do jogador já vem com o código do país (55) — não duplicar.
+  function linkCobranca(jid: string, nome: string, parte: number): string | null {
+    const telefone = telefones[jid];
+    if (!telefone) return null;
+    const numero = telefone.replace(/\D/g, "");
     const msg =
       `Oi ${nome.split(" ")[0]}! Falta a sua parte de ${formatarReais(parte)} ` +
       `da nossa partida (${resumoPartida}). Consegue acertar pelo app? Valeu!`;
-    // O telefone do jogador já vem com o código do país (55), pois vem do
-    // login por telefone. Não prefixar outro 55.
-    const numero = contato.telefone.replace(/\D/g, "");
-    posthog.capture("cobranca_whatsapp_aberta");
-    window.open(
-      `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`,
-      "_blank"
-    );
+    return `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
   }
 
   if (totalCentavos <= 0) return null;
@@ -227,16 +233,26 @@ export function PagamentoPartida({
                   )}
                 </p>
               </div>
-              {/* Organizador cobra os pendentes (menos ele mesmo) */}
-              {souOrganizador && !pago && j.jogador_id !== meuId && (
-                <button
-                  type="button"
-                  onClick={() => cobrarNoWhatsapp(j.jogador_id, j.nome, parte)}
-                  className="shrink-0 rounded-full bg-[#25D366] px-3 py-1.5 text-xs font-bold text-white transition hover:brightness-95"
-                >
-                  💬 Cobrar
-                </button>
-              )}
+              {/* Organizador cobra os pendentes (menos ele mesmo). É um link
+                  direto para o WhatsApp abrir no toque, sem bloqueio. */}
+              {souOrganizador &&
+                !pago &&
+                j.jogador_id !== meuId &&
+                (() => {
+                  const link = linkCobranca(j.jogador_id, j.nome, parte);
+                  if (!link) return null;
+                  return (
+                    <a
+                      href={link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => posthog.capture("cobranca_whatsapp_aberta")}
+                      className="shrink-0 rounded-full bg-[#25D366] px-3 py-1.5 text-xs font-bold text-white transition hover:brightness-95"
+                    >
+                      💬 Cobrar
+                    </a>
+                  );
+                })()}
             </div>
           );
         })}

@@ -24,12 +24,14 @@ export default async function PaginaFeed() {
   if (!jogador) redirect("/app/onboarding");
   if (!jogador.sexo) redirect("/app/completar-perfil");
 
+  // "aberta" (tem vaga) e "completa" (cheia, mas dá para entrar na fila de
+  // substitutos) aparecem no feed. Canceladas não.
   const { data: partidas } = await supabase
     .from("partidas")
     .select(
       "id, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, status, organizador_id, inicio, fim, quadras ( nome, clubes ( id, nome, cidade ) ), partida_jogadores ( jogador_id, papel )"
     )
-    .eq("status", "aberta")
+    .in("status", ["aberta", "completa"])
     .order("inicio", { ascending: true });
 
   return (
