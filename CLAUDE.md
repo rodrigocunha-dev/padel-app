@@ -65,6 +65,7 @@ Todos os comandos de retomada, sprint a sprint e módulo a módulo, estão no do
 
 ### Partidas abertas e experiência do jogador (levantado nos testes do Sprint 4, 23/07/2026)
 - ✅ **Aprovada** — **Filtros no feed de partidas abertas**: além de "compatível comigo", filtrar por esporte, quadra, categoria, dia, cidade, etc. Reaproveitar o padrão de filtros em cascata já feito no mapa de clubes (`Descobrir.tsx`). Falta só definir a fase.
+- 🔍 **Em avaliação (fundador vai pesquisar antes)** — **Repensar os filtros como um todo** (mapa de clubes + feed de partidas). O fundador acha que dá para melhorar a funcionalidade de filtros além de só replicar a atual, mas quer pesquisar referências primeiro para conversarmos e desenvolvermos juntos. Não implementar os filtros do feed no padrão atual sem antes ter essa conversa — ela pode mudar o desenho dos dois lugares.
 - ✅ **Aprovada** — **Barra de navegação fixa** para o app do jogador (início, descobrir, partidas, perfil/sair) presente em todas as telas. Hoje o app não tem navegação consistente — o "Sair" só existe na tela inicial e o usuário vai e volta na mão. Resolve isso e melhora a UX geral. Conecta com o "botão de troca de modo (jogador ↔ clube)" das pendências.
 - ✅ **Aprovada** — **Partida "grupo de amigos + vagas abertas"**: ao criar, já preencher 1–3 vagas com jogadores que o organizador escolhe (convida), deixando só as restantes abertas para estranhos. Conecta direto com a decisão privada-vs-aberta do modelo de pagamento (convidado = conhecido; vaga aberta = estranho que paga-ao-entrar).
 
