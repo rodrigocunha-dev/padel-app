@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { PartidaDetalhe } from "@/components/partidas/PartidaDetalhe";
-import { statusDaPartida } from "@/lib/partidas";
+import { statusDaPartida, partidaComecou } from "@/lib/partidas";
 
 export const metadata: Metadata = {
   title: "Partida — padel",
@@ -53,7 +53,8 @@ export default async function PaginaPartida({
     ? "← Minhas partidas"
     : "← Partidas abertas";
 
-  // Partida que já aconteceu não tem mais ações de entrar/sair/cancelar.
+  // Depois que começa, não há mais ações; depois que termina, é "jogada".
+  const jaComecou = partidaComecou(partida.inicio);
   const jaAconteceu = statusDaPartida(partida.fim) === "jogada";
 
   return (
@@ -68,6 +69,7 @@ export default async function PaginaPartida({
         <PartidaDetalhe
           partida={JSON.parse(JSON.stringify({ ...partida, jogadores }))}
           meuId={user.id}
+          jaComecou={jaComecou}
           jaAconteceu={jaAconteceu}
         />
       </div>

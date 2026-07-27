@@ -45,6 +45,11 @@ export function statusDaPartida(fimISO: string, agora = Date.now()): StatusParti
   return new Date(fimISO).getTime() > agora ? "futura" : "jogada";
 }
 
+// Depois que a partida começa, não cabem mais ações (entrar/sair/cancelar).
+export function partidaComecou(inicioISO: string, agora = Date.now()): boolean {
+  return new Date(inicioISO).getTime() <= agora;
+}
+
 // Paga = tem pagamento pago. Senão: inadimplente se já passou o prazo
 // (fim + 24h), ou aguardando se ainda dentro do prazo / é futura.
 export function statusDoPagamento(
