@@ -32,6 +32,15 @@ Um jogador é inadimplente (`jogador_inadimplente`) se jogou uma partida que **j
 ## A costura do pagamento (troca fácil de gateway)
 Todo o app conversa só com o contrato em `src/lib/pagamentos/tipos.ts`. `index.ts` escolhe o gateway por variável de ambiente (`NEXT_PUBLIC_PAGAMENTO_PROVEDOR`, padrão `simulado`). `simulado.ts` é a única peça descartável (gera QR e copia-e-cola falsos). O endpoint `/api/pagamentos/confirmar` é **o mesmo** que o gateway real vai chamar quando o PIX cair; no mock, quem chama é o botão "Simular pagamento confirmado" (só aparece enquanto o gateway é o simulado). Trocar pelo real = escrever `iugu.ts`/`mercadopago.ts` no mesmo formato + apontar a env + ajustar a autorização do endpoint (hoje: sessão do jogador; no real: assinatura do webhook + chave de serviço).
 
+## Minhas partidas (`/app/partidas/minhas`)
+Lista as partidas em que o jogador é/foi **jogador ativo** (substituto que nunca jogou não entra), exceto canceladas. Cada item mostra dois status bem visíveis:
+- **Status da partida:** Futura (fim > agora) ou Jogada (fim ≤ agora).
+- **Status de pagamento:** Paga (tem pagamento pago) · Aguardando pagamento (ainda no prazo ou futura) · Inadimplente (passou fim + 24h sem pagar).
+
+Tem filtros por esses dois status. Fecha um buraco real: antes, a partida vencida do inadimplente não aparecia em lugar nenhum — o jogador não conseguia achar nem pagar. Agora ele acha em "Minhas partidas", toca, e a tela da partida (mesma `PagamentoPartida`) deixa ele pagar e se desbloquear. Regras em `src/lib/partidas.ts` (`statusDaPartida`, `statusDoPagamento`); página em `src/app/app/partidas/minhas/` + `src/components/partidas/MinhasPartidas.tsx`.
+
+**Decisão registrada (CLAUDE.md):** não haverá seção "Financeira" separada — "Minhas partidas" filtrada por "Inadimplente" já é a visão financeira.
+
 ## O que ficou para o sprint do gateway real
 Ver "Ideias Futuras" no CLAUDE.md — o pacote do modelo de pagamento: quem assume o risco do calote, partida aberta com estranhos exigindo pagar-ao-entrar, e o que o clube vê sobre pagamentos.
 

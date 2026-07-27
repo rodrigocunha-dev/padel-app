@@ -29,6 +29,7 @@ Releia antes de escrever ou revisar qualquer artigo:
 ### Partidas
 - [Como criar uma partida aberta](jogadores/partidas/como-criar-uma-partida.md)
 - [Como entrar em uma partida aberta](jogadores/partidas/como-entrar-em-uma-partida.md)
+- [Como ver minhas partidas e o que ainda devo](jogadores/partidas/como-ver-minhas-partidas.md)
 
 ### Reservas e pagamentos
 - [Como reservar uma quadra](jogadores/reservas-pagamentos/como-reservar-uma-quadra.md)

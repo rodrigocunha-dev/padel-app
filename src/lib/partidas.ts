@@ -23,6 +23,41 @@ export function faixaCategoria(min: number, max: number): string {
     : `${ROTULO_CATEGORIA[min]} a ${ROTULO_CATEGORIA[max]}`;
 }
 
+// Status da partida para a seção "Minhas partidas".
+export type StatusPartida = "futura" | "jogada";
+export type StatusPagamento = "paga" | "aguardando" | "inadimplente";
+
+export const ROTULO_STATUS_PARTIDA: Record<StatusPartida, string> = {
+  futura: "Futura",
+  jogada: "Jogada",
+};
+export const ROTULO_STATUS_PAGAMENTO: Record<StatusPagamento, string> = {
+  paga: "Paga",
+  aguardando: "Aguardando pagamento",
+  inadimplente: "Inadimplente",
+};
+
+// Horas de folga depois do jogo antes de virar inadimplente (regra do
+// fundador; provisória, validar com clubes/jogadores).
+export const HORAS_ATE_INADIMPLENTE = 24;
+
+export function statusDaPartida(fimISO: string, agora = Date.now()): StatusPartida {
+  return new Date(fimISO).getTime() > agora ? "futura" : "jogada";
+}
+
+// Paga = tem pagamento pago. Senão: inadimplente se já passou o prazo
+// (fim + 24h), ou aguardando se ainda dentro do prazo / é futura.
+export function statusDoPagamento(
+  fimISO: string,
+  pagou: boolean,
+  agora = Date.now()
+): StatusPagamento {
+  if (pagou) return "paga";
+  const vencimento =
+    new Date(fimISO).getTime() + HORAS_ATE_INADIMPLENTE * 60 * 60 * 1000;
+  return agora > vencimento ? "inadimplente" : "aguardando";
+}
+
 // Divisão do valor da quadra entre os jogadores: partes iguais, e a sobra
 // de centavos vai para os primeiros da lista (jogador nunca paga taxa —
 // regra nº 1). Devolve um array com o valor de cada posição (1..total).

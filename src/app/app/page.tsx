@@ -95,6 +95,18 @@ export default async function PaginaApp() {
         </Link>
 
         <Link
+          href="/app/partidas/minhas"
+          className="mt-3 block rounded-2xl bg-superficie p-6 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"
+        >
+          <p className="font-display text-lg font-bold text-tinta">
+            📋 Minhas partidas
+          </p>
+          <p className="mt-1 text-sm text-tinta-suave">
+            Seus jogos e pagamentos — futuros e passados
+          </p>
+        </Link>
+
+        <Link
           href="/app/reservas"
           className="mt-3 block rounded-2xl bg-superficie p-6 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"
         >
