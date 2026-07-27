@@ -52,7 +52,6 @@ export default async function PaginaMinhasPartidas() {
     .eq("status", "pago");
   const pagouSet = new Set((pagos ?? []).map((p) => p.partida_id));
 
-  const agora = Date.now();
   const itens: ItemMinhaPartida[] = (vinculos ?? [])
     .map((v) => v.partidas as unknown)
     .filter(
@@ -74,12 +73,8 @@ export default async function PaginaMinhasPartidas() {
         inicio: part.inicio,
         fim: part.fim,
         preco_centavos: part.preco_centavos,
-        statusPartida: statusDaPartida(part.fim, agora),
-        statusPagamento: statusDoPagamento(
-          part.fim,
-          pagouSet.has(part.id),
-          agora
-        ),
+        statusPartida: statusDaPartida(part.fim),
+        statusPagamento: statusDoPagamento(part.fim, pagouSet.has(part.id)),
       };
     })
     .sort((a, b) => new Date(b.inicio).getTime() - new Date(a.inicio).getTime());

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { PartidaDetalhe } from "@/components/partidas/PartidaDetalhe";
+import { statusDaPartida } from "@/lib/partidas";
 
 export const metadata: Metadata = {
   title: "Partida — padel",
@@ -44,18 +45,30 @@ export default async function PaginaPartida({
     perfil: porId.get(j.jogador_id) ?? null,
   }));
 
+  // Se já estou na partida, "voltar" leva para Minhas partidas; senão, para
+  // o feed de partidas abertas (regra do fundador).
+  const estouNaPartida = jogadores.some((j) => j.jogador_id === user.id);
+  const voltarHref = estouNaPartida ? "/app/partidas/minhas" : "/app/partidas";
+  const voltarLabel = estouNaPartida
+    ? "← Minhas partidas"
+    : "← Partidas abertas";
+
+  // Partida que já aconteceu não tem mais ações de entrar/sair/cancelar.
+  const jaAconteceu = statusDaPartida(partida.fim) === "jogada";
+
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-8">
       <div className="mx-auto w-full max-w-md">
         <Link
-          href="/app/partidas"
+          href={voltarHref}
           className="text-sm font-medium text-tinta-suave hover:text-tinta"
         >
-          ← Partidas abertas
+          {voltarLabel}
         </Link>
         <PartidaDetalhe
           partida={JSON.parse(JSON.stringify({ ...partida, jogadores }))}
           meuId={user.id}
+          jaAconteceu={jaAconteceu}
         />
       </div>
     </main>

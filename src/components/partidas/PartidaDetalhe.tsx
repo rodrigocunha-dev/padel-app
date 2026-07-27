@@ -44,9 +44,11 @@ function formatarReais(centavos: number): string {
 export function PartidaDetalhe({
   partida,
   meuId,
+  jaAconteceu,
 }: {
   partida: Partida;
   meuId: string;
+  jaAconteceu: boolean;
 }) {
   const router = useRouter();
   const [acao, setAcao] = useState(false);
@@ -275,8 +277,15 @@ export function PartidaDetalhe({
         <p className="mt-4 text-sm font-medium text-red-600">{erro}</p>
       )}
 
-      {/* Ações */}
-      {!cancelada && (
+      {/* Partida que já aconteceu: sem ações, só o registro de que foi jogada. */}
+      {!cancelada && jaAconteceu && (
+        <p className="mt-5 rounded-xl bg-fundo p-3 text-sm text-tinta-suave">
+          Esta partida já foi jogada.
+        </p>
+      )}
+
+      {/* Ações — só enquanto a partida não aconteceu */}
+      {!cancelada && !jaAconteceu && (
         <div className="mt-5 flex flex-wrap gap-2">
           {!jaEstou && (
             <button
