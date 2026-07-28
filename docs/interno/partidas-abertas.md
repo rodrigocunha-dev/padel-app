@@ -11,7 +11,7 @@ O jogador cria uma partida aberta num clube (faixa de categoria, competitiva/ami
 - Regras compartilhadas: `src/lib/partidas.ts` (split, compatibilidade, rótulos)
 - Completar perfil (sexo): `src/app/app/completar-perfil/` + `src/components/CompletarPerfil.tsx`
 - **Costura do pagamento:** `src/lib/pagamentos/` + `src/app/api/pagamentos/confirmar/route.ts`
-- Banco: `supabase/sql/008` (partidas, sexo, telefone privado), `009` (dados públicos da partida), `010` (pagamentos, split, inadimplente), `011` (leitura do split só para jogadores)
+- Banco: `supabase/sql/008` (partidas, sexo, telefone privado), `009` (dados públicos da partida), `010` (pagamentos, split, inadimplente), `011` (leitura do split só para jogadores), `012` (correções pós-teste), `013` (cancelar só partida futura)
 
 ## Regras de negócio embutidas
 - **Competitiva só com 4 jogadores** (regra nº 5): 5+ é revezamento (amistoso), não conta para o rating. A função `criar_partida` recusa competitiva com nº ≠ 4.
@@ -28,6 +28,17 @@ A quadra é confirmada na hora (reusa `reservar_quadra` do Sprint 3, via `criar_
 
 ## Bloqueio do caloteiro (regra decidida com o fundador)
 Um jogador é inadimplente (`jogador_inadimplente`) se jogou uma partida que **já aconteceu**, passou **24h do fim** e não tem pagamento `pago`. Enquanto inadimplente, não cria nem entra em nova partida (`PENDENCIA`). **Partida futura nunca conta** — a pessoa pode ter vários jogos marcados e não pagos sem ser bloqueada. Pagou → desbloqueado na hora. Testado nos dois sentidos. As 24h são provisórias (validar com clubes/jogadores); a configuração por clube fica para o gateway real.
+
+## Correções pós-teste (scripts 012 e 013)
+Três problemas apareceram só quando o fundador testou no celular e quando fomos conferir as regras direto no banco. Ficam registrados aqui porque duas delas mudam funções que já existiam desde o Sprint 3.
+
+**012 — cancelar partida esbarrava na política de cancelamento do clube.** Cancelar a partida cancela a reserva por baixo, e isso acordava o gatilho `checar_politica_reserva` (Sprint 3). Se a partida estava dentro da janela do clube e o organizador não era o dono, o gatilho recusava — o organizador ficava preso a uma partida que queria cancelar. A decisão: **o cancelamento da PARTIDA é regido pela partida, não pela política de reserva avulsa**. `cancelar_partida` avisa o gatilho por uma flag de sessão (`set_config('app.pular_politica', ...)`, que vale só dentro da transação) e o gatilho deixa passar. A política continua valendo normalmente para quem cancela uma reserva avulsa.
+
+**012 — inadimplente ainda conseguia reservar quadra.** O bloqueio do caloteiro existia em `criar_partida` e `entrar_na_partida`, mas não em `reservar_quadra` — dava para estar bloqueado nas partidas e mesmo assim reservar quadra sozinho pelo app. Agora `reservar_quadra` também chama `jogador_inadimplente` e recusa com `PENDENCIA`.
+
+**013 — dava para cancelar partida já jogada (furo de apagar a dívida).** Partida cancelada não conta para inadimplência; logo, quem devia podia cancelar a partida vencida e sair do bloqueio. A primeira correção só escondeu o botão na tela — e a verificação no banco mostrou que **o servidor continuava aceitando**. A trava real ficou em `cancelar_partida`: recusa com `PARTIDA_JA_COMECOU` se `inicio <= now()`. A tela também esconde as ações assim que a partida começa (não só quando termina), mas quem garante é o banco.
+
+> Lição que vale para os próximos sprints: esconder o botão na interface não é trava. Enquanto a função do banco aceitar, a regra está aberta — sempre testar por fora da tela.
 
 ## A costura do pagamento (troca fácil de gateway)
 Todo o app conversa só com o contrato em `src/lib/pagamentos/tipos.ts`. `index.ts` escolhe o gateway por variável de ambiente (`NEXT_PUBLIC_PAGAMENTO_PROVEDOR`, padrão `simulado`). `simulado.ts` é a única peça descartável (gera QR e copia-e-cola falsos). O endpoint `/api/pagamentos/confirmar` é **o mesmo** que o gateway real vai chamar quando o PIX cair; no mock, quem chama é o botão "Simular pagamento confirmado" (só aparece enquanto o gateway é o simulado). Trocar pelo real = escrever `iugu.ts`/`mercadopago.ts` no mesmo formato + apontar a env + ajustar a autorização do endpoint (hoje: sessão do jogador; no real: assinatura do webhook + chave de serviço).
