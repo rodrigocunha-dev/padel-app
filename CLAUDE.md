@@ -118,7 +118,7 @@ Implementado:
 - **Botão de troca de modo (jogador ↔ painel do clube)** para donos e funcionários de clube, que hoje precisam navegar entre `/app` e `/clube` na mão. Ligado a isto: na tela do jogador a política de cancelamento vale para todos, inclusive o dono (no servidor o dono é isento). Decisão de 22/07/2026: **manter assim**; se mudar, tratar junto com o botão de troca de modo.
 - **Decidir o fornecedor do gateway de pagamento** (Iugu vs. Mercado Pago são os favoritos atuais) antes de trocar o PIX simulado do Sprint 4 pelo real.
 
-**Sprint 4 — Partidas abertas + PIX simulado: ✅ CONCLUÍDO (23/07/2026), testado de ponta a ponta (fundador ainda vai testar no celular).**
+**Sprint 4 — Partidas abertas + PIX simulado: ✅ CONCLUÍDO (23/07/2026), testado de ponta a ponta e testado pelo fundador no celular (27/07/2026), incluindo a extensão "Minhas partidas".**
 Gateway de pagamento ainda não decidido → **PIX simulado** (mock isolado para troca fácil — a "costura" fica em `src/lib/pagamentos/`: `tipos.ts` = contrato, `index.ts` = chave de troca por env, `simulado.ts` = peça descartável, endpoint `/api/pagamentos/confirmar` = o mesmo que o gateway real vai chamar). Implementado:
 - **Partidas abertas:** criar (faixa de categoria, competitiva/amistosa, sexo do jogo, 4–8; competitiva só com 4 — regra nº 5), feed de compatíveis, entrar em 1 toque, **fila de substitutos com promoção automática** (testado com 5 contas: 5º vira substituto; ao sair um jogador, o 1º da fila sobe).
 - **Reserva na confiança:** quadra confirmada na hora (reusa Sprint 3); o pagamento é um "caderninho" por cima que NÃO trava a reserva. A partida carrega horário/quadra/preço próprios (script 009) porque a reserva é privada (LGPD) e o feed alheio precisa ler esses dados.
