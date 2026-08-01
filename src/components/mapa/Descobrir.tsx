@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import posthog from "posthog-js";
@@ -63,9 +63,14 @@ function montarJanela(data: string, deHora: number, ateHora: number) {
   return { inicio, fim };
 }
 
-type Props = { clubes: ClubeDescoberta[]; minhaCidade: string | null };
+type Props = {
+  clubes: ClubeDescoberta[];
+  minhaCidade: string | null;
+  // Vem do atalho "Jogar agora" da tela inicial (/app/descobrir?agora=1).
+  agoraInicial?: boolean;
+};
 
-export function Descobrir({ clubes, minhaCidade }: Props) {
+export function Descobrir({ clubes, minhaCidade, agoraInicial }: Props) {
   const [esportesSel, setEsportesSel] = useState<string[]>([]);
   const [tiposSel, setTiposSel] = useState<string[]>([]);
   const [soCobertas, setSoCobertas] = useState(false);
@@ -145,6 +150,17 @@ export function Descobrir({ clubes, minhaCidade }: Props) {
     () => clubes.flatMap((c) => c.quadras.map((q) => q.id)),
     [clubes]
   );
+
+  // Atalho da tela inicial: liga o filtro pelo MESMO caminho do botão, para
+  // as ocupações serem carregadas. Ligar só o estado mostraria todo clube
+  // como livre (a lista trata "sem ocupação" como quadra vaga).
+  const jaAplicouAtalho = useRef(false);
+  useEffect(() => {
+    if (!agoraInicial || jaAplicouAtalho.current) return;
+    jaAplicouAtalho.current = true;
+    void alternarJogarAgora();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agoraInicial]);
 
   async function alternarJogarAgora() {
     const ligar = !jogarAgora;

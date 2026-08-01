@@ -9,7 +9,12 @@ export const metadata: Metadata = {
   title: "Descobrir clubes — padel",
 };
 
-export default async function PaginaDescobrir() {
+export default async function PaginaDescobrir({
+  searchParams,
+}: {
+  searchParams: Promise<{ agora?: string }>;
+}) {
+  const { agora } = await searchParams;
   const supabase = await criarClienteServidor();
   const {
     data: { user },
@@ -48,6 +53,7 @@ export default async function PaginaDescobrir() {
       <Descobrir
         clubes={(clubes ?? []) as ClubeDescoberta[]}
         minhaCidade={jogador?.cidade ?? null}
+        agoraInicial={agora === "1"}
       />
     </main>
   );

@@ -10,6 +10,13 @@ export const ROTULO_CATEGORIA: Record<number, string> = {
   7: "7ª",
 };
 
+// Nível dentro da categoria (usado na tela inicial e no perfil).
+export const ROTULO_NIVEL: Record<string, string> = {
+  forte: "Forte",
+  medio: "Médio",
+  fraco: "Fraco",
+};
+
 export const ROTULO_SEXO_JOGO: Record<string, string> = {
   masculino: "Masculina",
   feminino: "Feminina",
