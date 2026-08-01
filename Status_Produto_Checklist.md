@@ -60,9 +60,13 @@ sinal de alerta — pare e me chame antes de aprovar.
 
 ## 🔜 SPRINT 5 — ESCOPO DECIDIDO (29/07/2026)
 
-**Resultados + Rating + Categorias + barra de navegação fixa.**
+**Resultados + Rating + Categorias + barra de navegação fixa + sessão em grupo com convite e aceite.**
 
-> ⚠️ **BLOQUEIO DE INÍCIO:** a regra nº 5 do CLAUDE.md ("só partidas de 4 jogadores em modo competitivo afetam o rating") está **em reavaliação pelo fundador**. Ela define a arquitetura da função de cálculo — partidas com revezamento entram ou não? **Resolver ANTES de abrir o sprint**, não durante. Incluir revezamento não é remover uma trava: exige lógica própria (peso menor, ou considerar só os sets de cada dupla).
+> ✅ **DESBLOQUEADO EM 01/08/2026.** A regra nº 5 foi revisada e as duas decisões que travavam o sprint estão fechadas (detalhe completo no CLAUDE.md, em "Ideias Futuras"):
+> - **Decisão 1:** a reserva vira **sessão** com participantes aceitos, e **cada set é um mini-resultado** entre duas duplas, com travas de validade, confirmação e origem, em janela de 24h.
+> - **Decisão 2:** o set vale **0,5x** a partida cheia de 4. Competitivo por padrão, sem limite de sets repetidos no mesmo dia. Gamificação é eixo separado — **menos** a trava de origem no app, que é universal.
+>
+> ⚠️ **O escopo cresceu:** entra também transformar a reserva em sessão com convite e aceite. Dimensionar contando com isso.
 
 **Por que chat e notificações ficaram para depois:** o critério de pronto do MVP no CLAUDE.md termina em "registra resultado → vê categoria evoluir" — chat não está nele. Rating é a cunha contra o Playtomic e está em 0%, enquanto o trilho de descoberta já está quase pronto. Decisão consciente, não esquecimento.
 
@@ -118,10 +122,13 @@ sinal de alerta — pare e me chame antes de aprovar.
 - [ ] ⏳ 🔍 **Política de cancelamento exibida na tela de pagamento da partida** — regra nº 7 cumprida pela metade: aparece na página do clube e na reserva, não no pagamento da partida
 - [ ] ⏳ Cobrança automática de pendentes via WhatsApp (hoje é o botão manual "💬 Cobrar")
 
-## Módulo 1.5 — Resultados, Rating e Categorias *(🔜 SPRINT 5 — ver escopo e bloqueio no topo)*
+## Módulo 1.5 — Resultados, Rating e Categorias *(🔜 SPRINT 5 — ver escopo no topo)*
 
-> ⚠️ A regra nº 5 ("só partidas de 4 jogadores em modo competitivo afetam o rating") está **EM REAVALIAÇÃO** pelo fundador. Vale como está até virar decisão nova registrada no CLAUDE.md — e **bloqueia o início deste módulo**.
+> ✅ A regra nº 5 foi **revisada e decidida em 01/08/2026** — este módulo está liberado. Conta a partida cheia de 4 (peso 1x) e cada set de sessão em grupo (peso 0,5x), com travas de validade, confirmação e origem. Texto completo da regra no CLAUDE.md.
 
+- [ ] ⏳ **Sessão em grupo**: reserva com participantes convidados e aceitos (entrou no escopo pela Decisão 1)
+- [ ] ⏳ Registro de set por set, com as três travas (formato completo, confirmação anti-invenção, origem no app)
+- [ ] ⏳ Aviso dentro do app para cobrar quem não confirmou (cooldown de 6h por pendência)
 - [ ] ⏳ 🔍 Registro de placar por sets — não existe
 - [ ] ⏳ 🔍 Confirmação do resultado por 1 jogador da dupla adversária — não existe
 - [ ] ⏳ 🔍 Motor de rating Elo/Glicko para duplas — não existe. A palavra "rating" só aparece em texto de tela ("Competitiva — vale rating"), sem cálculo por trás
