@@ -23,7 +23,7 @@ O jogador cria uma partida aberta num clube (faixa de categoria, competitiva/ami
 A quadra é confirmada na hora (reusa `reservar_quadra` do Sprint 3, via `criar_partida`). O pagamento é um "caderninho" por cima que **NÃO trava a reserva**. A partida carrega o próprio horário/quadra/preço (colunas em `partidas`, script 009) porque a **reserva é privada** (LGPD) e o feed de outro jogador precisa ver esses dados — não dá para ler da reserva alheia.
 
 ## Privacidade (LGPD)
-- **Telefone do jogador fechado** (script 008): ninguém lê a coluna `telefone` da tabela `jogadores` por consulta normal (column privileges). Volta só pela função `contato_jogadores_partida`, e **apenas para o organizador** da partida — é o que alimenta o botão de cobrança por WhatsApp.
+- **Telefone do jogador fechado** (script 008): ninguém lê a coluna `telefone` da tabela `jogadores` por consulta normal (column privileges). Volta só pela função `contato_jogadores_partida` (**definida no script 010**, não no 008), e **apenas para o organizador** da partida — é o que alimenta o botão de cobrança por WhatsApp.
 - **Split visível só para jogadores ativos** (script 011): quem vê quem pagou são os jogadores que estão jogando — nem substitutos, nem quem só visita a partida, nem o clube. Verificado: jogador que saiu lê 0 linhas de pagamento.
 
 ## Bloqueio do caloteiro (regra decidida com o fundador)
