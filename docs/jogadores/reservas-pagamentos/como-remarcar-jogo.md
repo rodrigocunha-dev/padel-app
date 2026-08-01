@@ -13,7 +13,7 @@ Escolha o novo horário e confirme — é a mesma reserva mudando de hora, você
 
 ## Passo a passo
 
-1. Abra **"Minhas reservas"** na tela inicial.
+1. Toque em **"Perfil"** na barra de baixo e depois em **"Minhas reservas"**.
 2. Procure o jogo que quer mover.
 3. Toque **"Remarcar"** — não é cancelar.
 4. Escolha a nova data e o novo horário na grade.

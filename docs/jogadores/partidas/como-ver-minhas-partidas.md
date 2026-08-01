@@ -8,15 +8,17 @@ palavras-chave: minhas partidas, pagamento, inadimplente, histórico, status
 
 # Como ver minhas partidas e o que ainda devo
 
-**Resposta curta:** toque em **"Minhas partidas"** na tela inicial. Cada jogo mostra dois selos: se é
-**Futura** ou **Jogada**, e se está **Paga**, **Aguardando pagamento** ou **Inadimplente**.
+**Resposta curta:** toque em **"Perfil"** na barra de baixo e depois em **"Minhas partidas"**. Cada jogo
+mostra dois selos: se é **Futura** ou **Jogada**, e se está **Paga**, **Aguardando pagamento** ou
+**Inadimplente**.
 
 ## Passo a passo
 
-1. Na tela inicial, toque **"Minhas partidas"**.
-2. Veja a lista dos seus jogos, do mais recente para o mais antigo.
-3. Use os filtros no topo para mostrar só **Futuras**, só **Jogadas**, ou só as com pagamento em aberto.
-4. Toque numa partida para ver os detalhes e pagar sua parte, se ainda estiver em aberto.
+1. Toque em **"Perfil"** na barra de baixo.
+2. Toque em **"Minhas partidas"**.
+3. Veja a lista dos seus jogos, do mais recente para o mais antigo.
+4. Use os filtros no topo para mostrar só **Futuras**, só **Jogadas**, ou só as com pagamento em aberto.
+5. Toque numa partida para ver os detalhes e pagar sua parte, se ainda estiver em aberto.
 
 ## O que cada selo quer dizer
 

@@ -8,12 +8,12 @@ palavras-chave: entrar, partida, aberta, feed, jogar
 
 # Como entrar em uma partida aberta
 
-**Resposta curta:** toque em **"Partidas abertas"** na tela inicial. A lista já mostra os jogos do seu
+**Resposta curta:** toque em **"Partidas"** na barra de baixo. A lista já mostra os jogos do seu
 nível — toque **"Entrar"** e você está dentro.
 
 ## Passo a passo
 
-1. Na tela inicial, toque **"Partidas abertas"**.
+1. Toque em **"Partidas"** na barra de baixo.
 2. Veja os jogos compatíveis com você (mesma categoria e sexo do jogo).
 3. Toque **"Entrar"** na partida que te interessa.
 4. Pronto — você aparece na lista de jogadores.

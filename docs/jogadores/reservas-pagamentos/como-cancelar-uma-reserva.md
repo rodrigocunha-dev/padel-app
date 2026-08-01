@@ -13,7 +13,7 @@ Cada clube define até quantas horas antes você pode cancelar sozinho pelo app.
 
 ## Passo a passo
 
-1. Abra **"Minhas reservas"** na tela inicial.
+1. Toque em **"Perfil"** na barra de baixo e depois em **"Minhas reservas"**.
 2. Procure o jogo que quer desmarcar.
 3. Toque **"Cancelar reserva"**.
 4. Toque **"Confirmar cancelamento"**.

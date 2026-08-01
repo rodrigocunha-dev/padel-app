@@ -8,12 +8,12 @@ palavras-chave: mapa, clubes, filtros, preço, distância
 
 # Como encontrar um clube perto de mim
 
-**Resposta curta:** toque em **"Descobrir clubes"** na tela inicial. O mapa mostra cada clube com o
+**Resposta curta:** toque em **"Descobrir"** na barra de baixo. O mapa mostra cada clube com o
 menor preço por hora escrito no pin. Use os filtros para achar exatamente o que você quer.
 
 ## Passo a passo
 
-1. Toque em **"Descobrir clubes"**.
+1. Toque em **"Descobrir"** na barra de baixo.
 2. Permita a localização quando o app pedir — é o que ativa distância e "onde estou".
 3. Toque em **"Filtros"** para refinar por esporte, tipo de quadra, quadra coberta, preço ou distância.
 4. Toque em **"☰ Lista"** se preferir ver os clubes em cards em vez do mapa.

@@ -66,7 +66,7 @@ sinal de alerta — pare e me chame antes de aprovar.
 
 **Por que chat e notificações ficaram para depois:** o critério de pronto do MVP no CLAUDE.md termina em "registra resultado → vê categoria evoluir" — chat não está nele. Rating é a cunha contra o Playtomic e está em 0%, enquanto o trilho de descoberta já está quase pronto. Decisão consciente, não esquecimento.
 
-- [x] 🔧 🔍 **Barra de navegação fixa** (início, descobrir, partidas, perfil) — construída em 31/07/2026, `BarraNavegacao.tsx` + `app/app/layout.tsx`. Testada no navegador com 3 contas (inclusive conta nova, confirmando que some no cadastro). **Falta o teste do fundador no celular para virar ✅**
+- [x] ✅ 🔍 **Barra de navegação fixa** (início, descobrir, partidas, perfil) — `BarraNavegacao.tsx` + `app/app/layout.tsx`. Testada no navegador com 3 contas (inclusive conta nova, confirmando que some no cadastro) e **aprovada pelo fundador no celular em 01/08/2026**
 - [ ] ⏳ Todos os itens do **Módulo 1.5** abaixo
 
 ---
@@ -174,13 +174,13 @@ sinal de alerta — pare e me chame antes de aprovar.
 - [ ] ⏳ Submissão App Store / Google Play — inclui contas de desenvolvedor (só o fundador faz)
 
 ## Navegação e Experiência Geral
-- [x] 🔧 🔍 Barra de navegação fixa — ver o bloco do Sprint 5 no topo
-- [x] 🔧 🔍 **Tela de Início como resumo** (31/07/2026): deixou de ser menu de links e passou a mostrar categoria, pendência de pagamento, atalhos "Jogar agora" e "Reservar", e a lista de próximos jogos
-- [x] 🔧 🔍 **Lista única de próximos jogos** juntando reservas e partidas — **união só visual**, nada muda no banco. Não presume a decisão de partida privada; se ela acontecer, a tela já está no formato certo
+- [x] ✅ 🔍 Barra de navegação fixa — ver o bloco do Sprint 5 no topo
+- [x] ✅ 🔍 **Tela de Início como resumo** (01/08/2026): deixou de ser menu de links e passou a mostrar categoria, pendência de pagamento, atalhos "Jogar agora" e "Reservar", e a lista de próximos jogos
+- [x] ✅ 🔍 **Lista única de próximos jogos** juntando reservas e partidas — **união só visual**, nada muda no banco. Não presume a decisão de partida privada; se ela acontecer, a tela já está no formato certo
 - [ ] ⏳ Botão de troca de modo jogador ↔ painel do clube (para donos e funcionários)
 
 ## Perfil e Estatísticas do Jogador
-- [x] 🔧 🔍 **Tela de perfil mínima** (`/app/perfil`, 31/07/2026): nome, foto, cidade, categoria, selo de calibração, atalhos e o botão Sair (que saiu da tela inicial)
+- [x] ✅ 🔍 **Tela de perfil mínima** (`/app/perfil`, 01/08/2026): nome, foto, cidade, categoria, selo de calibração, atalhos e o botão Sair (que saiu da tela inicial)
 - [ ] ⏳ 🔍 Histórico, estatísticas e conquistas — não existem. **De propósito:** dependem do rating, que depende da regra nº 5. Não colocar placeholder na tela de perfil antes dessa decisão
 
 ---
