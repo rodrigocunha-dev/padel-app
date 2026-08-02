@@ -49,6 +49,7 @@ const CLASSE_MOTIVO: Record<string, string> = {
 
 const ERROS: Record<string, string> = {
   TETO_DE_SETS: "Já foram registrados todos os sets que cabem nesta reserva.",
+  ESPERE_15_MIN: "O registro de sets abre 15 minutos depois do início do jogo.",
   FORA_DA_JANELA: "O prazo para isso já passou.",
   PARTIDA_NAO_COMECOU: "O jogo ainda não começou.",
   JOGADOR_NAO_ESTA_NA_SESSAO: "Só quem está confirmado no jogo pode aparecer no set.",
@@ -68,6 +69,7 @@ export function SetsDaSessao({
   partidaId,
   meuId,
   jaComecou,
+  passaram15Min,
   participantes,
   sets,
   teto,
@@ -75,6 +77,9 @@ export function SetsDaSessao({
   partidaId: string;
   meuId: string;
   jaComecou: boolean;
+  // Calculado no servidor: a trava dos 15 minutos vive no banco, e a tela
+  // só reflete. Assim ela nunca oferece um botão que o servidor recusaria.
+  passaram15Min: boolean;
   participantes: Pessoa[];
   sets: SetDaSessao[];
   teto: number;
@@ -321,8 +326,28 @@ export function SetsDaSessao({
         })}
       </ul>
 
+      {/* Faltam confirmações: sem 4 aceitos não existe set possível, então
+          explico em vez de oferecer um botão que não vai funcionar. */}
+      {jaComecou && souParticipante && participantes.length < 4 && (
+        <p className="mt-4 rounded-2xl bg-amber-100 p-5 text-sm font-medium text-amber-800 ring-1 ring-amber-200">
+          Faltam confirmações para registrar sets. São necessários 4 jogadores
+          confirmados, e por enquanto {participantes.length === 1 ? "só há 1" : `há ${participantes.length}`}.
+        </p>
+      )}
+
+      {/* Começou, tem gente, mas ainda é cedo demais para um set ter acabado. */}
+      {jaComecou && souParticipante && participantes.length >= 4 && !passaram15Min && (
+        <p className="mt-4 rounded-2xl bg-superficie p-5 text-sm text-tinta-suave shadow ring-1 ring-black/5">
+          O registro de sets abre 15 minutos depois do início do jogo.
+        </p>
+      )}
+
       {/* Registrar set novo */}
-      {jaComecou && souParticipante && sets.length < teto && (
+      {jaComecou &&
+        passaram15Min &&
+        souParticipante &&
+        participantes.length >= 4 &&
+        sets.length < teto && (
         <div className="mt-4">
           {!abrirForm ? (
             <button

@@ -191,6 +191,10 @@ export default async function PaginaPartida({
             partidaId={partida.id}
             meuId={user.id}
             jaComecou={jaComecou}
+            passaram15Min={
+              new Date(partida.inicio).getTime() + 15 * 60 * 1000 <=
+              new Date().getTime()
+            }
             participantes={aceitos}
             sets={JSON.parse(JSON.stringify(sets))}
             teto={teto ?? 1}

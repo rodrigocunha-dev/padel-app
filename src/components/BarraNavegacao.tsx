@@ -15,6 +15,9 @@ type Destino = {
   // Outras rotas que acendem este item. Ex.: a página de um clube
   // pertence a "Descobrir", que é de onde o jogador chegou nela.
   tambem?: string[];
+  // Em vez do emoji, mostra a foto do jogador (ou a inicial do nome).
+  // Convenção que todo mundo já conhece de outros apps.
+  avatar?: boolean;
 };
 
 const DESTINOS: Destino[] = [
@@ -31,6 +34,7 @@ const DESTINOS: Destino[] = [
     rotulo: "Perfil",
     icone: "👤",
     tambem: ["/app/reservas"],
+    avatar: true,
   },
 ];
 
@@ -45,10 +49,18 @@ function estaAtivo(caminho: string, destino: Destino): boolean {
   );
 }
 
-export function BarraNavegacao() {
+export function BarraNavegacao({
+  nome,
+  fotoUrl,
+}: {
+  nome?: string | null;
+  fotoUrl?: string | null;
+}) {
   const caminho = usePathname();
 
   if (ROTAS_SEM_BARRA.some((rota) => caminho.startsWith(rota))) return null;
+
+  const inicial = nome?.trim()?.[0]?.toUpperCase() ?? null;
 
   return (
     <>
@@ -78,9 +90,34 @@ export function BarraNavegacao() {
                       : "text-tinta-suave hover:text-tinta"
                   }`}
                 >
-                  <span aria-hidden className="text-xl leading-none">
-                    {destino.icone}
-                  </span>
+                  {destino.avatar && (fotoUrl || inicial) ? (
+                    fotoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={fotoUrl}
+                        alt=""
+                        aria-hidden
+                        className={`h-5 w-5 rounded-full object-cover ${
+                          ativo ? "ring-2 ring-primaria" : "ring-1 ring-black/10"
+                        }`}
+                      />
+                    ) : (
+                      <span
+                        aria-hidden
+                        className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-extrabold ${
+                          ativo
+                            ? "bg-primaria text-white"
+                            : "bg-fundo text-tinta-suave ring-1 ring-black/10"
+                        }`}
+                      >
+                        {inicial}
+                      </span>
+                    )
+                  ) : (
+                    <span aria-hidden className="text-xl leading-none">
+                      {destino.icone}
+                    </span>
+                  )}
                   {destino.rotulo}
                 </Link>
               </li>

@@ -140,6 +140,40 @@ export function ConvidarParticipantes({
 
   return (
     <section className="mt-6">
+      {/* Fica no TOPO de propósito: quem tem convite pendente tem uma ação a
+          fazer aqui, e ela não pode exigir rolagem.
+          Aparece MESMO depois de a partida começar — o servidor permite
+          aceitar, e esconder aqui travava o jogo para sempre: sem os quatro
+          confirmados, nenhum set pode ser registrado. */}
+      {meuConvite?.estado === "convidado" && (
+        <div className="mb-6 rounded-2xl bg-destaque p-5 shadow-lg">
+          <p className="font-display font-bold text-destaque-tinta">
+            Você foi convidado para este jogo
+          </p>
+          <p className="mt-1 text-sm text-destaque-tinta/80">
+            Aceitando, você entra na partida e na divisão do valor da quadra.
+          </p>
+          <div className="mt-4 flex gap-3">
+            <button
+              type="button"
+              disabled={ocupado}
+              onClick={() => responder(true)}
+              className="flex-1 rounded-full bg-primaria px-5 py-2.5 font-display font-bold text-white transition hover:brightness-110 disabled:opacity-50"
+            >
+              Aceitar
+            </button>
+            <button
+              type="button"
+              disabled={ocupado}
+              onClick={() => responder(false)}
+              className="rounded-full px-5 py-2.5 font-display font-bold text-destaque-tinta ring-1 ring-destaque-tinta/30 transition hover:bg-white/30 disabled:opacity-50"
+            >
+              Recusar
+            </button>
+          </div>
+        </div>
+      )}
+
       <h2 className="font-display text-lg font-bold text-tinta">
         Quem vai jogar
       </h2>
@@ -174,36 +208,6 @@ export function ConvidarParticipantes({
           </li>
         ))}
       </ul>
-
-      {/* Eu fui convidado e ainda não respondi */}
-      {meuConvite?.estado === "convidado" && !jaComecou && (
-        <div className="mt-4 rounded-2xl bg-destaque p-5 shadow-lg">
-          <p className="font-display font-bold text-destaque-tinta">
-            Você foi convidado para este jogo
-          </p>
-          <p className="mt-1 text-sm text-destaque-tinta/80">
-            Aceitando, você entra na partida e na divisão do valor da quadra.
-          </p>
-          <div className="mt-4 flex gap-3">
-            <button
-              type="button"
-              disabled={ocupado}
-              onClick={() => responder(true)}
-              className="flex-1 rounded-full bg-primaria px-5 py-2.5 font-display font-bold text-white transition hover:brightness-110 disabled:opacity-50"
-            >
-              Aceitar
-            </button>
-            <button
-              type="button"
-              disabled={ocupado}
-              onClick={() => responder(false)}
-              className="rounded-full px-5 py-2.5 font-display font-bold text-destaque-tinta ring-1 ring-destaque-tinta/30 transition hover:bg-white/30 disabled:opacity-50"
-            >
-              Recusar
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Só o organizador convida, e só antes do jogo começar */}
       {souOrganizador && !jaComecou && (

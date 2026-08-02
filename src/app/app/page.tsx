@@ -65,7 +65,30 @@ export default async function PaginaApp() {
       "partidas ( id, reserva_id, inicio, fim, status, quadras ( nome, clubes ( nome ) ) )"
     )
     .eq("jogador_id", user.id)
-    .eq("papel", "jogador");
+    .eq("papel", "jogador")
+    // Convite pendente NÃO é jogo seu: sem este filtro, um convite que você
+    // ainda não aceitou apareceria entre os "próximos jogos".
+    .eq("estado", "aceito");
+
+  // Convites esperando resposta — bloco próprio, porque é uma AÇÃO pendente,
+  // não um compromisso já marcado.
+  const { data: convitesRaw } = await supabase
+    .from("partida_jogadores")
+    .select("partidas ( id, inicio, status, quadras ( clubes ( nome ) ) )")
+    .eq("jogador_id", user.id)
+    .eq("estado", "convidado");
+
+  const convites = (convitesRaw ?? [])
+    .map(
+      (c) =>
+        c.partidas as unknown as {
+          id: string;
+          inicio: string;
+          status: string;
+          quadras: { clubes: { nome: string } };
+        } | null
+    )
+    .filter((p) => !!p && p.status !== "cancelada");
 
   const { data: pagos } = await supabase
     .from("pagamentos")
@@ -231,6 +254,34 @@ export default async function PaginaApp() {
               </p>
             </Link>
           )
+        )}
+
+        {convites.length > 0 && (
+          <section className="mt-4">
+            <h2 className="font-display text-base font-bold text-tinta">
+              {convites.length === 1
+                ? "Você tem um convite"
+                : `Você tem ${convites.length} convites`}
+            </h2>
+            <ul className="mt-2 space-y-2">
+              {convites.map((c) => (
+                <li key={c!.id}>
+                  <Link
+                    href={`/app/partidas/${c!.id}`}
+                    className="block rounded-2xl bg-destaque p-4 shadow transition hover:brightness-105"
+                  >
+                    <p className="font-display font-bold text-destaque-tinta">
+                      {c!.quadras.clubes.nome}
+                    </p>
+                    <p className="mt-0.5 text-xs text-destaque-tinta/80">
+                      {formatarQuando(c!.inicio)} · toque para aceitar ou
+                      recusar
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         <div className="mt-4 grid grid-cols-2 gap-3">
