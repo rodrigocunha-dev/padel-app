@@ -197,6 +197,8 @@ Gateway de pagamento ainda não decidido → **PIX simulado** (mock isolado para
 >
 > **A ser observado com dados do beta, sem bloquear o sprint:** duplas parelhas jogando muitos sets seguidos no mesmo dia podem mover o rating por variância — se acontecer, considerar peso decrescente para sets repetidos entre a mesma dupla no mesmo dia.
 
+**Entrega A do Sprint 5 — CONSTRUÍDA (02/08/2026), aguardando o teste do fundador no celular.** Reserva vira sessão com convite e aceite; sets com registro, contestação por placar alternativo e votação do grupo; aviso dentro do app. Scripts `014` (sessões e sets) e `015` (correção: reserva não atravessa a meia-noite, bug achado testando o 014) — **ambos rodados**. Doc técnica em `/docs/interno/sessoes-e-sets.md` + 4 artigos de cliente. Verificado com 4 contas via API e com 2 contas no navegador. **Nada de rating ainda** — o motor é o próximo passo e lê o que isto grava.
+
 **Por que chat e notificações ficaram para depois (decisão consciente, não esquecimento):** o critério de pronto do MVP acima termina em "registra resultado → vê categoria evoluir" — chat não está nele. O rating é a cunha contra o Playtomic (categorias brasileiras + transparência) e está em 0%, enquanto o trilho de descoberta já está quase pronto. A barra de navegação fixa entra junto porque perfil, histórico e estatísticas do rating precisam dela para existir.
 
 **Nota para quando o chat voltar à pauta:** ele **não depende de fornecedor nenhum** — o Supabase Realtime já roda no projeto (3 canais) e o Web Push é nativo do navegador. Só o *fallback* WhatsApp automático depende de contratar um BSP.

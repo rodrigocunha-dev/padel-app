@@ -126,11 +126,13 @@ sinal de alerta — pare e me chame antes de aprovar.
 
 > ✅ A regra nº 5 foi **revisada e decidida em 01/08/2026** — este módulo está liberado. Conta a partida cheia de 4 (peso 1x) e cada set de sessão em grupo (peso 0,5x), com travas de validade, confirmação e origem. Texto completo da regra no CLAUDE.md.
 
-- [ ] ⏳ **Sessão em grupo**: reserva com participantes convidados e aceitos (entrou no escopo pela Decisão 1)
-- [ ] ⏳ Registro de set por set, com as três travas (formato completo, confirmação anti-invenção, origem no app)
-- [ ] ⏳ Aviso dentro do app para cobrar quem não confirmou (cooldown de 6h por pendência)
-- [ ] ⏳ 🔍 Registro de placar por sets — não existe
-- [ ] ⏳ 🔍 Confirmação do resultado por 1 jogador da dupla adversária — não existe
+- [x] 🔧 🔍 **Sessão em grupo**: reserva vira partida com participantes convidados e aceitos — `014_sessoes_e_sets.sql` + `ConvidarParticipantes.tsx`. Testado com 4 contas
+- [x] 🔧 🔍 **Registro de set por set**, com as travas de formato, janela de 24h, origem no app e teto de plausibilidade — `SetsDaSessao.tsx` + `situacao_do_set`
+- [x] 🔧 🔍 **Contestação com placar alternativo e votação do grupo** (mais de 50% dos elegíveis) — testado: 1 voto de 2 não resolve, 2 de 2 resolvem
+- [x] 🔧 🔍 **Aviso dentro do app** (resultado registrado / votação aberta), com cooldown de 6h por votação — tabela `avisos`, aparece em Minhas partidas
+- [ ] ⏳ **Web Push** (aviso na tela do celular) — entra logo depois da Entrega A e **antes do beta**: sem ele, "silêncio vale como concordância" é injusto com quem abre pouco o app
+- [ ] ⏳ **Entrega B**: convite por telefone de quem ainda não tem conta, com link de cadastro. O banco já nasceu preparado (`telefone` em `partida_jogadores`)
+- [ ] ⏳ **Sets em partida aberta** — a Decisão 2 diz que revezamento também gera sets a 0,5x; a tela da partida aberta ainda não tem essa área
 - [ ] ⏳ 🔍 Motor de rating Elo/Glicko para duplas — não existe. A palavra "rating" só aparece em texto de tela ("Competitiva — vale rating"), sem cálculo por trás
 - [ ] ⏳ Pesos do rating: nível dos adversários, tipo de jogo (amistoso 1x / liga 1,5x / torneio 2–3x), placar (regra nº 4)
 - [ ] ⏳ **Índice de confiabilidade** do rating (regra nº 4)
