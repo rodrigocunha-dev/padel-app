@@ -67,9 +67,16 @@ export function BarraNavegacao({
       {/* Espaçador: sem ele a barra tapa o fim do conteúdo na rolagem. */}
       <div className="h-[4.5rem] shrink-0" aria-hidden />
 
+      {/* CAMADAS — regra do app do jogador, respeitar ao criar pop-up novo:
+            Leaflet (mapa) usa até 800 nos controles
+            barra de navegação .... 1000
+            pop-up / modal ........ 1100 ou mais
+          A barra precisa ficar acima do mapa, e qualquer modal acima dela —
+          senão a barra tapa os botões do modal (foi o que aconteceu com o
+          pop-up de reservar, que estava em z-50). */}
       <nav
         aria-label="Navegação principal"
-        className="fixed inset-x-0 bottom-0 z-[1100] border-t border-black/5 bg-superficie/95 backdrop-blur"
+        className="fixed inset-x-0 bottom-0 z-[1000] border-t border-black/5 bg-superficie/95 backdrop-blur"
       >
         <ul className="mx-auto flex w-full max-w-md">
           {DESTINOS.map((destino) => {

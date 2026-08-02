@@ -303,9 +303,11 @@ export function ReservarQuadra({
         )}
       </div>
 
-      {/* Confirmação */}
+      {/* Confirmação. O z fica acima da barra de navegação (1000) — ver a
+          regra de camadas em BarraNavegacao.tsx. Em z-50 a barra tapava os
+          botões deste pop-up. */}
       {escolhido && quadra && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
+        <div className="fixed inset-0 z-[1100] flex items-end justify-center bg-black/40 p-4 sm:items-center">
           <div className="w-full max-w-sm rounded-2xl bg-superficie p-5 shadow-xl">
             <h2 className="font-display text-lg font-bold text-tinta">
               {remarcarId ? "Confirmar novo horário" : "Confirmar reserva"}
