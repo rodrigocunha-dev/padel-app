@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { PartidaDetalhe } from "@/components/partidas/PartidaDetalhe";
 import { ConvidarParticipantes } from "@/components/partidas/ConvidarParticipantes";
+import { SetsDaSessao } from "@/components/partidas/SetsDaSessao";
 import { statusDaPartida, partidaComecou } from "@/lib/partidas";
 
 export const metadata: Metadata = {
@@ -68,6 +69,67 @@ export default async function PaginaPartida({
       nome: string;
       clubes: { id: string; nome: string; cidade: string };
     };
+
+    const { data: setsRaw } = await supabase
+      .from("sets")
+      .select(
+        "id, ordem, a1, a2, b1, b2, games_a, games_b, registrado_por, registrado_em"
+      )
+      .eq("partida_id", partida.id)
+      .order("ordem", { ascending: true });
+
+    const setIds = (setsRaw ?? []).map((s) => s.id);
+
+    const { data: contestacoes } = setIds.length
+      ? await supabase
+          .from("set_contestacoes")
+          .select("set_id, contestado_por, games_a, games_b")
+          .in("set_id", setIds)
+      : { data: [] };
+
+    const { data: meusVotos } = setIds.length
+      ? await supabase
+          .from("set_votos")
+          .select("set_id, voto")
+          .in("set_id", setIds)
+          .eq("votante_id", user.id)
+      : { data: [] };
+
+    // A situação de cada set (qual placar vale e se conta) é calculada no
+    // servidor — não replico a regra aqui para as duas não divergirem.
+    const situacoes = await Promise.all(
+      setIds.map((sid) => supabase.rpc("situacao_do_set", { p_set_id: sid }))
+    );
+    const { data: teto } = await supabase.rpc("teto_de_sets", {
+      p_partida_id: partida.id,
+    });
+
+    const sets = (setsRaw ?? []).map((s, i) => {
+      const c = (contestacoes ?? []).find((x) => x.set_id === s.id) ?? null;
+      const v = (meusVotos ?? []).find((x) => x.set_id === s.id) ?? null;
+      const sit = (situacoes[i]?.data ?? [])[0] ?? null;
+      return {
+        ...s,
+        contestacao: c
+          ? {
+              contestado_por: c.contestado_por,
+              games_a: c.games_a,
+              games_b: c.games_b,
+            }
+          : null,
+        meuVoto: v?.voto ?? null,
+        situacao: {
+          games_a: sit?.games_a ?? s.games_a,
+          games_b: sit?.games_b ?? s.games_b,
+          conta: sit?.conta_para_rating ?? false,
+          motivo: sit?.motivo ?? "AGUARDANDO_JANELA",
+        },
+      };
+    });
+
+    const aceitos = jogadores
+      .filter((j) => j.estado === "aceito" && j.perfil)
+      .map((j) => ({ id: j.jogador_id, nome: j.perfil!.nome }));
     const quando = new Date(partida.inicio).toLocaleString("pt-BR", {
       weekday: "long",
       day: "2-digit",
@@ -123,6 +185,15 @@ export default async function PaginaPartida({
                 }))
               )
             )}
+          />
+
+          <SetsDaSessao
+            partidaId={partida.id}
+            meuId={user.id}
+            jaComecou={jaComecou}
+            participantes={aceitos}
+            sets={JSON.parse(JSON.stringify(sets))}
+            teto={teto ?? 1}
           />
         </div>
       </main>
