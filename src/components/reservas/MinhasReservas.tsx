@@ -58,6 +58,46 @@ export function MinhasReservas({
     string | null
   >(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [montando, setMontando] = useState<string | null>(null);
+
+  // Transforma a reserva numa sessão com participantes. Se já existir uma,
+  // só leva para ela — o botão não cria duas.
+  async function montarJogo(reserva: Reserva) {
+    setErro(null);
+    setMontando(reserva.id);
+
+    const supabase = criarClienteNavegador();
+    const { data, error } = await supabase.rpc("criar_sessao", {
+      p_reserva_id: reserva.id,
+      p_competitiva: true,
+      p_max_jogadores: 4,
+    });
+
+    if (!error) {
+      posthog.capture("sessao_criada");
+      router.push(`/app/partidas/${data}`);
+      return;
+    }
+
+    if (error.message.includes("JA_EXISTE_PARTIDA")) {
+      const { data: p } = await supabase
+        .from("partidas")
+        .select("id")
+        .eq("reserva_id", reserva.id)
+        .maybeSingle();
+      if (p) {
+        router.push(`/app/partidas/${p.id}`);
+        return;
+      }
+    }
+
+    setMontando(null);
+    setErro(
+      error.message.includes("PENDENCIA")
+        ? "Você tem um jogo não pago. Acerte antes de montar outro."
+        : "Não conseguimos montar o jogo. Tente de novo."
+    );
+  }
 
   async function cancelar(reserva: Reserva) {
     setErro(null);
@@ -181,6 +221,24 @@ export function MinhasReservas({
                 </>
               )}
             </p>
+
+            {/* Reservar quadra e montar o jogo são coisas diferentes: a
+                reserva sozinha não sabe quem jogou, então nunca poderia
+                registrar resultado. Montar o jogo é o que a torna uma
+                partida com participantes. */}
+            <button
+              type="button"
+              onClick={() => montarJogo(reserva)}
+              disabled={montando === reserva.id}
+              className="mt-3 block w-full rounded-2xl bg-primaria p-4 text-left shadow transition hover:brightness-110 disabled:opacity-60"
+            >
+              <span className="font-display font-bold text-white">
+                🎾 {montando === reserva.id ? "Montando..." : "Montar o jogo"}
+              </span>
+              <span className="mt-0.5 block text-xs text-white/80">
+                Convide quem vai jogar para poder registrar o resultado depois
+              </span>
+            </button>
 
             {podeMexer && (
               <div className="mt-3 flex flex-wrap gap-2">

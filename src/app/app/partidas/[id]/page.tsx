@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { PartidaDetalhe } from "@/components/partidas/PartidaDetalhe";
+import { ConvidarParticipantes } from "@/components/partidas/ConvidarParticipantes";
 import { statusDaPartida, partidaComecou } from "@/lib/partidas";
 
 export const metadata: Metadata = {
@@ -24,7 +25,7 @@ export default async function PaginaPartida({
   const { data: partida } = await supabase
     .from("partidas")
     .select(
-      "id, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, status, organizador_id, inicio, fim, preco_centavos, quadras ( nome, clubes ( id, nome, cidade ) ), partida_jogadores ( jogador_id, papel, ordem )"
+      "id, tipo, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, status, organizador_id, inicio, fim, preco_centavos, quadras ( nome, clubes ( id, nome, cidade ) ), partida_jogadores ( jogador_id, papel, ordem, estado )"
     )
     .eq("id", id)
     .maybeSingle();
@@ -56,6 +57,77 @@ export default async function PaginaPartida({
   // Depois que começa, não há mais ações; depois que termina, é "jogada".
   const jaComecou = partidaComecou(partida.inicio);
   const jaAconteceu = statusDaPartida(partida.fim) === "jogada";
+
+  // Sessão privada não tem faixa de categoria nem sexo do jogo — o
+  // organizador escolhe pessoa por pessoa. Por isso ela tem tela própria,
+  // em vez de reaproveitar a da partida aberta com campos vazios.
+  if (partida.tipo === "privada") {
+    // O tipo que o Supabase infere para a junção aninhada vem como lista;
+    // na prática é um registro só.
+    const local = partida.quadras as unknown as {
+      nome: string;
+      clubes: { id: string; nome: string; cidade: string };
+    };
+    const quando = new Date(partida.inicio).toLocaleString("pt-BR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    return (
+      <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-8">
+        <div className="mx-auto w-full max-w-md">
+          <Link
+            href={voltarHref}
+            className="text-sm font-medium text-tinta-suave hover:text-tinta"
+          >
+            {voltarLabel}
+          </Link>
+
+          <h1 className="mt-4 font-display text-2xl font-extrabold text-tinta">
+            {local.clubes.nome}
+          </h1>
+          <p className="mt-1 text-sm text-tinta-suave">
+            {local.nome} · {quando}
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="rounded-full bg-superficie px-3 py-1 text-xs font-bold text-tinta-suave ring-1 ring-black/5">
+              🔒 Jogo entre convidados
+            </span>
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-bold ${
+                partida.competitiva
+                  ? "bg-primaria/10 text-primaria"
+                  : "bg-fundo text-tinta-suave ring-1 ring-black/5"
+              }`}
+            >
+              {partida.competitiva ? "Vale rating" : "Amistoso"}
+            </span>
+          </div>
+
+          <ConvidarParticipantes
+            partidaId={partida.id}
+            meuId={user.id}
+            souOrganizador={partida.organizador_id === user.id}
+            jaComecou={jaComecou}
+            participantes={JSON.parse(
+              JSON.stringify(
+                jogadores.map((j) => ({
+                  jogador_id: j.jogador_id,
+                  estado: j.estado,
+                  papel: j.papel,
+                  perfil: j.perfil,
+                }))
+              )
+            )}
+          />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-8">
