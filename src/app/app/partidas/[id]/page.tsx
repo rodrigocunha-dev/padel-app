@@ -5,6 +5,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { PartidaDetalhe } from "@/components/partidas/PartidaDetalhe";
 import { ConvidarParticipantes } from "@/components/partidas/ConvidarParticipantes";
 import { SetsDaSessao } from "@/components/partidas/SetsDaSessao";
+import { PagamentoPartida } from "@/components/partidas/PagamentoPartida";
 import { statusDaPartida, partidaComecou } from "@/lib/partidas";
 
 export const metadata: Metadata = {
@@ -186,6 +187,30 @@ export default async function PaginaPartida({
               )
             )}
           />
+
+          {/* A divisão do valor vale para a sessão igual à partida aberta:
+              a quadra é paga do mesmo jeito. Sem isto, todo participante
+              virava inadimplente 24h depois do jogo sem ter como pagar —
+              foi o que aconteceu no teste do fundador.
+              O rateio é entre quem ACEITOU: numa sessão privada convite
+              pendente não é vaga vendida, é gente que ainda não entrou. */}
+          {partida.status !== "cancelada" &&
+            (partida.preco_centavos ?? 0) > 0 &&
+            aceitos.some((p) => p.id === user.id) && (
+              <PagamentoPartida
+                partidaId={partida.id}
+                meuId={user.id}
+                souOrganizador={partida.organizador_id === user.id}
+                totalCentavos={partida.preco_centavos ?? 0}
+                maxJogadores={aceitos.length}
+                jogadores={aceitos.map((p) => ({
+                  jogador_id: p.id,
+                  nome: p.nome,
+                  ehOrganizador: p.id === partida.organizador_id,
+                }))}
+                resumoPartida={`${local.nome}, ${quando}`}
+              />
+            )}
 
           <SetsDaSessao
             partidaId={partida.id}
