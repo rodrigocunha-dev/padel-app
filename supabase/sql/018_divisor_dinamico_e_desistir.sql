@@ -26,12 +26,32 @@
 
 
 -- ============================================================
--- 1) O DIVISOR CONGELADO
+-- 1) COLUNAS PRIMEIRO
 -- ============================================================
+-- Todas as colunas novas ficam aqui no topo, antes de qualquer função:
+-- o Postgres valida o corpo das funções no momento em que elas são
+-- criadas, então uma função que cite coluna criada mais abaixo falha.
 alter table public.partidas
   add column if not exists divisor_congelado smallint
     check (divisor_congelado is null or divisor_congelado > 0);
 
+-- "Desistir" marca a vaga como disponível para troca SEM remover a
+-- pessoa — ela só sai quando alguém assume.
+alter table public.partida_jogadores
+  add column if not exists desistiu_em timestamptz;
+
+-- Estado novo: 'saiu' é quem desistiu E foi substituído. Diferente de
+-- 'recusado', que é quem nunca aceitou.
+alter table public.partida_jogadores
+  drop constraint if exists partida_jogadores_estado_check;
+alter table public.partida_jogadores
+  add constraint partida_jogadores_estado_check
+  check (estado in ('convidado', 'aceito', 'recusado', 'saiu'));
+
+
+-- ============================================================
+-- 2) O DIVISOR
+-- ============================================================
 -- Quantas pessoas ocupam vaga agora. Quem recusou não ocupa; quem
 -- avisou que desiste também não, porque a vaga está aberta para troca.
 create or replace function public.vagas_ocupadas(p_partida_id uuid)
@@ -69,7 +89,7 @@ $fn$;
 
 
 -- ============================================================
--- 2) CONGELAR NO PRIMEIRO PAGAMENTO
+-- 3) CONGELAR NO PRIMEIRO PAGAMENTO
 -- ============================================================
 -- Gatilho, e não a tela: o congelamento tem que valer mesmo que o
 -- pagamento venha por outro caminho (o gateway real, amanhã).
@@ -95,22 +115,11 @@ create trigger trg_congelar_divisor
 
 
 -- ============================================================
--- 3) "DESISTIR" — avisa o grupo, não some da sessão
+-- 4) "DESISTIR" — avisa o grupo, não some da sessão
 -- ============================================================
 -- Situação real: a pessoa avisa que talvez não consiga ir, mas mantém a
 -- vaga se ninguém assumir. Por isso desistir NÃO remove — só marca a
--- vaga como disponível para troca.
-alter table public.partida_jogadores
-  add column if not exists desistiu_em timestamptz;
-
--- Estado novo: 'saiu' é quem desistiu E foi substituído. Diferente de
--- 'recusado', que é quem nunca aceitou.
-alter table public.partida_jogadores
-  drop constraint if exists partida_jogadores_estado_check;
-alter table public.partida_jogadores
-  add constraint partida_jogadores_estado_check
-  check (estado in ('convidado', 'aceito', 'recusado', 'saiu'));
-
+-- vaga como disponível para troca. (As colunas estão na seção 1.)
 create or replace function public.desistir_da_sessao(p_partida_id uuid)
 returns void
 language plpgsql
@@ -179,7 +188,7 @@ $fn$;
 
 
 -- ============================================================
--- 4) CONVIDAR — respeitando o congelamento
+-- 5) CONVIDAR — respeitando o congelamento
 -- ============================================================
 -- Antes do congelamento: sem limite, o grupo cresce à vontade.
 -- Depois: só cabe convite se houver vaga aberta (alguém recusou ou
@@ -245,7 +254,7 @@ $fn$;
 
 
 -- ============================================================
--- 5) ACEITAR — quem assume a vaga tira quem desistiu
+-- 6) ACEITAR — quem assume a vaga tira quem desistiu
 -- ============================================================
 create or replace function public.responder_convite(
   p_partida_id uuid,
