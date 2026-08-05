@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { FeedPartidas } from "@/components/partidas/FeedPartidas";
+import { AbasPartidas } from "@/components/partidas/AbasPartidas";
 import type { PartidaFeed } from "@/lib/partidas-tipos";
 
 export const metadata: Metadata = {
@@ -48,6 +49,8 @@ export default async function PaginaFeed() {
             ← Início
           </Link>
         </div>
+
+        <AbasPartidas atual="abertas" />
 
         <FeedPartidas
           partidas={JSON.parse(JSON.stringify(partidas ?? [])) as PartidaFeed[]}

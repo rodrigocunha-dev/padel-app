@@ -138,6 +138,22 @@ export default async function PaginaPartida({
     const aceitos = jogadores
       .filter((j) => j.estado === "aceito" && j.perfil)
       .map((j) => ({ id: j.jogador_id, nome: j.perfil!.nome }));
+    // A divisão do valor vale para a sessão igual à partida aberta: a quadra
+    // é paga do mesmo jeito. Onde ela aparece na tela depende de eu já ter
+    // pago ou não — devendo, ela vem antes de tudo.
+    const { data: meuPagamento } = await supabase
+      .from("pagamentos")
+      .select("status")
+      .eq("partida_id", partida.id)
+      .eq("jogador_id", user.id)
+      .maybeSingle();
+
+    const euPaguei = meuPagamento?.status === "pago";
+    const mostrarPagamento =
+      partida.status !== "cancelada" &&
+      (partida.preco_centavos ?? 0) > 0 &&
+      jogadores.some((j) => j.jogador_id === user.id && j.estado === "aceito");
+
     const quando = new Date(partida.inicio).toLocaleString("pt-BR", {
       weekday: "long",
       day: "2-digit",
@@ -178,6 +194,25 @@ export default async function PaginaPartida({
             </span>
           </div>
 
+          {/* Se EU ainda não paguei, a divisão sobe para antes de tudo:
+              quem chega aqui por um aviso de cobrança quer pagar, e não
+              deve ter que rolar a tela para achar o botão. */}
+          {mostrarPagamento && !euPaguei && (
+            <PagamentoPartida
+              partidaId={partida.id}
+              meuId={user.id}
+              souOrganizador={partida.organizador_id === user.id}
+              totalCentavos={partida.preco_centavos ?? 0}
+              maxJogadores={divisor ?? Math.max(4, aceitos.length)}
+              jogadores={aceitos.map((p) => ({
+                jogador_id: p.id,
+                nome: p.nome,
+                ehOrganizador: p.id === partida.organizador_id,
+              }))}
+              resumoPartida={`${local.nome}, ${quando}`}
+            />
+          )}
+
           <ConvidarParticipantes
             partidaId={partida.id}
             meuId={user.id}
@@ -199,15 +234,9 @@ export default async function PaginaPartida({
             )}
           />
 
-          {/* A divisão do valor vale para a sessão igual à partida aberta:
-              a quadra é paga do mesmo jeito. Sem isto, todo participante
-              virava inadimplente 24h depois do jogo sem ter como pagar —
-              foi o que aconteceu no teste do fundador.
-              O rateio é entre quem ACEITOU: numa sessão privada convite
-              pendente não é vaga vendida, é gente que ainda não entrou. */}
-          {partida.status !== "cancelada" &&
-            (partida.preco_centavos ?? 0) > 0 &&
-            aceitos.some((p) => p.id === user.id) && (
+          {/* Já paguei: a divisão fica aqui embaixo, como informação de
+              quem falta — não é mais uma ação minha. */}
+          {mostrarPagamento && euPaguei && (
               <PagamentoPartida
                 partidaId={partida.id}
                 meuId={user.id}

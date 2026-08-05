@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { MinhasPartidas } from "@/components/partidas/MinhasPartidas";
+import { AbasPartidas } from "@/components/partidas/AbasPartidas";
 import {
   statusDaPartida,
   statusDoPagamento,
@@ -26,7 +27,12 @@ export type ItemMinhaPartida = {
   statusPagamento: StatusPagamento;
 };
 
-export default async function PaginaMinhasPartidas() {
+export default async function PaginaMinhasPartidas({
+  searchParams,
+}: {
+  searchParams: Promise<{ filtro?: string }>;
+}) {
+  const { filtro } = await searchParams;
   const supabase = await criarClienteServidor();
   const {
     data: { user },
@@ -132,6 +138,8 @@ export default async function PaginaMinhasPartidas() {
           </Link>
         </div>
 
+        <AbasPartidas atual="minhas" />
+
         {/* O aviso dentro do app existe sempre — é o que torna justo o
             "quem não contestar em 24h concordou". */}
         {avisos.length > 0 && (
@@ -191,7 +199,14 @@ export default async function PaginaMinhasPartidas() {
           </section>
         )}
 
-        <MinhasPartidas itens={itens} />
+        <MinhasPartidas
+          itens={itens}
+          filtroInicial={
+            filtro === "inadimplente" || filtro === "aguardando"
+              ? filtro
+              : undefined
+          }
+        />
       </div>
     </main>
   );

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
 import { ROTULO_CATEGORIA } from "@/lib/partidas";
+import { AvisoPendencia } from "@/components/partidas/AvisoPendencia";
 
 export type Participante = {
   jogador_id: string | null;
@@ -66,6 +67,8 @@ export function ConvidarParticipantes({
   >([]);
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  // Pendência não é um erro qualquer: tem caminho de saída, então vira link.
+  const [ehPendencia, setEhPendencia] = useState(false);
 
   const meuConvite = participantes.find((p) => p.jogador_id === meuId);
   const jaNaLista = new Set(participantes.map((p) => p.jogador_id));
@@ -107,6 +110,7 @@ export function ConvidarParticipantes({
   async function convidar(jogadorId: string, nome: string) {
     setOcupado(true);
     setErro(null);
+    setEhPendencia(false);
     const supabase = criarClienteNavegador();
     const { error } = await supabase.rpc("convidar_participante", {
       p_partida_id: partidaId,
@@ -114,6 +118,7 @@ export function ConvidarParticipantes({
     });
     setOcupado(false);
     if (error) {
+      setEhPendencia(error.message.includes("PENDENCIA"));
       setErro(traduzir(error.message));
       return;
     }
@@ -130,6 +135,7 @@ export function ConvidarParticipantes({
   async function desistir(voltarAtras: boolean) {
     setOcupado(true);
     setErro(null);
+    setEhPendencia(false);
     const supabase = criarClienteNavegador();
     const { error } = await supabase.rpc(
       voltarAtras ? "cancelar_desistencia" : "desistir_da_sessao",
@@ -137,6 +143,7 @@ export function ConvidarParticipantes({
     );
     setOcupado(false);
     if (error) {
+      setEhPendencia(error.message.includes("PENDENCIA"));
       setErro(traduzir(error.message));
       return;
     }
@@ -147,6 +154,7 @@ export function ConvidarParticipantes({
   async function responder(aceito: boolean) {
     setOcupado(true);
     setErro(null);
+    setEhPendencia(false);
     const supabase = criarClienteNavegador();
     const { error } = await supabase.rpc("responder_convite", {
       p_partida_id: partidaId,
@@ -154,6 +162,7 @@ export function ConvidarParticipantes({
     });
     setOcupado(false);
     if (error) {
+      setEhPendencia(error.message.includes("PENDENCIA"));
       setErro(traduzir(error.message));
       return;
     }
@@ -339,11 +348,14 @@ export function ConvidarParticipantes({
         </div>
       )}
 
-      {erro && (
-        <p className="mt-3 rounded-xl bg-red-100 p-3 text-sm font-medium text-red-700">
-          {erro}
-        </p>
-      )}
+      {erro &&
+        (ehPendencia ? (
+          <AvisoPendencia texto={erro} />
+        ) : (
+          <p className="mt-3 rounded-xl bg-red-100 p-3 text-sm font-medium text-red-700">
+            {erro}
+          </p>
+        ))}
     </section>
   );
 }

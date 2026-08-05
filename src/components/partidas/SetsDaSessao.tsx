@@ -92,6 +92,9 @@ export function SetsDaSessao({
   const [ga, setGa] = useState("6");
   const [gb, setGb] = useState("4");
   const [contestando, setContestando] = useState<string | null>(null);
+  // Voto é em dois passos: escolher e confirmar. Um toque só decidiria o
+  // resultado de um jogo sem chance de corrigir a mão errada.
+  const [escolha, setEscolha] = useState<Record<string, "original" | "contestado">>({});
   const [cga, setCga] = useState("6");
   const [cgb, setCgb] = useState("4");
 
@@ -149,6 +152,10 @@ export function SetsDaSessao({
     setOcupado(false);
     if (error) return setErro(traduzir(error.message));
     posthog.capture("set_votado", { voto });
+    // Limpa a escolha local: a partir daqui vale o voto gravado.
+    setEscolha((e) => Object.fromEntries(
+      Object.entries(e).filter(([k]) => k !== setId)
+    ));
     router.refresh();
   }
 
@@ -235,34 +242,54 @@ export function SetsDaSessao({
                   {possoVotar && (
                     <>
                       <p className="mt-1 text-xs text-tinta-suave">
-                        Você estava lá. Qual placar está certo?
+                        {s.meuVoto
+                          ? "Você já votou. Dá para mudar enquanto a votação estiver aberta."
+                          : "Você estava lá. Qual placar está certo?"}
                       </p>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          disabled={ocupado}
-                          onClick={() => votar(s.id, "original")}
-                          className={`rounded-full px-4 py-2 text-sm font-bold ring-1 transition disabled:opacity-50 ${
-                            s.meuVoto === "original"
-                              ? "bg-primaria text-white ring-primaria"
-                              : "bg-superficie text-tinta ring-black/10 hover:ring-primaria/40"
-                          }`}
-                        >
-                          {s.games_a} x {s.games_b}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={ocupado}
-                          onClick={() => votar(s.id, "contestado")}
-                          className={`rounded-full px-4 py-2 text-sm font-bold ring-1 transition disabled:opacity-50 ${
-                            s.meuVoto === "contestado"
-                              ? "bg-primaria text-white ring-primaria"
-                              : "bg-superficie text-tinta ring-black/10 hover:ring-primaria/40"
-                          }`}
-                        >
-                          {s.contestacao!.games_a} x {s.contestacao!.games_b}
-                        </button>
+                        {(
+                          [
+                            ["original", `${s.games_a} x ${s.games_b}`],
+                            [
+                              "contestado",
+                              `${s.contestacao!.games_a} x ${s.contestacao!.games_b}`,
+                            ],
+                          ] as const
+                        ).map(([valor, rotulo]) => {
+                          const selecionado =
+                            (escolha[s.id] ?? s.meuVoto) === valor;
+                          return (
+                            <button
+                              key={valor}
+                              type="button"
+                              disabled={ocupado}
+                              onClick={() =>
+                                setEscolha((e) => ({ ...e, [s.id]: valor }))
+                              }
+                              className={`rounded-full px-4 py-2 text-sm font-bold ring-1 transition disabled:opacity-50 ${
+                                selecionado
+                                  ? "bg-primaria text-white ring-primaria"
+                                  : "bg-superficie text-tinta ring-black/10 hover:ring-primaria/40"
+                              }`}
+                            >
+                              {rotulo}
+                            </button>
+                          );
+                        })}
                       </div>
+
+                      {/* Só aparece depois de escolher, e some se a escolha
+                          for igual ao voto que já está registrado. */}
+                      {escolha[s.id] && escolha[s.id] !== s.meuVoto && (
+                        <button
+                          type="button"
+                          disabled={ocupado}
+                          onClick={() => votar(s.id, escolha[s.id])}
+                          className="mt-3 w-full rounded-full bg-primaria px-5 py-2.5 font-display font-bold text-white transition hover:brightness-110 disabled:opacity-50"
+                        >
+                          Confirmar voto
+                        </button>
+                      )}
                     </>
                   )}
                   {souParticipante && (

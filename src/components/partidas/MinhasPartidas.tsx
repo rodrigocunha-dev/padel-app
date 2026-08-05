@@ -37,13 +37,21 @@ const CLASSE_PAGAMENTO: Record<StatusPagamento, string> = {
   inadimplente: "bg-red-100 text-red-700",
 };
 
-export function MinhasPartidas({ itens }: { itens: ItemMinhaPartida[] }) {
+export function MinhasPartidas({
+  itens,
+  filtroInicial,
+}: {
+  itens: ItemMinhaPartida[];
+  // Vem de quem chegou por um link de cobrança ("você tem jogo não pago"):
+  // a lista já abre filtrada, em vez de a pessoa ter que achar a dívida.
+  filtroInicial?: StatusPagamento;
+}) {
   const [filtroPartida, setFiltroPartida] = useState<StatusPartida | "todas">(
     "todas"
   );
   const [filtroPagamento, setFiltroPagamento] = useState<
     StatusPagamento | "todos"
-  >("todos");
+  >(filtroInicial ?? "todos");
 
   const lista = useMemo(
     () =>
