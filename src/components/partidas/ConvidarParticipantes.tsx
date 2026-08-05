@@ -10,6 +10,7 @@ export type Participante = {
   jogador_id: string | null;
   estado: string;
   papel: string;
+  desistiu_em: string | null;
   perfil: { nome: string; foto_url: string | null; categoria: number } | null;
 };
 
@@ -33,6 +34,10 @@ const ERROS: Record<string, string> = {
   SO_O_ORGANIZADOR_CONVIDA: "Só quem montou o jogo pode convidar.",
   CONVITE_JA_RESPONDIDO: "Você já respondeu a este convite.",
   PENDENCIA: "Você tem um jogo não pago. Acerte antes de entrar em outro.",
+  SEM_VAGA_ABERTA:
+    "O grupo já está fechado. Só dá para convidar se alguém recusar ou desistir.",
+  SO_QUEM_ACEITOU_DESISTE: "Só quem já confirmou pode desistir.",
+  NADA_PARA_CANCELAR: "Você não tinha avisado que ia desistir.",
 };
 
 function traduzir(msg: string | undefined): string {
@@ -119,6 +124,26 @@ export function ConvidarParticipantes({
     void nome;
   }
 
+  // "Desistir" NÃO tira você do jogo: avisa o grupo que a vaga está
+  // disponível. Você só sai de fato quando alguém assumir — e dá para
+  // voltar atrás enquanto isso não acontece.
+  async function desistir(voltarAtras: boolean) {
+    setOcupado(true);
+    setErro(null);
+    const supabase = criarClienteNavegador();
+    const { error } = await supabase.rpc(
+      voltarAtras ? "cancelar_desistencia" : "desistir_da_sessao",
+      { p_partida_id: partidaId }
+    );
+    setOcupado(false);
+    if (error) {
+      setErro(traduzir(error.message));
+      return;
+    }
+    posthog.capture(voltarAtras ? "desistencia_cancelada" : "desistiu_da_sessao");
+    router.refresh();
+  }
+
   async function responder(aceito: boolean) {
     setOcupado(true);
     setErro(null);
@@ -200,14 +225,62 @@ export function ConvidarParticipantes({
             </div>
             <span
               className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                CLASSE_ESTADO[p.estado] ?? "bg-fundo text-tinta-suave"
+                p.desistiu_em
+                  ? "bg-amber-100 text-amber-800"
+                  : CLASSE_ESTADO[p.estado] ?? "bg-fundo text-tinta-suave"
               }`}
             >
-              {ROTULO_ESTADO[p.estado] ?? p.estado}
+              {p.desistiu_em
+                ? "Vaga disponível"
+                : ROTULO_ESTADO[p.estado] ?? p.estado}
             </span>
           </li>
         ))}
       </ul>
+
+      {/* Já confirmei e ainda dá tempo: posso avisar que talvez não vá */}
+      {meuConvite?.estado === "aceito" && !jaComecou && (
+        <div className="mt-4 rounded-2xl bg-superficie p-5 shadow ring-1 ring-black/5">
+          {meuConvite.desistiu_em ? (
+            <>
+              <p className="font-display font-bold text-tinta">
+                O grupo sabe que sua vaga está disponível
+              </p>
+              <p className="mt-1 text-sm text-tinta-suave">
+                Você continua no jogo até alguém assumir. Se ninguém assumir
+                até a hora de jogar, a vaga segue sua.
+              </p>
+              <button
+                type="button"
+                disabled={ocupado}
+                onClick={() => desistir(true)}
+                className="mt-3 rounded-full bg-primaria px-5 py-2.5 font-display font-bold text-white transition hover:brightness-110 disabled:opacity-50"
+              >
+                Voltar atrás, eu vou jogar
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="font-display font-bold text-tinta">
+                Não vai conseguir ir?
+              </p>
+              <p className="mt-1 text-sm text-tinta-suave">
+                Avise o grupo que sua vaga está disponível. Você{" "}
+                <strong>não sai do jogo</strong> — só sai se alguém assumir
+                seu lugar.
+              </p>
+              <button
+                type="button"
+                disabled={ocupado}
+                onClick={() => desistir(false)}
+                className="mt-3 rounded-full px-5 py-2.5 font-display font-bold text-tinta ring-1 ring-black/10 transition hover:ring-primaria/40 disabled:opacity-50"
+              >
+                Avisar que posso não ir
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Só o organizador convida, e só antes do jogo começar */}
       {souOrganizador && !jaComecou && (

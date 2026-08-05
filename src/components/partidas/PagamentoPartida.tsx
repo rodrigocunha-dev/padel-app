@@ -17,6 +17,7 @@ type Pagamento = {
   jogador_id: string;
   status: string;
   cobranca_externa_id: string | null;
+  valor_centavos: number;
 };
 
 function formatarReais(centavos: number): string {
@@ -57,13 +58,16 @@ export function PagamentoPartida({
   const [confirmando, setConfirmando] = useState(false);
 
   // Cada jogador paga uma parte igual; a sobra de centavos vai para os
-  // primeiros da lista. O total é dividido pelo número de vagas da partida.
+  // primeiros da lista. Na partida aberta o divisor é o número de vagas;
+  // na sessão em grupo vem do servidor (mínimo 4, congelado no primeiro
+  // pagamento) — em nenhum caso a tela inventa a conta.
   const partes = dividirValor(totalCentavos, maxJogadores);
+  const faltamPessoas = Math.max(0, maxJogadores - jogadores.length);
 
   async function carregar() {
     const { data } = await supabase
       .from("pagamentos")
-      .select("jogador_id, status, cobranca_externa_id")
+      .select("jogador_id, status, cobranca_externa_id, valor_centavos")
       .eq("partida_id", partidaId);
     setPagamentos((data as Pagamento[]) ?? []);
   }
@@ -109,6 +113,12 @@ export function PagamentoPartida({
 
   const statusDe = (jid: string) =>
     pagamentos.find((p) => p.jogador_id === jid)?.status ?? "sem";
+
+  // Quanto a pessoa REALMENTE pagou. Antes a tela mostrava sempre a parte
+  // calculada agora — então, se o divisor mudasse, quem pagou R$65
+  // aparecia como tendo pago R$43,33. O valor certo sempre esteve gravado.
+  const valorPagoDe = (jid: string) =>
+    pagamentos.find((p) => p.jogador_id === jid)?.valor_centavos ?? null;
 
   const minhaParte = (() => {
     const idx = jogadores.findIndex((j) => j.jogador_id === meuId);
@@ -204,8 +214,16 @@ export function PagamentoPartida({
       </h2>
       <p className="mt-1 text-sm text-tinta-suave">
         {quantosPagaram}/{jogadores.length} pagaram · a quadra sai por{" "}
-        {formatarReais(totalCentavos)}, dividida sem taxa nenhuma.
+        {formatarReais(totalCentavos)}, dividida por {maxJogadores} sem taxa
+        nenhuma.
       </p>
+      {faltamPessoas > 0 && (
+        <p className="mt-1 text-xs text-tinta-suave">
+          A divisão já conta com {maxJogadores} jogadores, o mínimo para
+          fechar um jogo. {faltamPessoas === 1 ? "Falta 1" : `Faltam ${faltamPessoas}`}{" "}
+          para completar.
+        </p>
+      )}
 
       <div className="mt-3 flex flex-col gap-2">
         {jogadores.map((j, i) => {
@@ -225,7 +243,9 @@ export function PagamentoPartida({
                   )}
                 </p>
                 <p className="text-xs text-tinta-suave">
-                  {formatarReais(parte)} ·{" "}
+                  {/* Quem já pagou mostra o valor QUE PAGOU; quem não pagou
+                      mostra o que deve pela divisão de agora. */}
+                  {formatarReais(pago ? (valorPagoDe(j.jogador_id) ?? parte) : parte)} ·{" "}
                   {pago ? (
                     <span className="font-bold text-primaria">pago ✓</span>
                   ) : (

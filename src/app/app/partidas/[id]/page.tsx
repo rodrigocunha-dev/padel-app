@@ -27,7 +27,7 @@ export default async function PaginaPartida({
   const { data: partida } = await supabase
     .from("partidas")
     .select(
-      "id, tipo, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, status, organizador_id, inicio, fim, preco_centavos, quadras ( nome, clubes ( id, nome, cidade ) ), partida_jogadores ( jogador_id, papel, ordem, estado )"
+      "id, tipo, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, status, organizador_id, inicio, fim, preco_centavos, quadras ( nome, clubes ( id, nome, cidade ) ), partida_jogadores ( jogador_id, papel, ordem, estado, desistiu_em )"
     )
     .eq("id", id)
     .maybeSingle();
@@ -105,6 +105,13 @@ export default async function PaginaPartida({
       p_partida_id: partida.id,
     });
 
+    // O divisor vem do servidor: mínimo 4 e congelado no 1º pagamento.
+    // A tela não recalcula por conta própria — foi assim que a conta de
+    // quem já tinha pago mudou sozinha no teste.
+    const { data: divisor } = await supabase.rpc("divisor_da_partida", {
+      p_partida_id: partida.id,
+    });
+
     const sets = (setsRaw ?? []).map((s, i) => {
       const c = (contestacoes ?? []).find((x) => x.set_id === s.id) ?? null;
       const v = (meusVotos ?? []).find((x) => x.set_id === s.id) ?? null;
@@ -178,12 +185,16 @@ export default async function PaginaPartida({
             jaComecou={jaComecou}
             participantes={JSON.parse(
               JSON.stringify(
-                jogadores.map((j) => ({
-                  jogador_id: j.jogador_id,
-                  estado: j.estado,
-                  papel: j.papel,
-                  perfil: j.perfil,
-                }))
+                jogadores
+                  // Quem foi substituído sai da lista: não está mais no jogo.
+                  .filter((j) => j.estado !== "saiu")
+                  .map((j) => ({
+                    jogador_id: j.jogador_id,
+                    estado: j.estado,
+                    papel: j.papel,
+                    desistiu_em: j.desistiu_em,
+                    perfil: j.perfil,
+                  }))
               )
             )}
           />
@@ -202,7 +213,7 @@ export default async function PaginaPartida({
                 meuId={user.id}
                 souOrganizador={partida.organizador_id === user.id}
                 totalCentavos={partida.preco_centavos ?? 0}
-                maxJogadores={aceitos.length}
+                maxJogadores={divisor ?? Math.max(4, aceitos.length)}
                 jogadores={aceitos.map((p) => ({
                   jogador_id: p.id,
                   nome: p.nome,
