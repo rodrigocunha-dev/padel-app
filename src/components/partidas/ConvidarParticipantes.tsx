@@ -6,6 +6,7 @@ import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
 import { ROTULO_CATEGORIA } from "@/lib/partidas";
 import { AvisoPendencia } from "@/components/partidas/AvisoPendencia";
+import { MensagemFlutuante } from "@/components/MensagemFlutuante";
 
 export type Participante = {
   jogador_id: string | null;
@@ -59,12 +60,16 @@ export function ConvidarParticipantes({
   souOrganizador,
   jaComecou,
   participantes,
+  jaPagaram,
 }: {
   partidaId: string;
   meuId: string;
   souOrganizador: boolean;
   jaComecou: boolean;
   participantes: Participante[];
+  // Quem já pagou não pode ser removido (o dinheiro está naquela vaga).
+  // Some o ✕ em vez de deixá-lo tocável e mostrar erro depois.
+  jaPagaram: string[];
 }) {
   const router = useRouter();
   const [busca, setBusca] = useState("");
@@ -284,6 +289,7 @@ export function ConvidarParticipantes({
               {souOrganizador &&
                 !jaComecou &&
                 p.jogador_id !== meuId &&
+                !jaPagaram.includes(p.jogador_id ?? "") &&
                 (p.estado === "convidado" || p.estado === "aceito") && (
                   <button
                     type="button"
@@ -428,14 +434,11 @@ export function ConvidarParticipantes({
         </div>
       )}
 
-      {erro &&
-        (ehPendencia ? (
-          <AvisoPendencia texto={erro} />
-        ) : (
-          <p className="mt-3 rounded-xl bg-red-100 p-3 text-sm font-medium text-red-700">
-            {erro}
-          </p>
-        ))}
+      {erro && (
+        <MensagemFlutuante aoFechar={() => setErro(null)}>
+          {ehPendencia ? <AvisoPendencia texto={erro} embutido /> : erro}
+        </MensagemFlutuante>
+      )}
     </section>
   );
 }

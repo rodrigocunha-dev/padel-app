@@ -141,14 +141,16 @@ export default async function PaginaPartida({
     // A divisão do valor vale para a sessão igual à partida aberta: a quadra
     // é paga do mesmo jeito. Onde ela aparece na tela depende de eu já ter
     // pago ou não — devendo, ela vem antes de tudo.
-    const { data: meuPagamento } = await supabase
+    const { data: pagamentosDaPartida } = await supabase
       .from("pagamentos")
-      .select("status")
-      .eq("partida_id", partida.id)
-      .eq("jogador_id", user.id)
-      .maybeSingle();
+      .select("jogador_id, status")
+      .eq("partida_id", partida.id);
 
-    const euPaguei = meuPagamento?.status === "pago";
+    const jaPagaram = (pagamentosDaPartida ?? [])
+      .filter((p) => p.status === "pago")
+      .map((p) => p.jogador_id);
+
+    const euPaguei = jaPagaram.includes(user.id);
     const mostrarPagamento =
       partida.status !== "cancelada" &&
       (partida.preco_centavos ?? 0) > 0 &&
@@ -232,6 +234,7 @@ export default async function PaginaPartida({
                   }))
               )
             )}
+            jaPagaram={jaPagaram}
           />
 
           {/* Já paguei: a divisão fica aqui embaixo, como informação de

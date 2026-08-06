@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
+import { MensagemFlutuante } from "@/components/MensagemFlutuante";
 
 export type Pessoa = { id: string; nome: string };
 
@@ -472,10 +473,10 @@ export function SetsDaSessao({
         </div>
       )}
 
+      {/* Preso acima da barra: o erro no fim da seção fazia a pessoa
+          repetir a ação sem ver que já tinha dado erro. */}
       {erro && (
-        <p className="mt-3 rounded-xl bg-red-100 p-3 text-sm font-medium text-red-700">
-          {erro}
-        </p>
+        <MensagemFlutuante aoFechar={() => setErro(null)}>{erro}</MensagemFlutuante>
       )}
     </section>
   );
