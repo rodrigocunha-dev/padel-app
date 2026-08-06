@@ -21,6 +21,15 @@ duplas e informe o placar. Qualquer pessoa confirmada no jogo pode registrar.
 
 Repita para cada set jogado. O app avisa quantos sets ainda cabem no seu horário.
 
+## Quando o botão aparece
+
+O botão de registrar só aparece quando duas coisas acontecem:
+
+- O jogo tem **4 jogadores confirmados** — sem isso não há como montar as duplas.
+- Já passaram **15 minutos** do início. Antes disso nenhum set teria terminado.
+
+O prazo para registrar vai até **24 horas depois do fim** do jogo. Passado isso, o botão some.
+
 ## Não precisa ser o organizador
 
 Entre um set e outro, sempre tem alguém do grupo com o celular na mão. Por isso qualquer jogador

@@ -77,11 +77,69 @@ Nas telas (navegador, tamanho de celular, 2 contas): montar o jogo, buscar, conv
 
 Para exercitar os sets às 2h da manhã foi aberta uma faixa de horário temporária numa quadra de teste, **removida ao fim**. Todos os dados de teste foram cancelados.
 
+## A divisão do valor da quadra (scripts 018 e 019)
+Esta parte nasceu de um **bug caro achado no teste**, e vale entender o erro antes da regra.
+
+Uma sessão de R$130 dividida por quem já tinha aceitado: Rodrigo e Carlos pagaram R$65 cada — quadra quitada. Quando o Diego aceitou, o divisor virou 3, e a tela passou a dizer que os dois tinham pago **R$43,33** e a cobrar mais R$43,33 por uma quadra já paga. Divisor que se mexe depois que o dinheiro andou deixa quem pagou sempre errado, e o total arrecadado passa do valor da quadra.
+
+**A regra que ficou:**
+- **Não existe número de vagas declarado.** O divisor é quantas pessoas estão na sessão, com **mínimo de 4** — abaixo disso não dá para fechar um jogo de padel.
+- **Antes do 1º pagamento** recalcula à vontade: convite novo, recusa, tanto faz. Nada foi pago, o grupo ainda está se formando.
+- **No 1º pagamento CONGELA.** Por gatilho na tabela `pagamentos`, não na tela — assim vale também quando o gateway real existir e o pagamento vier por outro caminho.
+- **Quem recusa ou desiste depois libera exatamente 1 vaga**, pelo mesmo valor congelado. Sem recálculo geral.
+
+**Dois consertos na tela, ligados ao mesmo bug:** a consulta nem buscava `valor_centavos` — mostrava sempre a parte calculada agora, e por isso quem pagou R$65 aparecia com R$43,33. E o divisor passou a vir do servidor (`divisor_da_partida`), em vez de a tela recalcular por conta própria.
+
+**⚠️ O mínimo 4 está fixo (`minimo_de_jogadores`) e não pode ficar assim.** A reserva pelo app vale para todos os esportes do clube desde o dia 1. O mínimo tem de vir do esporte da quadra — com a nuance de que esporte sozinho não basta, porque tênis e beach tennis têm simples (2) e duplas (4). Registrado no CLAUDE.md como pendência.
+
+## "Desistir" — a vaga fica disponível sem a pessoa sair
+Situação real: alguém avisa que talvez não consiga ir, mas mantém a vaga se ninguém assumir.
+
+Por isso desistir **não remove**: marca `desistiu_em`, a vaga passa a contar como aberta, e a pessoa só sai (estado `saiu`) quando alguém aceita no lugar dela. Dá para voltar atrás enquanto isso não acontece. Prazo: até o jogo começar.
+
+**O pagamento de quem desistiu fica com ele.** A vaga segue quitada para o clube, e o acerto entre as duas pessoas é por fora — decisão do fundador, conectada com as variantes A1/A2 do modelo de pagamento no CLAUDE.md. Não há transferência de valor entre jogadores.
+
+**Qual vaga o substituto assume:** com duas pessoas oferecendo a vaga, quem entra assumia sempre a de quem desistiu primeiro. Mas se foi o jogador B que achou o substituto, é a vaga de B que tem de ser preenchida — senão B continua no jogo contra a vontade e A sai sem ter arrumado ninguém. O convite passou a carregar `substitui_jogador_id`, e o organizador escolhe quando há mais de uma vaga aberta.
+
+**Não deu para reaproveitar a fila de substitutos** da partida aberta: lá é promoção automática de quem se inscreveu sozinho, sem prazo e sem valor por vaga. Aqui é aviso + substituição manual pelo organizador, com a vaga carregando estado financeiro. Só o nome é parecido.
+
+## Remover participante (script 020)
+O organizador não tinha como tirar alguém convidado por engano. Agora tem — com uma trava: **quem já pagou não pode ser removido**, porque o dinheiro está naquela vaga e não existe estorno com PIX simulado. Na tela o ✕ nem aparece para quem pagou; a trava real continua no banco.
+
+## Registro de set: 15 minutos (script 016)
+O botão liberava assim que dava a hora da partida. Agora só a partir de **15 minutos do início** — ninguém joga um set em menos que isso, e é mais uma porta fechada para jogo fantasma.
+
+Esperar não custa nada porque a janela de registro é de 24h após o fim: um set rápido é registrado alguns minutos depois.
+
+**Atenção a dois números diferentes de propósito:** o teto usa 20 min por set (quantos *cabem* na reserva); a liberação usa 15 min (*quando* o primeiro pode ser registrado). Não "harmonizar" os dois.
+
+## Avisos: um bloco por tipo, e eles somem
+Três correções vindas do teste no celular:
+- **Somem depois de vistos.** Ao abrir a partida pelo bloco, os avisos daquele jogo são marcados como lidos. Antes continuavam cobrando algo já feito.
+- **Um bloco por TIPO, não um por aviso.** Com vários resultados registrados a tela virava pilha de blocos iguais; agora o bloco mostra a contagem e abre a lista.
+- **Dizem de qual jogo são** (clube e data). Antes só diziam que havia algo.
+
+## Onde os erros aparecem
+O erro era renderizado no fim da seção. No teste, o fundador tentou remover três vezes achando que nada acontecia — o erro já estava lá, fora da vista.
+
+Agora existe `MensagemFlutuante`: presa logo acima da barra de navegação, sempre visível, com botão de fechar. **Camada 1050** — acima da barra (1000) e abaixo dos pop-up (1100), seguindo a regra de camadas de `BarraNavegacao.tsx`.
+
 ## O que ainda não existe
 - **Motor de rating** — próximo passo; lê o que isto grava
 - **Entrega B** — convite por telefone com link de cadastro (o banco já está pronto)
 - **Sets em partida aberta** — a Decisão 2 diz que revezamento também gera sets a 0,5x; a tela de partida aberta ainda não tem essa área
 - **Web Push** — logo em seguida, antes do beta
 
+## Scripts de banco desta entrega
+| Script | O que faz |
+|---|---|
+| `014` | Sessões, convite/aceite, sets, contestação, votação, avisos |
+| `015` | Correção: reserva não atravessa a meia-noite (bug achado testando o 014) |
+| `016` | Set só pode ser registrado 15 min depois do início |
+| `017` | Convidado não vê a divisão do valor antes de aceitar |
+| `018` | Divisor dinâmico até o 1º pagamento + "Desistir" |
+| `019` | Divisor nunca menor que 4 |
+| `020` | Remover participante + convite dizendo qual vaga preenche |
+
 ## Métricas
-`sessao_criada`, `participante_convidado`, `convite_aceito`, `convite_recusado`, `set_registrado`, `set_contestado`, `set_votado`, `votacao_avisada`
+`sessao_criada`, `participante_convidado`, `participante_removido`, `convite_aceito`, `convite_recusado`, `desistiu_da_sessao`, `desistencia_cancelada`, `set_registrado`, `set_contestado`, `set_votado`, `votacao_avisada`

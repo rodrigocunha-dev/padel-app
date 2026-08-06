@@ -71,7 +71,15 @@ sinal de alerta — pare e me chame antes de aprovar.
 **Por que chat e notificações ficaram para depois:** o critério de pronto do MVP no CLAUDE.md termina em "registra resultado → vê categoria evoluir" — chat não está nele. Rating é a cunha contra o Playtomic e está em 0%, enquanto o trilho de descoberta já está quase pronto. Decisão consciente, não esquecimento.
 
 - [x] ✅ 🔍 **Barra de navegação fixa** (início, descobrir, partidas, perfil) — `BarraNavegacao.tsx` + `app/app/layout.tsx`. Testada no navegador com 3 contas (inclusive conta nova, confirmando que some no cadastro) e **aprovada pelo fundador no celular em 01/08/2026**
-- [ ] ⏳ Todos os itens do **Módulo 1.5** abaixo
+
+### ✅ ENTREGA A — fechada em 04/08/2026 (7 scripts: `014` a `020`)
+Sessão com convite e aceite, sets com contestação e votação, divisão do valor, "Desistir", avisos dentro do app. Detalhe em `docs/interno/sessoes-e-sets.md`.
+
+### 🔜 O que falta no Sprint 5
+- [ ] ⏳ **Motor de rating** — o item principal, ainda não iniciado. Tudo da Entrega A é a *entrada de dados* dele
+- [ ] ⏳ **Web Push** — antes do beta, porque sem ele "silêncio vale como concordância" é injusto
+- [ ] ⏳ **Entrega B** — convite por telefone com link de cadastro (banco já preparado)
+- [ ] ⏳ **Sets em partida aberta** — a Decisão 2 prevê revezamento a 0,5x; só a sessão privada tem a área de sets
 
 ---
 
@@ -126,10 +134,13 @@ sinal de alerta — pare e me chame antes de aprovar.
 
 > ✅ A regra nº 5 foi **revisada e decidida em 01/08/2026** — este módulo está liberado. Conta a partida cheia de 4 (peso 1x) e cada set de sessão em grupo (peso 0,5x), com travas de validade, confirmação e origem. Texto completo da regra no CLAUDE.md.
 
-- [x] 🔧 🔍 **Sessão em grupo**: reserva vira partida com participantes convidados e aceitos — `014_sessoes_e_sets.sql` + `ConvidarParticipantes.tsx`. Testado com 4 contas
-- [x] 🔧 🔍 **Registro de set por set**, com as travas de formato, janela de 24h, origem no app e teto de plausibilidade — `SetsDaSessao.tsx` + `situacao_do_set`
-- [x] 🔧 🔍 **Contestação com placar alternativo e votação do grupo** (mais de 50% dos elegíveis) — testado: 1 voto de 2 não resolve, 2 de 2 resolvem
-- [x] 🔧 🔍 **Aviso dentro do app** (resultado registrado / votação aberta), com cooldown de 6h por votação — tabela `avisos`, aparece em Minhas partidas
+- [x] ✅ 🔍 **Sessão em grupo**: reserva vira partida com participantes convidados e aceitos — `014` + `ConvidarParticipantes.tsx`. Testado com 4 contas e pelo fundador no celular
+- [x] 🔧 🔍 **Registro de set por set**, com as travas de formato, janela de 24h, origem no app, teto de plausibilidade e liberação 15 min após o início (`016`)
+- [x] 🔧 🔍 **Contestação com placar alternativo e votação do grupo** (mais de 50% dos elegíveis, com "Confirmar voto" em dois passos) — testado: 1 voto de 2 não resolve, 2 de 2 resolvem
+- [x] 🔧 🔍 **Aviso dentro do app** — um bloco por tipo, some depois de visto, e diz de qual jogo é
+- [x] ✅ 🔍 **Divisão do valor da quadra** (`018`, `019`): divisor sem vagas declaradas, mínimo 4, congelado no 1º pagamento. Nasceu de um bug real — divisor móvel fazia quem pagou R$65 aparecer com R$43,33
+- [x] ✅ 🔍 **"Desistir"** — a vaga fica disponível sem a pessoa sair; ela só sai quando alguém assume, e o convite diz qual vaga preenche (`020`)
+- [x] ✅ 🔍 **Remover participante** pelo organizador — quem já pagou não pode ser removido (`020`)
 - [ ] ⏳ **Web Push** (aviso na tela do celular) — entra logo depois da Entrega A e **antes do beta**: sem ele, "silêncio vale como concordância" é injusto com quem abre pouco o app
 - [ ] ⏳ **Entrega B**: convite por telefone de quem ainda não tem conta, com link de cadastro. O banco já nasceu preparado (`telefone` em `partida_jogadores`)
 - [ ] ⏳ **Sets em partida aberta** — a Decisão 2 diz que revezamento também gera sets a 0,5x; a tela da partida aberta ainda não tem essa área

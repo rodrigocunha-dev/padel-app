@@ -236,6 +236,7 @@ Gateway de pagamento ainda não decidido → **PIX simulado** (mock isolado para
 
 ## Convenções de trabalho
 - **Ao concluir cada sprint, SEMPRE fazer os dois passos (sem esperar o fundador pedir):** (1) atualizar este CLAUDE.md com o que foi feito, o que ficou pendente e qual o próximo passo; (2) confirmar explicitamente ao fundador que está tudo salvo no GitHub (nada de commit local pendente).
+- **Sprint grande se divide em ENTREGAS, e a documentação fecha CADA entrega** (decidido em 04/08/2026). Não esperar o sprint inteiro terminar: ao fim de cada entrega, atualizar a doc técnica, os artigos de cliente e o Checklist. No Sprint 5 isso significa fechar documentação no fim da Entrega A e de novo no fim da Entrega B. **Motivo:** a Entrega A acumulou 7 scripts e dezenas de decisões em poucos dias; deixar tudo para o fim do sprint é como a documentação envelhece e passa a mentir — foi exatamente o que a auditoria de 29/07 encontrou.
 - Commits pequenos e frequentes com mensagens em PT-BR descrevendo o "porquê".
 - Antes de qualquer mudança grande, explicar o plano em 3–5 linhas e aguardar ok do fundador.
 - Toda funcionalidade nova nasce com: teste no celular real + evento de métrica (PostHog) + **os DOIS documentos da base de conhecimento** (ver `docs/README.md`):

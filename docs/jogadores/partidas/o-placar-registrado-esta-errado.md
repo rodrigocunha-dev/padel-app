@@ -32,6 +32,10 @@ contar com o número correto; e quem estava lá consegue dizer qual das duas ver
 Quando existem dois placares, quem jogou e **não está na discussão** escolhe qual vale. Nem quem
 registrou nem quem contestou votam — as duas pessoas envolvidas ficam de fora.
 
+Para votar, toque no placar que você acha certo e depois em **"Confirmar voto"**. São dois passos de
+propósito: um toque só decidiria o resultado de um jogo, sem chance de corrigir a mão errada. Dá para
+mudar seu voto enquanto a votação estiver aberta.
+
 Para um placar vencer, **mais da metade de quem pode votar** precisa escolher ele. Num jogo de 4,
 isso quer dizer que os outros dois precisam concordar entre si. É o que impede um jogador de mudar
 um resultado só porque trouxe um amigo junto.

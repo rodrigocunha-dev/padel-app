@@ -80,5 +80,27 @@ Cinco artigos de cliente mandavam tocar em "Minhas partidas" ou "Minhas reservas
 ## O que isto deixou exposto
 Testando no celular, o fundador notou que quase todo caminho termina no **Descobrir**. Investigado: não é só falta de dados, é estrutural — criar partida e reservar só existem dentro da página de um clube, e o único jeito de escolher um clube é o mapa. Registrado no CLAUDE.md em "Ideias Futuras" como assunto de UX a analisar, com o "favoritar clubes" apontado como antídoto natural.
 
+## Regra de camadas — respeitar ao criar pop-up novo
+A barra é `fixed`, e isso quebrou o pop-up de reservar: ele estava numa camada abaixo dela, e a barra cobria os botões "Confirmar reserva" e "Voltar".
+
+A ordem ficou assim, e está escrita em `BarraNavegacao.tsx`:
+
+| Camada | O quê |
+|---|---|
+| até 800 | Leaflet (controles do mapa) |
+| 1000 | barra de navegação |
+| 1050 | mensagem flutuante de erro |
+| 1100+ | pop-up / modal |
+
+A barra precisa ficar acima do mapa, e qualquer modal acima dela. O pop-up da agenda do clube não precisou mudar: `/clube` não tem barra.
+
+## O avatar
+O ícone de perfil virou a **foto do jogador** (ou a inicial do nome), convenção que todo mundo já conhece. O layout busca nome e foto e passa para a barra.
+
+O **dropup** com Perfil/Configurações/Sair ficou de fora por ora: hoje o menu teria dois itens, e "Sair" já está dentro do perfil — adicionaria um toque para chegar no que hoje é um toque. Revisitar quando "Configurações" existir.
+
+## Abas de partidas
+A barra tem um item "Partidas" só, mas existem duas listas: as **abertas** (para entrar) e as **minhas**. Sem as abas, "Partidas" levava só às abertas e "Minhas partidas" ficava escondida dentro do Perfil.
+
 ## Métricas
 - `navegacao_barra` (com o destino tocado)

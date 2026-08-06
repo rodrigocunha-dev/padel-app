@@ -35,6 +35,20 @@ O jogador **não** pode ler as reservas dos outros. Para saber o que está ocupa
 ## Remarcar
 Remarcar **move a mesma reserva** para outro horário (não cria uma nova). Isso importa porque: o preço é recalculado pelo servidor, dá para mover para um horário que encosta no atual, e se o novo horário for tomado no meio do caminho a reserva original continua de pé.
 
+## Correção: reserva não atravessa a meia-noite (script 015, 02/08/2026)
+Uma reserva das **23:00 às 01:00** era aceita num clube cuja faixa de funcionamento termina às 23:59 — o clube ficaria com gente em quadra depois de fechado.
+
+A causa: a checagem comparava só a **hora** do fim contra a faixa. Atravessando a meia-noite, o fim vira 01:00, e `23:59 >= 01:00` é verdadeiro comparando hora com hora. A verificação não enxergava que o fim caiu no dia seguinte.
+
+Agora a comparação é em **minutos desde a meia-noite** do dia em que a reserva começa. Quem atravessa passa de 1440 e não cabe em faixa nenhuma — que é o certo, porque a faixa é sempre uma janela de um mesmo dia. A checagem virou uma função única (`preco_da_faixa`) usada por `reservar_quadra` e `remarcar_reserva`, que tinham o mesmo erro.
+
+Só apareceu porque um clube de teste tem faixa terminando às 23:59; com horários comuns, o furo ficaria escondido até acontecer com cliente real.
+
+**Efeito colateral a saber:** numa faixa de 59 minutos (como 23:00–23:59) nenhuma reserva cabe, porque a menor duração oferecida é 1 hora. Não é bug — é a faixa que é irreal.
+
+## Reserva vira jogo
+Uma reserva pode virar uma **sessão** com participantes convidados, e aí passa a poder registrar resultado. Ver `sessoes-e-sets.md`.
+
 ## O que ainda não faz
 - **Pagamento:** a reserva é confirmada e paga-se no clube. O PIX dividido é o próximo módulo e encaixa aqui.
 - Partidas abertas (juntar jogadores na mesma reserva) — módulo próprio.
