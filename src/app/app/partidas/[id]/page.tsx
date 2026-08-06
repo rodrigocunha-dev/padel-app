@@ -260,6 +260,10 @@ export default async function PaginaPartida({
               new Date(partida.inicio).getTime() + 15 * 60 * 1000 <=
               new Date().getTime()
             }
+            dentroDaJanela={
+              new Date().getTime() <=
+              new Date(partida.fim).getTime() + 24 * 60 * 60 * 1000
+            }
             participantes={aceitos}
             sets={JSON.parse(JSON.stringify(sets))}
             teto={teto ?? 1}

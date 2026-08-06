@@ -70,6 +70,7 @@ export function SetsDaSessao({
   meuId,
   jaComecou,
   passaram15Min,
+  dentroDaJanela,
   participantes,
   sets,
   teto,
@@ -80,6 +81,10 @@ export function SetsDaSessao({
   // Calculado no servidor: a trava dos 15 minutos vive no banco, e a tela
   // só reflete. Assim ela nunca oferece um botão que o servidor recusaria.
   passaram15Min: boolean;
+  // A janela de registro fecha 24h depois do fim. Sem isto o botão
+  // continuava aparecendo e clicável, e o servidor recusava com
+  // FORA_DA_JANELA — tela oferecendo o que o banco nega.
+  dentroDaJanela: boolean;
   participantes: Pessoa[];
   sets: SetDaSessao[];
   teto: number;
@@ -191,11 +196,12 @@ export function SetsDaSessao({
           const emDisputa = !!s.contestacao;
           const souRegistrador = s.registrado_por === meuId;
           const souContestador = s.contestacao?.contestado_por === meuId;
-          // Quem sabe se a janela de 24h ainda está aberta é o servidor —
-          // ele devolve AGUARDANDO_JANELA enquanto der para contestar.
-          const dentroDaJanela = s.situacao.motivo === "AGUARDANDO_JANELA";
+          // Janela de CONTESTAÇÃO deste set (24h a partir do registro), que
+          // é diferente da janela de REGISTRO da sessão inteira. Quem sabe
+          // é o servidor: ele devolve AGUARDANDO_JANELA enquanto dá tempo.
+          const podeAindaContestar = s.situacao.motivo === "AGUARDANDO_JANELA";
           const possoContestar =
-            souParticipante && !souRegistrador && !emDisputa && dentroDaJanela;
+            souParticipante && !souRegistrador && !emDisputa && podeAindaContestar;
           const possoVotar =
             souParticipante && emDisputa && !souRegistrador && !souContestador;
 
@@ -355,7 +361,7 @@ export function SetsDaSessao({
 
       {/* Faltam confirmações: sem 4 aceitos não existe set possível, então
           explico em vez de oferecer um botão que não vai funcionar. */}
-      {jaComecou && souParticipante && participantes.length < 4 && (
+      {jaComecou && dentroDaJanela && souParticipante && participantes.length < 4 && (
         <p className="mt-4 rounded-2xl bg-amber-100 p-5 text-sm font-medium text-amber-800 ring-1 ring-amber-200">
           Faltam confirmações para registrar sets. São necessários 4 jogadores
           confirmados, e por enquanto {participantes.length === 1 ? "só há 1" : `há ${participantes.length}`}.
@@ -363,14 +369,23 @@ export function SetsDaSessao({
       )}
 
       {/* Começou, tem gente, mas ainda é cedo demais para um set ter acabado. */}
-      {jaComecou && souParticipante && participantes.length >= 4 && !passaram15Min && (
+      {jaComecou && dentroDaJanela && souParticipante && participantes.length >= 4 && !passaram15Min && (
         <p className="mt-4 rounded-2xl bg-superficie p-5 text-sm text-tinta-suave shadow ring-1 ring-black/5">
           O registro de sets abre 15 minutos depois do início do jogo.
         </p>
       )}
 
+      {/* Prazo de registro encerrado: explica em vez de sumir sem motivo. */}
+      {jaComecou && souParticipante && !dentroDaJanela && (
+        <p className="mt-4 rounded-2xl bg-superficie p-5 text-sm text-tinta-suave shadow ring-1 ring-black/5">
+          O prazo para registrar sets deste jogo terminou (24 horas depois do
+          fim).
+        </p>
+      )}
+
       {/* Registrar set novo */}
       {jaComecou &&
+        dentroDaJanela &&
         passaram15Min &&
         souParticipante &&
         participantes.length >= 4 &&

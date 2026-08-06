@@ -39,6 +39,12 @@ const ERROS: Record<string, string> = {
     "O grupo já está fechado. Só dá para convidar se alguém recusar ou desistir.",
   SO_QUEM_ACEITOU_DESISTE: "Só quem já confirmou pode desistir.",
   NADA_PARA_CANCELAR: "Você não tinha avisado que ia desistir.",
+  SO_O_ORGANIZADOR_REMOVE: "Só quem montou o jogo pode tirar alguém.",
+  ORGANIZADOR_NAO_SAI: "Quem montou o jogo não pode se tirar.",
+  JOGADOR_JA_PAGOU:
+    "Essa pessoa já pagou a parte dela. Não dá para tirá-la sem devolver o valor.",
+  JOGADOR_NAO_ESTA_NA_SESSAO: "Essa pessoa não está mais no jogo.",
+  VAGA_ALVO_INVALIDA: "Essa vaga não está disponível para troca.",
 };
 
 function traduzir(msg: string | undefined): string {
@@ -69,6 +75,7 @@ export function ConvidarParticipantes({
   const [erro, setErro] = useState<string | null>(null);
   // Pendência não é um erro qualquer: tem caminho de saída, então vira link.
   const [ehPendencia, setEhPendencia] = useState(false);
+  const [vagaAlvo, setVagaAlvo] = useState<string | null>(null);
 
   const meuConvite = participantes.find((p) => p.jogador_id === meuId);
   const jaNaLista = new Set(participantes.map((p) => p.jogador_id));
@@ -115,6 +122,10 @@ export function ConvidarParticipantes({
     const { error } = await supabase.rpc("convidar_participante", {
       p_partida_id: partidaId,
       p_jogador_id: jogadorId,
+      // Com mais de uma pessoa oferecendo a vaga, quem entra assume a vaga
+      // ESCOLHIDA — não a de quem ofereceu primeiro. Assim quem achou o
+      // próprio substituto é quem sai.
+      p_substitui: vagaAlvo,
     });
     setOcupado(false);
     if (error) {
@@ -127,6 +138,25 @@ export function ConvidarParticipantes({
     setAchados([]);
     router.refresh();
     void nome;
+  }
+
+  async function remover(jogadorId: string, nome: string) {
+    if (!confirm(`Tirar ${nome || "esta pessoa"} do jogo?`)) return;
+    setOcupado(true);
+    setErro(null);
+    setEhPendencia(false);
+    const supabase = criarClienteNavegador();
+    const { error } = await supabase.rpc("remover_participante", {
+      p_partida_id: partidaId,
+      p_jogador_id: jogadorId,
+    });
+    setOcupado(false);
+    if (error) {
+      setErro(traduzir(error.message));
+      return;
+    }
+    posthog.capture("participante_removido");
+    router.refresh();
   }
 
   // "Desistir" NÃO tira você do jogo: avisa o grupo que a vaga está
@@ -171,6 +201,10 @@ export function ConvidarParticipantes({
   }
 
   const aceitos = participantes.filter((p) => p.estado === "aceito").length;
+  // Quem ofereceu a vaga e ainda espera alguém assumir.
+  const ofereceram = participantes.filter(
+    (p) => p.estado === "aceito" && p.desistiu_em && p.jogador_id
+  );
 
   return (
     <section className="mt-6">
@@ -232,17 +266,36 @@ export function ConvidarParticipantes({
                 </p>
               )}
             </div>
-            <span
-              className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                p.desistiu_em
-                  ? "bg-amber-100 text-amber-800"
-                  : CLASSE_ESTADO[p.estado] ?? "bg-fundo text-tinta-suave"
-              }`}
-            >
-              {p.desistiu_em
-                ? "Vaga disponível"
-                : ROTULO_ESTADO[p.estado] ?? p.estado}
-            </span>
+            <div className="flex shrink-0 items-center gap-2">
+              <span
+                className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                  p.desistiu_em
+                    ? "bg-amber-100 text-amber-800"
+                    : CLASSE_ESTADO[p.estado] ?? "bg-fundo text-tinta-suave"
+                }`}
+              >
+                {p.desistiu_em
+                  ? "Vaga disponível"
+                  : ROTULO_ESTADO[p.estado] ?? p.estado}
+              </span>
+
+              {/* Tirar alguém convidado por engano. Quem já pagou não some:
+                  o dinheiro dele está naquela vaga e não há estorno. */}
+              {souOrganizador &&
+                !jaComecou &&
+                p.jogador_id !== meuId &&
+                (p.estado === "convidado" || p.estado === "aceito") && (
+                  <button
+                    type="button"
+                    disabled={ocupado}
+                    onClick={() => remover(p.jogador_id!, p.perfil?.nome ?? "")}
+                    aria-label={`Tirar ${p.perfil?.nome ?? "jogador"} do jogo`}
+                    className="rounded-full px-2 py-1 text-sm text-tinta-suave transition hover:bg-red-100 hover:text-red-700 disabled:opacity-50"
+                  >
+                    ✕
+                  </button>
+                )}
+            </div>
           </li>
         ))}
       </ul>
@@ -304,6 +357,33 @@ export function ConvidarParticipantes({
             Digite pelo menos 3 letras do nome. A pessoa precisa ter conta no
             app e vai receber um convite para aceitar.
           </p>
+          {/* Duas ou mais pessoas ofereceram a vaga: o organizador diz de
+              QUEM é a vaga que este convite preenche. Com uma só, não há o
+              que escolher. */}
+          {ofereceram.length > 1 && (
+            <div className="mt-3">
+              <p className="text-xs font-bold text-tinta-suave">
+                Esta pessoa entra no lugar de quem?
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {ofereceram.map((o) => (
+                  <button
+                    key={o.jogador_id}
+                    type="button"
+                    onClick={() => setVagaAlvo(o.jogador_id)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-bold ring-1 transition ${
+                      vagaAlvo === o.jogador_id
+                        ? "bg-primaria text-white ring-primaria"
+                        : "bg-fundo text-tinta-suave ring-black/10"
+                    }`}
+                  >
+                    {o.perfil?.nome.split(" ")[0] ?? "Jogador"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <input
             id="busca-jogador"
             type="text"

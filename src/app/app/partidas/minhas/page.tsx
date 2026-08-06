@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { MinhasPartidas } from "@/components/partidas/MinhasPartidas";
 import { AbasPartidas } from "@/components/partidas/AbasPartidas";
+import { AvisosPendentes } from "@/components/partidas/AvisosPendentes";
 import {
   statusDaPartida,
   statusDoPagamento,
@@ -77,16 +78,25 @@ export default async function PaginaMinhasPartidas({
   // Avisos ainda não lidos (resultado registrado, votação aberta).
   const { data: avisosRaw } = await supabase
     .from("avisos")
-    .select("id, tipo, sets ( partida_id )")
+    .select(
+      "id, tipo, sets ( partida_id, partidas ( quadras ( clubes ( nome ) ), inicio ) )"
+    )
     .eq("jogador_id", user.id)
     .is("lido_em", null);
 
-  const avisos = (avisosRaw ?? []).map((a) => ({
-    id: a.id,
-    tipo: a.tipo,
-    partidaId:
-      (a.sets as unknown as { partida_id: string } | null)?.partida_id ?? null,
-  }));
+  const avisos = (avisosRaw ?? []).map((a) => {
+    const s = a.sets as unknown as {
+      partida_id: string;
+      partidas: { inicio: string; quadras: { clubes: { nome: string } } } | null;
+    } | null;
+    // O aviso agora diz DE QUAL jogo é — antes só dizia que havia algo.
+    const nome = s?.partidas
+      ? `${s.partidas.quadras.clubes.nome} · ${new Date(
+          s.partidas.inicio
+        ).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`
+      : null;
+    return { id: a.id, tipo: a.tipo, partidaId: s?.partida_id ?? null, partidaNome: nome };
+  });
 
   // Meus pagamentos (para saber o que está pago).
   const { data: pagos } = await supabase
@@ -142,29 +152,7 @@ export default async function PaginaMinhasPartidas({
 
         {/* O aviso dentro do app existe sempre — é o que torna justo o
             "quem não contestar em 24h concordou". */}
-        {avisos.length > 0 && (
-          <ul className="mt-4 space-y-2">
-            {avisos.map((a) => (
-              <li key={a.id}>
-                <Link
-                  href={a.partidaId ? `/app/partidas/${a.partidaId}` : "#"}
-                  className="block rounded-2xl bg-amber-100 p-4 shadow ring-1 ring-amber-200 transition hover:brightness-105"
-                >
-                  <p className="font-display text-sm font-bold text-amber-800">
-                    {a.tipo === "votacao_aberta"
-                      ? "🗳️ Há um placar em disputa — seu voto decide"
-                      : "📋 Registraram um resultado do seu jogo"}
-                  </p>
-                  <p className="mt-0.5 text-xs text-amber-800/80">
-                    {a.tipo === "votacao_aberta"
-                      ? "Você estava lá. Toque para dizer qual placar está certo."
-                      : "Confira. Se não estiver certo, você tem 24h para contestar."}
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        <AvisosPendentes avisos={avisos} />
 
         {convites.length > 0 && (
           <section className="mt-4">

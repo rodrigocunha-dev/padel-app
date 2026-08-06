@@ -300,9 +300,12 @@ export function PagamentoPartida({
         </p>
       )}
 
-      {/* QR da cobrança */}
+      {/* QR da cobrança — pop-up centralizado. Embutido abaixo do botão
+         obrigava a rolar a tela justamente depois de tocar em pagar.
+         z acima da barra de navegação (1000), ver BarraNavegacao.tsx. */}
       {cobranca && (
-        <div className="mt-4 rounded-2xl bg-superficie p-5 text-center shadow ring-1 ring-black/5">
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/50 p-4">
+        <div className="w-full max-w-sm rounded-2xl bg-superficie p-5 text-center shadow-xl">
           <p className="text-sm font-medium text-tinta">
             Pague {formatarReais(minhaParte)} com este PIX
           </p>
@@ -343,6 +346,7 @@ export function PagamentoPartida({
           >
             Fechar
           </button>
+        </div>
         </div>
       )}
     </section>
