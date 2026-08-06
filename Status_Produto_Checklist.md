@@ -135,11 +135,11 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 > ✅ A regra nº 5 foi **revisada e decidida em 01/08/2026** — este módulo está liberado. Conta a partida cheia de 4 (peso 1x) e cada set de sessão em grupo (peso 0,5x), com travas de validade, confirmação e origem. Texto completo da regra no CLAUDE.md.
 
 - [x] ✅ 🔍 **Sessão em grupo**: reserva vira partida com participantes convidados e aceitos — `014` + `ConvidarParticipantes.tsx`. Testado com 4 contas e pelo fundador no celular
-- [x] 🔧 🔍 **Registro de set por set**, com as travas de formato, janela de 24h, origem no app, teto de plausibilidade e liberação 15 min após o início (`016`)
-- [x] 🔧 🔍 **Contestação com placar alternativo e votação do grupo** (mais de 50% dos elegíveis, com "Confirmar voto" em dois passos) — testado: 1 voto de 2 não resolve, 2 de 2 resolvem
+- [x] ✅ 🔍 **Registro de set por set**, com as travas de formato, janela de 24h, origem no app, teto de plausibilidade e liberação 15 min após o início (`016`)
+- [x] ✅ 🔍 **Contestação com placar alternativo e votação do grupo** (mais de 50% dos elegíveis, com "Confirmar voto" em dois passos) — testado: 1 voto de 2 não resolve, 2 de 2 resolvem
 - [x] 🔧 🔍 **Aviso dentro do app** — um bloco por tipo, some depois de visto, e diz de qual jogo é
-- [x] 🔧 🔍 **Divisão do valor da quadra** (`018`, `019`): divisor sem vagas declaradas, mínimo 4, congelado no 1º pagamento. Nasceu de um bug real — divisor móvel fazia quem pagou R$65 aparecer com R$43,33
-- [x] 🔧 🔍 **"Desistir"** — a vaga fica disponível sem a pessoa sair; ela só sai quando alguém assume, e o convite diz qual vaga preenche (`020`)
+- [x] ✅ 🔍 **Divisão do valor da quadra** (`018`, `019`): divisor sem vagas declaradas, mínimo 4, congelado no 1º pagamento. Nasceu de um bug real — divisor móvel fazia quem pagou R$65 aparecer com R$43,33
+- [x] ✅ 🔍 **"Desistir"** — a vaga fica disponível sem a pessoa sair; ela só sai quando alguém assume, e o convite diz qual vaga preenche (`020`)
 - [x] ✅ 🔍 **Remover participante** pelo organizador — quem já pagou não pode ser removido (`020`)
 - [ ] ⏳ **Web Push** (aviso na tela do celular) — entra logo depois da Entrega A e **antes do beta**: sem ele, "silêncio vale como concordância" é injusto com quem abre pouco o app
 - [ ] ⏳ **Entrega B**: convite por telefone de quem ainda não tem conta, com link de cadastro. O banco já nasceu preparado (`telefone` em `partida_jogadores`)
