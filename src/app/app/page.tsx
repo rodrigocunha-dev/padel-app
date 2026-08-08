@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { AvisosPendentes } from "@/components/partidas/AvisosPendentes";
 import {
   ROTULO_NIVEL,
   statusDaPartida,
@@ -77,6 +78,28 @@ export default async function PaginaApp() {
     .select("partidas ( id, inicio, status, quadras ( clubes ( nome ) ) )")
     .eq("jogador_id", user.id)
     .eq("estado", "convidado");
+
+  // Avisos ainda não lidos — os mesmos de Minhas partidas, mesma consulta.
+  const { data: avisosRaw } = await supabase
+    .from("avisos")
+    .select(
+      "id, tipo, sets ( partida_id, partidas ( quadras ( clubes ( nome ) ), inicio ) )"
+    )
+    .eq("jogador_id", user.id)
+    .is("lido_em", null);
+
+  const avisos = (avisosRaw ?? []).map((a) => {
+    const s = a.sets as unknown as {
+      partida_id: string;
+      partidas: { inicio: string; quadras: { clubes: { nome: string } } } | null;
+    } | null;
+    const nome = s?.partidas
+      ? `${s.partidas.quadras.clubes.nome} · ${new Date(
+          s.partidas.inicio
+        ).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`
+      : null;
+    return { id: a.id, tipo: a.tipo, partidaId: s?.partida_id ?? null, partidaNome: nome };
+  });
 
   const convites = (convitesRaw ?? [])
     .map(
@@ -255,6 +278,12 @@ export default async function PaginaApp() {
             </Link>
           )
         )}
+
+        {/* Os avisos também vivem aqui, e não só em Minhas partidas: eles
+            têm prazo de 24h, e a tela inicial é onde a pessoa cai. Sem
+            isto, "quem não contestar concordou" dependia de ela ir
+            procurar — o oposto do que a regra pretende. */}
+        <AvisosPendentes avisos={avisos} />
 
         {convites.length > 0 && (
           <section className="mt-4">
