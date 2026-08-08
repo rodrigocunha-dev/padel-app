@@ -83,7 +83,7 @@ export default async function PaginaApp() {
   const { data: avisosRaw } = await supabase
     .from("avisos")
     .select(
-      "id, tipo, sets ( partida_id, partidas ( quadras ( clubes ( nome ) ), inicio ) )"
+      "id, tipo, sets ( partida_id, ordem, games_a, games_b, partidas ( quadras ( clubes ( nome ) ), inicio ) )"
     )
     .eq("jogador_id", user.id)
     .is("lido_em", null);
@@ -91,14 +91,26 @@ export default async function PaginaApp() {
   const avisos = (avisosRaw ?? []).map((a) => {
     const s = a.sets as unknown as {
       partida_id: string;
+      ordem: number;
+      games_a: number;
+      games_b: number;
       partidas: { inicio: string; quadras: { clubes: { nome: string } } } | null;
     } | null;
+    // O aviso diz DE QUAL jogo é — e, dentro dele, de qual set: dois avisos
+    // da mesma partida apareciam como duas linhas idênticas.
     const nome = s?.partidas
       ? `${s.partidas.quadras.clubes.nome} · ${new Date(
           s.partidas.inicio
         ).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`
       : null;
-    return { id: a.id, tipo: a.tipo, partidaId: s?.partida_id ?? null, partidaNome: nome };
+    const setRotulo = s ? `Set ${s.ordem} · ${s.games_a}x${s.games_b}` : null;
+    return {
+      id: a.id,
+      tipo: a.tipo,
+      partidaId: s?.partida_id ?? null,
+      partidaNome: nome,
+      setRotulo,
+    };
   });
 
   const convites = (convitesRaw ?? [])

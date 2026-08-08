@@ -6,6 +6,7 @@ import { PartidaDetalhe } from "@/components/partidas/PartidaDetalhe";
 import { ConvidarParticipantes } from "@/components/partidas/ConvidarParticipantes";
 import { SetsDaSessao } from "@/components/partidas/SetsDaSessao";
 import { PagamentoPartida } from "@/components/partidas/PagamentoPartida";
+import { MarcarAvisosLidos } from "@/components/partidas/MarcarAvisosLidos";
 import { statusDaPartida, partidaComecou } from "@/lib/partidas";
 
 export const metadata: Metadata = {
@@ -167,6 +168,9 @@ export default async function PaginaPartida({
     return (
       <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-8">
         <div className="mx-auto w-full max-w-md">
+          {/* Chegou no jogo → os avisos DESTE jogo já cumpriram o papel. */}
+          <MarcarAvisosLidos setIds={setIds} />
+
           <Link
             href={voltarHref}
             className="text-sm font-medium text-tinta-suave hover:text-tinta"

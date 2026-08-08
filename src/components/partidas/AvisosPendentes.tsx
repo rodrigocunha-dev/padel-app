@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { criarClienteNavegador } from "@/lib/supabase/client";
 
 export type Aviso = {
   id: string;
   tipo: string;
   partidaId: string | null;
   partidaNome: string | null;
+  // Qual set — dois avisos do mesmo jogo apareciam como linhas idênticas.
+  setRotulo: string | null;
 };
 
 const TITULO: Record<string, string> = {
@@ -33,22 +33,14 @@ const ICONE: Record<string, string> = {
 // virava uma pilha de blocos iguais. Quando há mais de um do mesmo tipo, o
 // bloco abre a lista das partidas envolvidas.
 export function AvisosPendentes({ avisos }: { avisos: Aviso[] }) {
-  const router = useRouter();
   const [aberto, setAberto] = useState<string | null>(null);
 
   const tipos = [...new Set(avisos.map((a) => a.tipo))];
   if (tipos.length === 0) return null;
 
-  // Ao ir para a partida, os avisos daquele jogo já foram vistos — some o
-  // que levou a pessoa até lá, em vez de continuar cobrando algo feito.
-  async function marcarLidos(ids: string[]) {
-    const supabase = criarClienteNavegador();
-    await supabase
-      .from("avisos")
-      .update({ lido_em: new Date().toISOString() })
-      .in("id", ids);
-    router.refresh();
-  }
+  // Quem marca o aviso como lido é a página do jogo (MarcarAvisosLidos), não
+  // o toque aqui. Ver o porquê lá — em resumo: toque não é chegada, e gravar
+  // durante a navegação fazia o link não levar a lugar nenhum.
 
   return (
     <ul className="mt-4 space-y-2">
@@ -78,7 +70,6 @@ export function AvisosPendentes({ avisos }: { avisos: Aviso[] }) {
             {destino ? (
               <Link
                 href={destino}
-                onClick={() => marcarLidos(doTipo.map((a) => a.id))}
                 className="block rounded-2xl bg-amber-100 p-4 shadow ring-1 ring-amber-200 transition hover:brightness-105"
               >
                 {conteudo}
@@ -102,12 +93,24 @@ export function AvisosPendentes({ avisos }: { avisos: Aviso[] }) {
                       <li key={a.id}>
                         <Link
                           href={a.partidaId ? `/app/partidas/${a.partidaId}` : "#"}
-                          onClick={() => marcarLidos([a.id])}
-                          className="block rounded-xl bg-superficie p-3 shadow ring-1 ring-black/5 transition hover:ring-primaria/40"
+                          className="flex items-center justify-between gap-3 rounded-xl bg-superficie p-3 shadow ring-1 ring-black/5 transition hover:ring-primaria/40"
                         >
-                          <p className="text-sm font-bold text-tinta">
-                            {a.partidaNome ?? "Ver jogo"}
-                          </p>
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-bold text-tinta">
+                              {a.partidaNome ?? "Ver jogo"}
+                            </span>
+                            {a.setRotulo && (
+                              <span className="block text-xs text-tinta-suave">
+                                {a.setRotulo}
+                              </span>
+                            )}
+                          </span>
+                          {/* A seta é o que faz a linha parecer tocável: sem
+                              ela o cartão branco lia como texto, e o fundador
+                              não percebeu que dava para abrir. */}
+                          <span className="shrink-0 text-sm font-bold text-primaria">
+                            Abrir →
+                          </span>
                         </Link>
                       </li>
                     ))}
