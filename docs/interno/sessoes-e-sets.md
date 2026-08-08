@@ -114,10 +114,21 @@ Esperar não custa nada porque a janela de registro é de 24h após o fim: um se
 **Atenção a dois números diferentes de propósito:** o teto usa 20 min por set (quantos *cabem* na reserva); a liberação usa 15 min (*quando* o primeiro pode ser registrado). Não "harmonizar" os dois.
 
 ## Avisos: um bloco por tipo, e eles somem
-Três correções vindas do teste no celular:
-- **Somem depois de vistos.** Ao abrir a partida pelo bloco, os avisos daquele jogo são marcados como lidos. Antes continuavam cobrando algo já feito.
+Correções vindas dos testes no celular:
 - **Um bloco por TIPO, não um por aviso.** Com vários resultados registrados a tela virava pilha de blocos iguais; agora o bloco mostra a contagem e abre a lista.
-- **Dizem de qual jogo são** (clube e data). Antes só diziam que havia algo.
+- **Dizem de qual jogo são** (clube e data) e, dentro dele, **de qual set** (`Set 2 · 7x5`). Sem o set, dois avisos da mesma partida viravam duas linhas idênticas.
+- **A linha da lista parece tocável** (`Abrir →`). Sem afordância, o cartão branco lia como texto e o fundador não percebeu que dava para abrir.
+- **Estão nas duas telas** — Início e Minhas partidas, mesma consulta e mesmo componente. Só em Minhas partidas, a regra "quem não contestar em 24h concordou" dependia de a pessoa ir procurar.
+
+### Quem marca como lido, e por que não é o toque
+O aviso vira lido quando a **página do jogo abre** (`MarcarAvisosLidos`), não quando se toca no bloco. A primeira versão marcava no toque e tinha dois defeitos, os dois vistos no teste de 08/08/2026:
+
+1. **Toque não é chegada.** Um toque que não abria o jogo apagava o aviso do mesmo jeito.
+2. **Corrida com a navegação.** A gravação chamava `router.refresh()` ao terminar, disputando com o `<Link>` que ainda estava navegando. Às vezes o refresh ganhava e o toque não levava a lugar nenhum — só apagava. Tentando abrir cinco avisos, o fundador apagou os cinco e viu um resultado só.
+
+Marcando na chegada não há corrida (a página já abriu, a marcação é um efeito solto) e "lido" passa a significar que a pessoa realmente esteve lá. O filtro é por `set_id` dos sets **daquela** partida: abrir um jogo não apaga o aviso de outro.
+
+**Em aberto, para observar com uso real:** o aviso some ao *abrir* o jogo, mesmo sem contestar. Se a pessoa só der uma olhada e o prazo de 24h correr, nada a lembra de novo.
 
 ## Onde os erros aparecem
 O erro era renderizado no fim da seção. No teste, o fundador tentou remover três vezes achando que nada acontecia — o erro já estava lá, fora da vista.
