@@ -27,11 +27,16 @@ export default async function PaginaFeed() {
 
   // "aberta" (tem vaga) e "completa" (cheia, mas dá para entrar na fila de
   // substitutos) aparecem no feed. Canceladas não.
+  //
+  // O filtro por `tipo` não é detalhe: sem ele as SESSÕES PRIVADAS de todo
+  // mundo apareciam aqui como se fossem partidas abertas, com botão de
+  // entrar. O feed é anterior à sessão privada existir e nunca foi relido.
   const { data: partidas } = await supabase
     .from("partidas")
     .select(
-      "id, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, status, organizador_id, inicio, fim, quadras ( nome, clubes ( id, nome, cidade ) ), partida_jogadores ( jogador_id, papel )"
+      "id, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, status, organizador_id, inicio, fim, quadras ( nome, clubes ( id, nome, cidade ) ), partida_jogadores ( jogador_id, papel, estado )"
     )
+    .eq("tipo", "aberta")
     .in("status", ["aberta", "completa"])
     .order("inicio", { ascending: true });
 

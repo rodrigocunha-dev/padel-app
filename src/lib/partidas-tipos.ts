@@ -17,5 +17,5 @@ export type PartidaFeed = {
     nome: string;
     clubes: { id: string; nome: string; cidade: string };
   };
-  partida_jogadores: { jogador_id: string; papel: string }[];
+  partida_jogadores: { jogador_id: string; papel: string; estado: string }[];
 };

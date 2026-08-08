@@ -120,8 +120,11 @@ export function FeedPartidas({
       ) : (
         <div className="mt-4 flex flex-col gap-3">
           {lista.map((p) => {
+            // Quem ocupa vaga é quem ACEITOU. Hoje, em partida aberta, todo
+            // mundo é 'aceito' — mas a conta de vagas passou a ter um estado
+            // para olhar, e contar sem ele foi a origem de três bugs.
             const jogadores = p.partida_jogadores.filter(
-              (j) => j.papel === "jogador"
+              (j) => j.papel === "jogador" && j.estado === "aceito"
             ).length;
             const vagas = p.max_jogadores - jogadores;
             const jaEstou = p.partida_jogadores.some(
