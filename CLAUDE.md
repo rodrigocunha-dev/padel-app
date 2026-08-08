@@ -230,7 +230,38 @@ Gateway de pagamento ainda não decidido → **PIX simulado** (mock isolado para
 
 **Entrega A do Sprint 5 — ✅ CONCLUÍDA (02–08/08/2026), testada pelo fundador no celular.** Reserva vira sessão com convite e aceite; sets com registro, contestação por placar alternativo e votação do grupo; divisão do valor com divisor congelado; "Desistir" e remover participante; aviso dentro do app na Início e em Minhas partidas. Scripts `014` a `021` — **todos rodados**. Doc técnica em `/docs/interno/sessoes-e-sets.md` + artigos de cliente. **Nada de rating ainda** — o motor é o próximo passo e lê o que isto grava.
 
-**Lição cara desta entrega, que vale para o resto do produto:** três bugs da mesma família apareceram um atrás do outro — **regra escrita antes do convite existir**. "Minhas partidas" mostrava convite pendente como jogo seu; o split aparecia para quem só foi convidado (`017`); e o convidado que ignorava o convite virava **inadimplente e ficava bloqueado no app inteiro** (`021`). Toda regra anterior ao script `014` precisa ser relida com uma pergunta: *"isto vale para quem só foi convidado?"*. Ainda não varri o código inteiro atrás das restantes.
+**Lição cara desta entrega, que vale para o resto do produto:** três bugs da mesma família apareceram um atrás do outro — **regra escrita antes do convite existir**. "Minhas partidas" mostrava convite pendente como jogo seu; o split aparecia para quem só foi convidado (`017`); e o convidado que ignorava o convite virava **inadimplente e ficava bloqueado no app inteiro** (`021`).
+
+**Varredura dessa família — ✅ FEITA (08/08/2026), scripts `022` e `023`, ambos rodados.** Mais **seis** furos, todos reproduzidos no banco com contas de teste antes de corrigir (não foram achados por leitura):
+- **Estranho entrava em sessão privada sem convite.** `entrar_na_partida` nunca olhou `tipo`; e `jogador_compativel` *parecia* barrar mas não barrava, porque sessão privada tem faixa nula e em SQL `4 < null` não é falso, é **nulo** — o `if` não entra. Derrubava a decisão central da entrega.
+- **Sessões privadas apareciam no feed de partidas abertas**, com botão de entrar (o feed nunca filtrou `tipo`).
+- **O organizador recebia nome e telefone de quem só foi convidado ou recusou** — bastava convidar alguém para obter o telefone dela.
+- **Qualquer pessoa gravava pagamento em partida alheia**, e o gatilho do divisor **congelava a sessão de um grupo em formação**. A política só conferia que a linha era do próprio jogador, nunca se ele estava na partida.
+- **`sair_da_partida` apagava a linha numa sessão privada**, por fora do "Desistir" e sem deixar rastro do convite.
+- **Qualquer pessoa logada lia todas as partidas e participantes**, inclusive sessões privadas alheias (`023`).
+
+A regra do `023` é de propósito **uma frase sem lista de estados**: *você vê uma partida se ela é aberta, ou se tem qualquer vínculo com ela*. Lista de estados foi o formato que produziu os furos acima e teria de ser revisitada a cada estado novo (o `saiu` já nasceu depois).
+
+**Continua em aberto (privacidade, não furo):** a tabela `jogadores` é legível por qualquer pessoa logada, porque é assim que a busca por nome acha quem convidar. Olhar junto com o **nome de usuário (@)** do banco de ideias.
+
+## Motor de rating — decisões de produto (fechadas com o fundador em 08/08/2026)
+*Ainda NÃO construído. Este bloco é o desenho aprovado; o script vem depois de fechar as três questões técnicas no fim.*
+
+1. **Rating individual.** Cada jogador tem o seu; o set atualiza os dois jogadores de cada dupla. A força da dupla é derivada dos dois números, não armazenada.
+2. **Peso:** partida cheia de 4 = **1x** (um evento só, pelo resultado final); cada set de sessão em grupo = **0,5x**. Ver a ⚠️ logo abaixo — hoje não existe onde gravar o resultado da partida cheia.
+3. **Faixas de categoria fixas, não relativas.** Motivo: com faixa relativa dá para cair de categoria sem perder jogo nenhum, só porque outros melhoraram — impossível de explicar e briga com a transparência da regra nº 4. **Conversa própria mais perto do beta:** usar jogadores de nível conhecido nos clubes-piloto (1ª a 5ª/6ª) como **âncoras** para calibrar as faixas. Só funciona se essas âncoras jogarem contra novos entrantes, o que nem sempre acontece. Registrar a intenção, não desenhar agora.
+4. **Índice de confiabilidade existe por dentro, mas não aparece na tela** por enquanto. Reversível.
+5. 🔍 **Validação por pares — proposta em avaliação, NÃO aprovada.** O problema real: a regra nº 4 pede "validação por 2 pares", e quem não conhece ninguém no app não tem quem o valide. Proposta: perguntar aos **adversários** depois do set se o nível pareceu compatível (mais fraco / condizente / mais forte), reusando a mecânica de confirmação de resultado. **Ressalva técnica registrada:** a resposta do adversário tende a seguir o placar (ganhou = "mais fraco"), e o placar o motor já leu — pode ser eco, não informação nova. Decidir depois do beta, com dados de convergência da calibração na mão.
+6. **Calibração acelerada por PESO ACUMULADO, não por contagem de partidas.** Alvo ≈ equivalente a 10 partidas cheias (número exato não fixado). ~10 é o que ladders de jogo costumam usar como fase de colocação.
+7. **Proteção de rebaixamento também por peso acumulado**, mesmo raciocínio do item 6.
+8. **Inatividade prolongada** (buraco identificado pelo fundador, não estava coberto): o **próprio índice de confiabilidade é o gatilho** — ele cai sozinho com o tempo sem jogar, e abaixo de um limiar os próximos jogos voltam a ter peso acelerado. Escolha consciente de unificar em um mecanismo só, em vez de um período fixo de dias em paralelo. **Isso é nativo do Glicko** (o RD cresce com o tempo parado), então não é sistema novo.
+
+**⚠️ ACHADO NO CÓDIGO (08/08/2026) — a partida cheia de 4 não grava resultado nenhum.** Não existe placar, vencedor nem sets em `partidas`, e a área de sets na tela só é renderizada no ramo `tipo === 'privada'`. Ou seja, o peso 1x do item 2 **não tem fonte de dado**: hoje só a sessão privada produz resultado. Isso muda o escopo — "sets em partida aberta" (ou um registro de resultado próprio dela) deixa de ser item futuro e vira **pré-requisito** do motor. Nota lateral: `registrar_set` não trava por `tipo`, então o banco aceitaria sets em partida aberta; falta só a tela.
+
+**Três questões técnicas a fechar antes de desenhar o script:**
+- **(a) Quando a conta é feita — ÚNICA REALMENTE EM ABERTO.** Um set não fica pronto ao ser registrado: vira válido 24h depois, ou quando a votação resolve, e a votação pode trocar o placar. Logo os resultados ficam prontos **fora de ordem**. Recomendação: **refazer a conta inteira do zero** a cada vez, na ordem em que os jogos aconteceram, em vez de ir somando. Barato no volume que teremos por anos, é o que faz a regra nº 4 ("quanto mudou e por quê") funcionar, e mata a classe de bugs de ordem.
+- **(b) Faixas fixas ou relativas** — respondida pelo item 3: **fixas**.
+- **(c) Elo ou Glicko** — respondida na prática pelos itens 4 e 8, que pressupõem um índice de confiabilidade que decai com o tempo parado: isso **é** o Glicko. Com Elo, o índice teria de ser inventado por fora.
 
 **Por que chat e notificações ficaram para depois (decisão consciente, não esquecimento):** o critério de pronto do MVP acima termina em "registra resultado → vê categoria evoluir" — chat não está nele. O rating é a cunha contra o Playtomic (categorias brasileiras + transparência) e está em 0%, enquanto o trilho de descoberta já está quase pronto. A barra de navegação fixa entra junto porque perfil, histórico e estatísticas do rating precisam dela para existir.
 
