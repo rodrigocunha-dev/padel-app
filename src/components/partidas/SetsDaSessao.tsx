@@ -182,8 +182,11 @@ export function SetsDaSessao({
     <section className="mt-8">
       <h2 className="font-display text-lg font-bold text-tinta">Sets jogados</h2>
       <p className="mt-1 text-sm text-tinta-suave">
-        Qualquer um do grupo registra. O placar vale se ninguém contestar em 24
-        horas. {sets.length} de {teto} sets registrados.
+        {/* "quem jogou" e não "o grupo": esta área passou a valer também para
+            partida aberta, onde as pessoas não são um grupo — e onde quem
+            está na fila de substitutos não registra nada. */}
+        Qualquer um que jogou registra. O placar vale se ninguém contestar em
+        24 horas. {sets.length} de {teto} sets registrados.
       </p>
 
       {sets.length === 0 && (

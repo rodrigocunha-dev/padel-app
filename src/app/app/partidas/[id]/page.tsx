@@ -61,6 +61,98 @@ export default async function PaginaPartida({
   const jaComecou = partidaComecou(partida.inicio);
   const jaAconteceu = statusDaPartida(partida.fim) === "jogada";
 
+  // Quem joga de verdade: aceitou E ocupa vaga. O `papel` importa na partida
+  // aberta, onde existe fila de substitutos — quem está na fila não entrou em
+  // quadra, então não registra set, não aparece num set e não vota.
+  const aceitos = jogadores
+    .filter((j) => j.papel === "jogador" && j.estado === "aceito" && j.perfil)
+    .map((j) => ({ id: j.jogador_id, nome: j.perfil!.nome }));
+
+  // ============================================================
+  // SETS — carregados para os DOIS tipos de partida
+  // ============================================================
+  // Desde 08/08/2026 a unidade do rating é sempre o set, em qualquer
+  // contexto (regra nº 5). Antes disto a área de sets só existia na sessão
+  // privada, e a partida aberta não gravava resultado nenhum — o que deixava
+  // o motor de rating sem fonte de dado justamente para o jogo entre
+  // desconhecidos, que é o que mais interessa medir.
+  const { data: setsRaw } = await supabase
+    .from("sets")
+    .select(
+      "id, ordem, a1, a2, b1, b2, games_a, games_b, registrado_por, registrado_em"
+    )
+    .eq("partida_id", partida.id)
+    .order("ordem", { ascending: true });
+
+  const setIds = (setsRaw ?? []).map((s) => s.id);
+
+  const { data: contestacoes } = setIds.length
+    ? await supabase
+        .from("set_contestacoes")
+        .select("set_id, contestado_por, games_a, games_b")
+        .in("set_id", setIds)
+    : { data: [] };
+
+  const { data: meusVotos } = setIds.length
+    ? await supabase
+        .from("set_votos")
+        .select("set_id, voto")
+        .in("set_id", setIds)
+        .eq("votante_id", user.id)
+    : { data: [] };
+
+  // A situação de cada set (qual placar vale e se conta) é calculada no
+  // servidor — não replico a regra aqui para as duas não divergirem.
+  const situacoes = await Promise.all(
+    setIds.map((sid) => supabase.rpc("situacao_do_set", { p_set_id: sid }))
+  );
+  const { data: teto } = await supabase.rpc("teto_de_sets", {
+    p_partida_id: partida.id,
+  });
+
+  const sets = (setsRaw ?? []).map((s, i) => {
+    const c = (contestacoes ?? []).find((x) => x.set_id === s.id) ?? null;
+    const v = (meusVotos ?? []).find((x) => x.set_id === s.id) ?? null;
+    const sit = (situacoes[i]?.data ?? [])[0] ?? null;
+    return {
+      ...s,
+      contestacao: c
+        ? {
+            contestado_por: c.contestado_por,
+            games_a: c.games_a,
+            games_b: c.games_b,
+          }
+        : null,
+      meuVoto: v?.voto ?? null,
+      situacao: {
+        games_a: sit?.games_a ?? s.games_a,
+        games_b: sit?.games_b ?? s.games_b,
+        conta: sit?.conta_para_rating ?? false,
+        motivo: sit?.motivo ?? "AGUARDANDO_JANELA",
+      },
+    };
+  });
+
+  // As duas telas mostram a mesma área de sets, com as mesmas travas.
+  const areaDeSets = (
+    <SetsDaSessao
+      partidaId={partida.id}
+      meuId={user.id}
+      jaComecou={jaComecou}
+      passaram15Min={
+        new Date(partida.inicio).getTime() + 15 * 60 * 1000 <=
+        new Date().getTime()
+      }
+      dentroDaJanela={
+        new Date().getTime() <=
+        new Date(partida.fim).getTime() + 24 * 60 * 60 * 1000
+      }
+      participantes={aceitos}
+      sets={JSON.parse(JSON.stringify(sets))}
+      teto={teto ?? 1}
+    />
+  );
+
   // Sessão privada não tem faixa de categoria nem sexo do jogo — o
   // organizador escolhe pessoa por pessoa. Por isso ela tem tela própria,
   // em vez de reaproveitar a da partida aberta com campos vazios.
@@ -72,40 +164,6 @@ export default async function PaginaPartida({
       clubes: { id: string; nome: string; cidade: string };
     };
 
-    const { data: setsRaw } = await supabase
-      .from("sets")
-      .select(
-        "id, ordem, a1, a2, b1, b2, games_a, games_b, registrado_por, registrado_em"
-      )
-      .eq("partida_id", partida.id)
-      .order("ordem", { ascending: true });
-
-    const setIds = (setsRaw ?? []).map((s) => s.id);
-
-    const { data: contestacoes } = setIds.length
-      ? await supabase
-          .from("set_contestacoes")
-          .select("set_id, contestado_por, games_a, games_b")
-          .in("set_id", setIds)
-      : { data: [] };
-
-    const { data: meusVotos } = setIds.length
-      ? await supabase
-          .from("set_votos")
-          .select("set_id, voto")
-          .in("set_id", setIds)
-          .eq("votante_id", user.id)
-      : { data: [] };
-
-    // A situação de cada set (qual placar vale e se conta) é calculada no
-    // servidor — não replico a regra aqui para as duas não divergirem.
-    const situacoes = await Promise.all(
-      setIds.map((sid) => supabase.rpc("situacao_do_set", { p_set_id: sid }))
-    );
-    const { data: teto } = await supabase.rpc("teto_de_sets", {
-      p_partida_id: partida.id,
-    });
-
     // O divisor vem do servidor: mínimo 4 e congelado no 1º pagamento.
     // A tela não recalcula por conta própria — foi assim que a conta de
     // quem já tinha pago mudou sozinha no teste.
@@ -113,32 +171,6 @@ export default async function PaginaPartida({
       p_partida_id: partida.id,
     });
 
-    const sets = (setsRaw ?? []).map((s, i) => {
-      const c = (contestacoes ?? []).find((x) => x.set_id === s.id) ?? null;
-      const v = (meusVotos ?? []).find((x) => x.set_id === s.id) ?? null;
-      const sit = (situacoes[i]?.data ?? [])[0] ?? null;
-      return {
-        ...s,
-        contestacao: c
-          ? {
-              contestado_por: c.contestado_por,
-              games_a: c.games_a,
-              games_b: c.games_b,
-            }
-          : null,
-        meuVoto: v?.voto ?? null,
-        situacao: {
-          games_a: sit?.games_a ?? s.games_a,
-          games_b: sit?.games_b ?? s.games_b,
-          conta: sit?.conta_para_rating ?? false,
-          motivo: sit?.motivo ?? "AGUARDANDO_JANELA",
-        },
-      };
-    });
-
-    const aceitos = jogadores
-      .filter((j) => j.estado === "aceito" && j.perfil)
-      .map((j) => ({ id: j.jogador_id, nome: j.perfil!.nome }));
     // A divisão do valor vale para a sessão igual à partida aberta: a quadra
     // é paga do mesmo jeito. Onde ela aparece na tela depende de eu já ter
     // pago ou não — devendo, ela vem antes de tudo.
@@ -259,30 +291,23 @@ export default async function PaginaPartida({
               />
             )}
 
-          <SetsDaSessao
-            partidaId={partida.id}
-            meuId={user.id}
-            jaComecou={jaComecou}
-            passaram15Min={
-              new Date(partida.inicio).getTime() + 15 * 60 * 1000 <=
-              new Date().getTime()
-            }
-            dentroDaJanela={
-              new Date().getTime() <=
-              new Date(partida.fim).getTime() + 24 * 60 * 60 * 1000
-            }
-            participantes={aceitos}
-            sets={JSON.parse(JSON.stringify(sets))}
-            teto={teto ?? 1}
-          />
+          {areaDeSets}
         </div>
       </main>
     );
   }
 
+  // Partida aberta. A área de sets é a mesma da sessão privada, e só aparece
+  // para quem está jogando: substituto na fila não registra nem vota, e quem
+  // só visita a partida não tem o que registrar.
+  const souJogador = aceitos.some((p) => p.id === user.id);
+
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-8">
       <div className="mx-auto w-full max-w-md">
+        {/* Chegou no jogo → os avisos DESTE jogo já cumpriram o papel. */}
+        <MarcarAvisosLidos setIds={setIds} />
+
         <Link
           href={voltarHref}
           className="text-sm font-medium text-tinta-suave hover:text-tinta"
@@ -295,6 +320,11 @@ export default async function PaginaPartida({
           jaComecou={jaComecou}
           jaAconteceu={jaAconteceu}
         />
+
+        {/* Amistosa também registra set: o resultado entra no histórico e na
+            gamificação, e só não encosta no rating. Quem decide isso é o
+            servidor (`situacao_do_set`), não esta tela. */}
+        {souJogador && areaDeSets}
       </div>
     </main>
   );

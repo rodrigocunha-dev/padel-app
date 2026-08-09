@@ -286,7 +286,19 @@ A regra do `023` é de propósito **uma frase sem lista de estados**: *você vê
 
 **14. Teto do peso final: 8,0.** Princípio: **o teto fica ACIMA de toda combinação legítima** — existe para pegar engano, não para limitar caso normal. A combinação legítima mais alta hoje é torneio (3,0) × placar amplo (1,3) × calibração (2,0) = 7,8, e ela *deve* valer muito. Um teto em 4,0 foi descartado justamente por achatar: torneio 3,0 × 1,3 já dá 3,9, então qualquer vitória boa de torneio bateria no limite e apagaria a diferença entre torneio e o resto. **Hoje o teto de 8,0 não dispara nunca — esse é o papel dele:** seguro contra nós mesmos, para quando alguém acrescentar um peso novo daqui a um ano sem refazer esta conta. **O freio de verdade não é o teto, é o próprio Glicko:** quanto mais certeza ele tem do seu nível, menos qualquer resultado isolado te move.
 
-**15. O placar mexe no PESO, nunca na direção.** ⚠️ **Armadilha explícita a evitar:** tratar 6x4 como "60% de uma vitória". Se fizermos isso, ganhar apertado de alguém muito mais fraco faz a pessoa **perder** rating — venceu e caiu. Já quebrou sistemas de ranking reais. O certo: quem ganhou vale vitória cheia sempre; 6x0 diz "informação confiável, considere bastante", 7x5 diz "foi apertado, considere menos". ⚠️ **Isto é extensão nossa, não Glicko publicado** — o algoritmo é desenhado para vitória/derrota. É o ponto do motor onde mais podemos errar a mão. **A margem rende no jogo parelho, quase nada no desequilibrado** — não esperar dela o que ela não faz.
+**15. O placar mexe no PESO, nunca na direção.** Fator por diferença de games — faixa estreita de propósito, porque o placar é evidência **fraca** perto do fato de ter vencido, e porque esta parte é extensão nossa:
+
+| Placar | Diferença | Fator |
+|---|---|---|
+| 6x0 | 6 | 1,30 |
+| 6x1 | 5 | 1,20 |
+| 6x2 | 4 | 1,10 |
+| 6x3 | 3 | **1,00** (neutro) |
+| 6x4 · 7x5 | 2 | 0,90 |
+| 7x6 (tie-break) | 1 | 0,80 |
+
+O fator escala o quanto o set move **os dois lados**: quem ganhou 6x0 sobe mais, quem perdeu 6x0 cai mais.
+ ⚠️ **Armadilha explícita a evitar:** tratar 6x4 como "60% de uma vitória". Se fizermos isso, ganhar apertado de alguém muito mais fraco faz a pessoa **perder** rating — venceu e caiu. Já quebrou sistemas de ranking reais. O certo: quem ganhou vale vitória cheia sempre; 6x0 diz "informação confiável, considere bastante", 7x5 diz "foi apertado, considere menos". ⚠️ **Isto é extensão nossa, não Glicko publicado** — o algoritmo é desenhado para vitória/derrota. É o ponto do motor onde mais podemos errar a mão. **A margem rende no jogo parelho, quase nada no desequilibrado** — não esperar dela o que ela não faz.
 
 **16. Farmar jogador fraco: já resolvido pelo algoritmo, sem construir nada.** O Glicko não pergunta "ganhou?", pergunta **"o resultado surpreendeu?"**. Ganhar de quem se devia ganhar não surpreende — ganho tende a zero, com placar apertado ou não. É **matematicamente impossível subir farmando fraco**: cada vitória vale quase nada, cada derrota custa muito.
 - **Alavanca nossa:** o quanto vale "quase nada" depende da **largura das faixas dos 21 degraus**. Faixas mais largas = três categorias de distância viram ganho essencialmente zero. Isso entra na conversa das âncoras (item 3), que passa a decidir também isto.
