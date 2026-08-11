@@ -87,21 +87,40 @@ export default async function PaginaTrilhaDoRating() {
                       </p>
                     </div>
 
-                    <ul className="mt-3 space-y-1.5">
+                    {/* O impacto de cada set aparece porque a conta do dia se
+                        decompõe exatamente — a soma daqui fecha com o número
+                        do topo. O motor continua contando por dia. */}
+                    <ul className="mt-3 space-y-2">
                       {d.sets.map((s, i) => (
                         <li
                           key={i}
-                          className="flex items-start gap-2 text-sm text-tinta-suave"
+                          className="flex items-start justify-between gap-3 text-sm text-tinta-suave"
                         >
-                          <span aria-hidden>{s.venceu ? "✅" : "❌"}</span>
-                          <span>
-                            {s.venceu ? "Venceu" : "Perdeu"} jogando com um{" "}
-                            <strong className="text-tinta">{s.parceiro}</strong>{" "}
-                            contra a dupla{" "}
-                            <strong className="text-tinta">
-                              {s.adversarios}
-                            </strong>
+                          <span className="flex items-start gap-2">
+                            <span aria-hidden>{s.venceu ? "✅" : "❌"}</span>
+                            <span>
+                              {s.venceu ? "Venceu" : "Perdeu"} jogando com um{" "}
+                              <strong className="text-tinta">
+                                {s.parceiro}
+                              </strong>{" "}
+                              contra a dupla{" "}
+                              <strong className="text-tinta">
+                                {s.adversarios}
+                              </strong>
+                            </span>
                           </span>
+                          {s.variacao !== null && (
+                            <span
+                              className={`shrink-0 font-display text-sm font-bold ${
+                                s.variacao >= 0
+                                  ? "text-primaria"
+                                  : "text-red-600"
+                              }`}
+                            >
+                              {s.variacao >= 0 ? "+" : "−"}
+                              {Math.abs(s.variacao).toFixed(1)}
+                            </span>
+                          )}
                         </li>
                       ))}
                     </ul>

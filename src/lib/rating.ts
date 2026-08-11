@@ -105,6 +105,9 @@ export type DiaDaTrilha = {
     venceu: boolean;
     parceiro: string;    // categoria + nível
     adversarios: string; // categoria + nível (média da dupla)
+    // Quanto ESTE set moveu. A soma dos sets do dia fecha exatamente com a
+    // variação do dia — não é rateio, é a mesma conta aberta (script 029).
+    variacao: number | null;
   }[];
 };
 
@@ -125,7 +128,7 @@ export async function trilhaDoRating(
 
   const { data: sets } = await supabase
     .from("rating_bloco_sets")
-    .select("bloco_id, venceu, degrau_adversarios, degrau_parceiro")
+    .select("bloco_id, venceu, degrau_adversarios, degrau_parceiro, variacao")
     .in(
       "bloco_id",
       blocos.map((b) => b.id)
@@ -143,6 +146,7 @@ export async function trilhaDoRating(
         venceu: s.venceu,
         parceiro: rotuloDoDegrau(s.degrau_parceiro),
         adversarios: rotuloDoDegrau(s.degrau_adversarios),
+        variacao: s.variacao === null ? null : Number(s.variacao),
       })),
   }));
 }
