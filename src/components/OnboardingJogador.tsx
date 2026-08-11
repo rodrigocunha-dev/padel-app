@@ -6,7 +6,10 @@ import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
 import {
   PERGUNTAS,
-  sugerirCategoria,
+  sugerirDegrau,
+  janelaDeDegraus,
+  rotuloDoDegrau,
+  categoriaDoDegrau,
 } from "@/lib/calibracao";
 
 const DIAS = [
@@ -25,14 +28,11 @@ const TURNOS = [
 ];
 const RAIOS = [5, 10, 20, 30, 50];
 
-const ROTULO_CATEGORIA: Record<number, string> = {
-  2: "2ª — muito forte",
-  3: "3ª — forte",
-  4: "4ª — intermediário-avançado",
-  5: "5ª — intermediário",
-  6: "6ª — iniciante-intermediário",
-  7: "7ª — iniciante",
-};
+// Fora do componente de propósito: `Date.now()` dentro do corpo dele faz o
+// lint acusar chamada impura em render — mesmo aqui, que só roda no clique.
+function caminhoDaFoto(usuarioId: string): string {
+  return `${usuarioId}/perfil-${Date.now()}.jpg`;
+}
 
 type Props = { usuarioId: string; telefone: string };
 
@@ -51,7 +51,9 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
   const [sexo, setSexo] = useState<string | null>(null);
   const [foto, setFoto] = useState<File | null>(null);
   const [respostas, setRespostas] = useState<Record<string, number>>({});
-  const [categoria, setCategoria] = useState<number | null>(null);
+  // O degrau (0 a 20) é o que a pessoa escolhe; categoria e nível saem dele.
+  // Guardar os dois separados abriria espaço para divergirem.
+  const [degrau, setDegrau] = useState<number | null>(null);
   const [posicao, setPosicao] = useState<string | null>(null);
   const [disponibilidade, setDisponibilidade] = useState<
     Record<string, string[]>
@@ -65,7 +67,8 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
   const totalEtapas = etapaDisponibilidade + 1;
 
   const pontos = Object.values(respostas).reduce((a, b) => a + b, 0);
-  const sugerida = sugerirCategoria(pontos);
+  const degrauSugerido = sugerirDegrau(pontos);
+  const degrauEscolhido = degrau ?? degrauSugerido;
 
   function alternarTurno(dia: string, turno: string) {
     setDisponibilidade((atual) => {
@@ -85,7 +88,7 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
 
     let fotoUrl: string | null = null;
     if (foto) {
-      const caminho = `${usuarioId}/perfil-${Date.now()}.jpg`;
+      const caminho = caminhoDaFoto(usuarioId);
       const { error: erroUpload } = await supabase.storage
         .from("fotos")
         .upload(caminho, foto);
@@ -105,7 +108,8 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
       cidade: cidade.trim(),
       sexo,
       telefone,
-      categoria,
+      categoria: categoriaDoDegrau(degrauEscolhido).categoria,
+      nivel_categoria: categoriaDoDegrau(degrauEscolhido).nivel,
       posicao,
       disponibilidade: Object.entries(disponibilidade).map(
         ([dia, turnos]) => ({ dia, turnos })
@@ -115,8 +119,12 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
       calibracao_respostas: {
         respostas,
         pontos,
-        categoria_sugerida: sugerida,
-        categoria_escolhida: categoria,
+        degrau_sugerido: degrauSugerido,
+        degrau_escolhido: degrauEscolhido,
+        // Quanto a pessoa mexeu, e para que lado. Não é usado hoje: é para
+        // olhar no beta se quem se declara PIOR do que é ganha demais nos
+        // primeiros jogos — essa é a manipulação que rende prêmio.
+        ajuste: degrauEscolhido - degrauSugerido,
       },
     });
 
@@ -128,9 +136,9 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
     }
 
     posthog.capture("onboarding_concluido", {
-      categoria_sugerida: sugerida,
-      categoria_escolhida: categoria,
-      ajustou_sugestao: categoria !== sugerida,
+      degrau_sugerido: degrauSugerido,
+      degrau_escolhido: degrauEscolhido,
+      ajuste: degrauEscolhido - degrauSugerido,
       cidade: cidade.trim(),
       raio_km: raioKm,
       tem_foto: !!fotoUrl,
@@ -302,35 +310,40 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
     );
   }
 
-  // ---------- Etapa: categoria sugerida ----------
+  // ---------- Etapa: a autoavaliação, como AJUSTE de ±2 degraus ----------
+  // As quatro perguntas anteriores (fatos verificáveis) definiram o degrau.
+  // Aqui entra a única coisa que elas não conseguem capturar: se dentro da
+  // sua categoria você é Fraco, Médio ou Forte. A janela é curta de
+  // propósito — antes desta mudança a lista era aberta e o questionário não
+  // decidia nada, porque bastava tocar na 2ª e seguir.
   if (etapa === etapaCategoria) {
-    const escolhida = categoria ?? sugerida;
     return (
       <div>
         {barra}
         <div className={cartao}>
           <h1 className="font-display text-2xl font-extrabold text-tinta">
-            Sua categoria de largada
+            Como você avalia seu jogo hoje?
           </h1>
           <p className="mt-2 text-sm text-tinta-suave">
-            Pelas suas respostas, sugerimos a{" "}
+            Pelas suas respostas, seu ponto de largada é{" "}
             <strong className="text-primaria">
-              {ROTULO_CATEGORIA[sugerida]}
+              {rotuloDoDegrau(degrauSugerido)}
             </strong>
-            . Pode ajustar se achar que não te representa.
+            . Se achar que não te representa, ajuste um pouco para cima ou
+            para baixo.
           </p>
           <div className="mt-5 flex flex-col gap-2.5">
-            {[2, 3, 4, 5, 6, 7].map((c) => (
+            {janelaDeDegraus(degrauSugerido).map((d) => (
               <button
-                key={c}
+                key={d}
                 type="button"
-                className={botaoOpcao(escolhida === c)}
-                onClick={() => setCategoria(c)}
+                className={botaoOpcao(degrauEscolhido === d)}
+                onClick={() => setDegrau(d)}
               >
-                {ROTULO_CATEGORIA[c]}
-                {c === sugerida && (
+                {rotuloDoDegrau(d)}
+                {d === degrauSugerido && (
                   <span className="ml-2 rounded-full bg-destaque px-2 py-0.5 text-xs font-bold text-destaque-tinta">
-                    sugerida
+                    sugerido
                   </span>
                 )}
               </button>
@@ -339,15 +352,16 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
           <div className="mt-4 rounded-xl bg-primaria/5 p-3 text-xs text-tinta-suave">
             ⚖️ Seu perfil nasce com o selo <strong>“em calibração”</strong>:
             nas primeiras partidas o sistema confirma sua categoria e o selo
-            some. Jogar na categoria certa é mais divertido para todo mundo.
+            some. Não precisa acertar em cheio agora — os primeiros jogos
+            ajustam bem mais que esta escolha.
           </div>
           <button
             type="button"
             onClick={() => {
-              if (categoria === null) setCategoria(sugerida);
+              if (degrau === null) setDegrau(degrauSugerido);
               posthog.capture("calibracao_concluida", {
                 pontos,
-                categoria_sugerida: sugerida,
+                degrau_sugerido: degrauSugerido,
               });
               setEtapa(etapaPosicao);
             }}
