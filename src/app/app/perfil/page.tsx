@@ -3,15 +3,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { BotaoSair } from "@/components/BotaoSair";
-import { ROTULO_NIVEL } from "@/lib/partidas";
+import { BarraDeProgresso } from "@/components/rating/BarraDeProgresso";
+import { estadoDoRating } from "@/lib/rating";
 
 export const metadata: Metadata = {
   title: "Meu perfil — padel",
 };
 
-// Perfil mínimo: só o que já está guardado hoje. Histórico, estatísticas
-// e evolução do rating entram no Sprint 5, depois que a regra nº 5 for
-// decidida — não colocar placeholder aqui antes disso.
 export default async function PaginaPerfil() {
   const supabase = await criarClienteServidor();
   const {
@@ -21,11 +19,15 @@ export default async function PaginaPerfil() {
 
   const { data: jogador } = await supabase
     .from("jogadores")
-    .select("nome, foto_url, cidade, categoria, nivel_categoria, em_calibracao")
+    .select("nome, foto_url, cidade")
     .eq("id", user.id)
     .maybeSingle();
 
   if (!jogador) redirect("/app/onboarding");
+
+  // O rating bruto fica no servidor: daqui sai só categoria, nível e
+  // posições em porcentagem (ver `src/lib/rating.ts`).
+  const rating = await estadoDoRating(user.id);
 
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-8">
@@ -60,20 +62,21 @@ export default async function PaginaPerfil() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-2xl bg-superficie p-6 shadow-lg ring-1 ring-black/5">
-          <p className="text-sm text-tinta-suave">Sua categoria</p>
-          <p className="mt-1 font-display text-3xl font-extrabold text-primaria">
-            {jogador.categoria}ª{" "}
-            <span className="text-lg font-bold text-tinta-suave">
-              {ROTULO_NIVEL[jogador.nivel_categoria] ?? jogador.nivel_categoria}
-            </span>
-          </p>
-          {jogador.em_calibracao && (
-            <span className="mt-3 inline-block rounded-full bg-destaque px-3 py-1 text-xs font-bold text-destaque-tinta">
-              ⚖️ Em calibração
-            </span>
-          )}
+        <div className="mt-6">
+          {rating && <BarraDeProgresso estado={rating} />}
         </div>
+
+        <Link
+          href="/app/perfil/rating"
+          className="mt-3 block rounded-2xl bg-superficie p-5 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"
+        >
+          <p className="font-display text-base font-bold text-tinta">
+            📈 Como minha categoria mudou
+          </p>
+          <p className="mt-1 text-sm text-tinta-suave">
+            O que cada jogo fez com o seu nível
+          </p>
+        </Link>
 
         <Link
           href="/app/reservas"
