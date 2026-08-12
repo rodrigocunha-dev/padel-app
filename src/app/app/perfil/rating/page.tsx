@@ -99,7 +99,16 @@ export default async function PaginaTrilhaDoRating() {
                           <span className="flex items-start gap-2">
                             <span aria-hidden>{s.venceu ? "✅" : "❌"}</span>
                             <span>
-                              {s.venceu ? "Venceu" : "Perdeu"} jogando com um{" "}
+                              {/* O placar vem primeiro: sem ele, dois sets
+                                  com a mesma descrição mostravam valores
+                                  diferentes e pareciam arbitrários. */}
+                              {s.placar && (
+                                <strong className="text-tinta">
+                                  {s.placar}
+                                </strong>
+                              )}
+                              {s.placar ? " — " : ""}
+                              {s.venceu ? "venceu" : "perdeu"} jogando com um{" "}
                               <strong className="text-tinta">
                                 {s.parceiro}
                               </strong>{" "}

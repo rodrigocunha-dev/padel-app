@@ -108,6 +108,10 @@ export type DiaDaTrilha = {
     // Quanto ESTE set moveu. A soma dos sets do dia fecha exatamente com a
     // variação do dia — não é rateio, é a mesma conta aberta (script 029).
     variacao: number | null;
+    // O placar VÁLIDO, visto por quem está olhando. Sem ele, dois sets com
+    // a mesma explicação exibiam números diferentes sem motivo aparente —
+    // foi o que o fundador estranhou, com razão (script 030).
+    placar: string | null;
   }[];
 };
 
@@ -128,7 +132,9 @@ export async function trilhaDoRating(
 
   const { data: sets } = await supabase
     .from("rating_bloco_sets")
-    .select("bloco_id, venceu, degrau_adversarios, degrau_parceiro, variacao")
+    .select(
+      "bloco_id, venceu, degrau_adversarios, degrau_parceiro, variacao, games_meus, games_deles"
+    )
     .in(
       "bloco_id",
       blocos.map((b) => b.id)
@@ -147,6 +153,10 @@ export async function trilhaDoRating(
         parceiro: rotuloDoDegrau(s.degrau_parceiro),
         adversarios: rotuloDoDegrau(s.degrau_adversarios),
         variacao: s.variacao === null ? null : Number(s.variacao),
+        placar:
+          s.games_meus === null || s.games_deles === null
+            ? null
+            : `${s.games_meus} x ${s.games_deles}`,
       })),
   }));
 }
