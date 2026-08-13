@@ -76,10 +76,12 @@ sinal de alerta — pare e me chame antes de aprovar.
 Sessão com convite e aceite, sets com contestação e votação, divisão do valor, "Desistir", avisos dentro do app. Detalhe em `docs/interno/sessoes-e-sets.md`.
 
 ### 🔜 O que falta no Sprint 5
-- [ ] ⏳ **Motor de rating** — o item principal, ainda não iniciado. Tudo da Entrega A é a *entrada de dados* dele
+- [x] ✅ **Motor de rating (Glicko-1)** — scripts `025` a `030`. Fórmula conferida contra o exemplo publicado do autor do Glicko; recálculo reproduzível; proteção de queda vista funcionando com dados reais. Detalhe em `docs/interno/motor-de-rating.md`
+- [x] ✅ **Sets em partida aberta** — a área de sets passou a valer para os dois tipos de partida (`024`); sem isso o motor nasceria cego para o jogo entre desconhecidos
+- [x] ✅ **Tela do rating** — categoria, barra de progresso e a trilha do "quanto mudou e por quê", com o número privado
+- [ ] ⏳ **Agendar o recálculo** — hoje é chamada manual no SQL Editor. Depende de decidir a frequência, que depende do bloco diário
 - [ ] ⏳ **Web Push** — antes do beta, porque sem ele "silêncio vale como concordância" é injusto
 - [ ] ⏳ **Entrega B** — convite por telefone com link de cadastro (banco já preparado)
-- [ ] ⏳ **Sets em partida aberta** — a Decisão 2 prevê revezamento a 0,5x; só a sessão privada tem a área de sets
 
 ---
 
@@ -143,7 +145,12 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] ✅ 🔍 **Remover participante** pelo organizador — quem já pagou não pode ser removido (`020`)
 - [ ] ⏳ **Web Push** (aviso na tela do celular) — entra logo depois da Entrega A e **antes do beta**: sem ele, "silêncio vale como concordância" é injusto com quem abre pouco o app
 - [ ] ⏳ **Entrega B**: convite por telefone de quem ainda não tem conta, com link de cadastro. O banco já nasceu preparado (`telefone` em `partida_jogadores`)
-- [ ] ⏳ **Sets em partida aberta** — a Decisão 2 diz que revezamento também gera sets a 0,5x; a tela da partida aberta ainda não tem essa área
+- [x] ✅ 🔍 **Sets em partida aberta** (`024`) — a área de sets vale para os dois tipos. Junto veio a trava que faltava: o substituto da fila tem `estado = 'aceito'` e, sem olhar o `papel`, registrava set, era escalado em set que não jogou, contestava e votava
+- [x] ✅ 🔍 **Motor de rating Glicko-1** (`025`–`030`) — conta refeita do zero em blocos de um dia, força da dupla, placar mexendo na intensidade, calibração e proteção de queda por peso acumulado, número privado. Doc em `docs/interno/motor-de-rating.md`
+- [x] ✅ 🔍 **Onboarding com janela de ±2 degraus** — as 4 perguntas de fato definem o degrau, a autoavaliação virou o ajuste. Antes a escolha era livre e o questionário não decidia nada
+- [x] ✅ 🔍 **Tela do rating** — categoria + barra dentro da faixa (só para o dono) e a trilha do "quanto mudou e por quê", com placar e impacto de cada set
+- [ ] ⏳ **Agendar o recálculo do rating** — hoje é `select public.recalcular_ratings();` no SQL Editor
+- [ ] ⏳ **Conversa das âncoras** — usar jogadores de nível conhecido nos clubes-piloto para calibrar a largura das faixas. Decide também a força do anti-farming
 - [ ] ⏳ 🔍 Motor de rating Elo/Glicko para duplas — não existe. A palavra "rating" só aparece em texto de tela ("Competitiva — vale rating"), sem cálculo por trás
 - [ ] ⏳ Pesos do rating: nível dos adversários, tipo de jogo (amistoso 1x / liga 1,5x / torneio 2–3x), placar (regra nº 4)
 - [ ] ⏳ **Índice de confiabilidade** do rating (regra nº 4)

@@ -247,8 +247,14 @@ A regra do `023` é de propósito **uma frase sem lista de estados**: *você vê
 
 **Continua em aberto (privacidade, não furo):** a tabela `jogadores` é legível por qualquer pessoa logada, porque é assim que a busca por nome acha quem convidar. Olhar junto com o **nome de usuário (@)** do banco de ideias.
 
-## Motor de rating — decisões de produto (fechadas com o fundador em 08/08/2026)
-*Ainda NÃO construído. Este bloco é o desenho aprovado; o script vem depois de fechar as três questões técnicas no fim.*
+## Motor de rating — ✅ CONSTRUÍDO E TESTADO (08–12/08/2026)
+*Scripts `024` a `030`, todos rodados. Doc técnica completa em `docs/interno/motor-de-rating.md` — inclusive o que foi medido, o que foi corrigido no caminho e o que ainda não existe. O bloco abaixo é o desenho de produto que originou tudo, mantido como registro das decisões e dos porquês.*
+
+**O que ficou provado, não afirmado:** a fórmula bate com o exemplo publicado por Glickman (1464,1 / 151,4); o recálculo é reproduzível (duas execuções, ratings idênticos — o que também prova o congelamento da categoria do cadastro); a proteção de queda foi vista funcionando com dados reais nos três estados (segurado, mensagem acompanhando o degrau real, e queda confirmada). Antes do último teste, simulei o resultado por fora e previ 1404 e 1387 — o recálculo devolveu exatamente isso.
+
+**Quatro correções que só apareceram EXECUTANDO, nunca por leitura:** a incerteza inicial do xadrez estourava a nossa escala (número ia a −1467 e +2752); o multiplicador de calibração contava a mesma coisa duas vezes (a incerteza alta JÁ é "primeiros jogos valem mais"); a função de recálculo estava aberta para qualquer usuário logado (`revoke from public, anon` não alcança `authenticated` neste banco); e a força do parceiro não entrava na conta.
+
+**Pendências do motor:** agendar o recálculo (hoje é manual), a conversa das âncoras (decide a largura das faixas e com ela a força do anti-farming) e o `peso_do_mais_fraco`, que nasceu em 0,5 esperando evidência do beta.
 
 1. **Rating individual.** Cada jogador tem o seu; o set atualiza os dois jogadores de cada dupla. A força da dupla é derivada dos dois números, não armazenada.
 2. **Peso: a unidade é sempre o SET** (fechado em 08/08/2026, substitui "partida cheia = 1x, set = 0,5x"). A partida tradicional também é registrada set a set, e o set comum é a base 1,0 — tabela completa no item 12. Motivo da mudança: a partida cheia não gravava resultado nenhum (ver ⚠️ abaixo), e na prática o pessoal joga o que cabe no tempo da quadra, nem sempre um melhor-de-3 — registrar set a set deixa o motor agrupar sozinho, sem obrigar ninguém a escolher.
