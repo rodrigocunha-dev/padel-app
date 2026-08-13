@@ -1,4 +1,5 @@
 import { BarraNavegacao } from "@/components/BarraNavegacao";
+import { IrPelaNotificacao } from "@/components/IrPelaNotificacao";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
 // Layout só do app do jogador. O painel do clube (/clube) e o login
@@ -24,6 +25,9 @@ export default async function LayoutApp({
 
   return (
     <>
+      {/* Fica no layout do app inteiro: a notificação pode chegar com a
+          pessoa em qualquer tela, e o ouvinte precisa existir em todas. */}
+      <IrPelaNotificacao />
       {children}
       <BarraNavegacao
         nome={jogador?.nome ?? null}

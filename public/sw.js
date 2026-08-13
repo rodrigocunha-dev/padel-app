@@ -48,16 +48,39 @@ self.addEventListener("notificationclick", (evento) => {
   const destino = (evento.notification.data && evento.notification.data.url) || "/app";
 
   evento.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((abas) => {
-      // Se o app já está aberto, leva a aba existente para o destino em vez
-      // de abrir uma segunda cópia.
-      for (const aba of abas) {
-        if ("focus" in aba) {
-          aba.navigate(destino);
-          return aba.focus();
-        }
-      }
-      return self.clients.openWindow(destino);
-    })
+    (async () => {
+      const abas = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+
+      // App fechado: abre direto no destino. Simples e sem atraso.
+      const aba = abas.find((a) => "focus" in a);
+      if (!aba) return self.clients.openWindow(destino);
+
+      // App já aberto em segundo plano. Aqui `aba.navigate()` funcionaria,
+      // mas recarrega a página inteira — e no iPhone o efeito é feio: o
+      // sistema restaura o app na tela onde a pessoa estava e só depois a
+      // navegação acontece, com alguns segundos de salto visível.
+      //
+      // Então pedimos à própria página que navegue por dentro (a mesma
+      // navegação de quando se toca num link), que é quase instantânea.
+      await aba.focus();
+
+      const respondeu = await new Promise((resolve) => {
+        const canal = new MessageChannel();
+        const prazo = setTimeout(() => resolve(false), 500);
+        canal.port1.onmessage = () => {
+          clearTimeout(prazo);
+          resolve(true);
+        };
+        aba.postMessage({ tipo: "ir-para", url: destino }, [canal.port2]);
+      });
+
+      // Se a página não respondeu (versão antiga em cache, aba sem o
+      // ouvinte), cai no caminho antigo. Lento, mas nunca deixa de levar a
+      // pessoa ao lugar certo — que é o que não pode falhar.
+      if (!respondeu) return aba.navigate(destino);
+    })()
   );
 });
