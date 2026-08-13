@@ -1,0 +1,17 @@
+{
+  "name": "Padel",
+  "short_name": "Padel",
+  "description": "Encontre parceiros do seu nível, monte partidas e reserve a quadra sem taxa de conveniência.",
+  "lang": "pt-BR",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0e5c46",
+  "background_color": "#f5f8f2",
+  "icons": [
+    { "src": "/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

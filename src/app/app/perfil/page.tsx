@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { BotaoSair } from "@/components/BotaoSair";
 import { BarraDeProgresso } from "@/components/rating/BarraDeProgresso";
+import { AtivarNotificacoes } from "@/components/AtivarNotificacoes";
 import { estadoDoRating } from "@/lib/rating";
 
 export const metadata: Metadata = {
@@ -65,6 +66,11 @@ export default async function PaginaPerfil() {
         <div className="mt-6">
           {rating && <BarraDeProgresso estado={rating} />}
         </div>
+
+        {/* Fica no Perfil, e não na Início, de propósito: pedir permissão
+            antes de a pessoa entender para quê rende um "não" que o
+            navegador guarda para sempre. */}
+        <AtivarNotificacoes />
 
         <Link
           href="/app/perfil/rating"

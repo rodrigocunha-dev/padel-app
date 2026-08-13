@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Archivo, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -18,6 +18,22 @@ export const metadata: Metadata = {
   title: "Padel perto de você — lista de espera",
   description:
     "Encontre parceiros do seu nível, monte partidas e reserve a quadra sem taxa de conveniência. Entre na lista de espera.",
+  // O manifesto é o que torna o app instalável. No iPhone isso não é
+  // conforto: sem estar na tela de início, o Safari não deixa nem PEDIR
+  // permissão de notificação.
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Padel", statusBarStyle: "default" },
+  icons: {
+    icon: [
+      { url: "/icone-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icone-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0e5c46",
 };
 
 export default function RootLayout({

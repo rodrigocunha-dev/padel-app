@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
+import { dispararPush } from "@/lib/push";
 import { MensagemFlutuante } from "@/components/MensagemFlutuante";
 
 export type Pessoa = { id: string; nome: string };
@@ -131,6 +132,9 @@ export function SetsDaSessao({
     setOcupado(false);
     if (error) return setErro(traduzir(error.message));
     posthog.capture("set_registrado");
+    // Os outros do set têm 24h para contestar — o push é o que alcança quem
+    // não vai abrir o app hoje.
+    dispararPush();
     setAbrirForm(false);
     setDuplas({});
     router.refresh();
@@ -146,6 +150,7 @@ export function SetsDaSessao({
     setOcupado(false);
     if (error) return setErro(traduzir(error.message));
     posthog.capture("set_contestado");
+    dispararPush();
     setContestando(null);
     router.refresh();
   }
@@ -173,6 +178,7 @@ export function SetsDaSessao({
     setOcupado(false);
     if (error) return setErro(traduzir(error.message));
     posthog.capture("votacao_avisada");
+    dispararPush();
     router.refresh();
   }
 
