@@ -63,6 +63,7 @@ Releia antes de escrever ou revisar qualquer artigo:
 - [Sessões e sets (Sprint 5, Entrega A)](interno/sessoes-e-sets.md) — reserva vira sessão com convite e aceite, sets com contestação e votação, divisão do valor e avisos.
 - [Navegação do app (Sprint 5)](interno/navegacao-app.md) — barra fixa, regra de camadas e telas de perfil.
 - [Motor de rating (Sprint 5)](interno/motor-de-rating.md) — Glicko-1, escala de 21 degraus, pesos, calibração, proteção de rebaixamento e a trilha da transparência.
+- [Web Push e PWA](interno/web-push.md) — app instalável, inscrições por aparelho, envio idempotente e a exigência do iPhone.
 
 ---
 

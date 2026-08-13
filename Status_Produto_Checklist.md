@@ -80,7 +80,9 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] ✅ **Sets em partida aberta** — a área de sets passou a valer para os dois tipos de partida (`024`); sem isso o motor nasceria cego para o jogo entre desconhecidos
 - [x] ✅ **Tela do rating** — categoria, barra de progresso e a trilha do "quanto mudou e por quê", com o número privado
 - [ ] ⏳ **Agendar o recálculo** — hoje é chamada manual no SQL Editor. Depende de decidir a frequência, que depende do bloco diário
-- [ ] ⏳ **Web Push** — antes do beta, porque sem ele "silêncio vale como concordância" é injusto
+- [x] ✅ **Web Push + PWA instalável** (`031`) — testado no iPhone do fundador com um aviso real. Junto veio o PWA, que **não existia**: sem manifesto, ícones e service worker o push nem é possível no iPhone
+- [ ] ⏳ **Agendar o envio do push** — hoje depende de alguém usar o app; falta uma tarefa periódica para o caso de o app de quem registrou fechar antes
+- [ ] ⏳ **Decidir o fallback para quem não instala no iPhone** — aceitar a imperfeição ou antecipar o BSP. Com o número real de alcance, antes do beta
 - [ ] ⏳ **Entrega B** — convite por telefone com link de cadastro (banco já preparado)
 
 ---
@@ -143,7 +145,9 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] ✅ 🔍 **Divisão do valor da quadra** (`018`, `019`): divisor sem vagas declaradas, mínimo 4, congelado no 1º pagamento. Nasceu de um bug real — divisor móvel fazia quem pagou R$65 aparecer com R$43,33
 - [x] ✅ 🔍 **"Desistir"** — a vaga fica disponível sem a pessoa sair; ela só sai quando alguém assume, e o convite diz qual vaga preenche (`020`)
 - [x] ✅ 🔍 **Remover participante** pelo organizador — quem já pagou não pode ser removido (`020`)
-- [ ] ⏳ **Web Push** (aviso na tela do celular) — entra logo depois da Entrega A e **antes do beta**: sem ele, "silêncio vale como concordância" é injusto com quem abre pouco o app
+- [x] ✅ 🔍 **Web Push** (`031`) — service worker, inscrições por aparelho, envio idempotente e limpeza de inscrição morta. Testado em produção no iPhone, com um aviso real. Doc em `docs/interno/web-push.md`
+- [x] ✅ 🔍 **PWA instalável** — manifesto, ícones e meta tags. **Não existia nada disso**; o "PWA primeiro" da stack era intenção, não código. ⚠️ Ícone e nome são **provisórios** e agora aparecem na tela de início do usuário, o que torna visíveis as pendências de marca e cor
+- [x] ✅ 🔒 **Next.js 16.2.10 → 16.3.0** — fecha o *Middleware/Proxy bypass* (GHSA-6gpp-xcg3-4w24), que afetava justamente a proteção de `/app` e `/clube`. De 5 vulnerabilidades para zero. Verificado que, sem sessão, as rotas protegidas continuam caindo no login
 - [ ] ⏳ **Entrega B**: convite por telefone de quem ainda não tem conta, com link de cadastro. O banco já nasceu preparado (`telefone` em `partida_jogadores`)
 - [x] ✅ 🔍 **Sets em partida aberta** (`024`) — a área de sets vale para os dois tipos. Junto veio a trava que faltava: o substituto da fila tem `estado = 'aceito'` e, sem olhar o `papel`, registrava set, era escalado em set que não jogou, contestava e votava
 - [x] ✅ 🔍 **Motor de rating Glicko-1** (`025`–`030`) — conta refeita do zero em blocos de um dia, força da dupla, placar mexendo na intensidade, calibração e proteção de queda por peso acumulado, número privado. Doc em `docs/interno/motor-de-rating.md`
