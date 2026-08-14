@@ -201,7 +201,7 @@ export default async function PaginaPartida({
       <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-8">
         <div className="mx-auto w-full max-w-md">
           {/* Chegou no jogo → os avisos DESTE jogo já cumpriram o papel. */}
-          <MarcarAvisosLidos setIds={setIds} />
+          <MarcarAvisosLidos partidaId={partida.id} />
 
           <Link
             href={voltarHref}
@@ -306,7 +306,7 @@ export default async function PaginaPartida({
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-8">
       <div className="mx-auto w-full max-w-md">
         {/* Chegou no jogo → os avisos DESTE jogo já cumpriram o papel. */}
-        <MarcarAvisosLidos setIds={setIds} />
+        <MarcarAvisosLidos partidaId={partida.id} />
 
         <Link
           href={voltarHref}
