@@ -5,6 +5,8 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { MinhasPartidas } from "@/components/partidas/MinhasPartidas";
 import { AbasPartidas } from "@/components/partidas/AbasPartidas";
 import { AvisosPendentes } from "@/components/partidas/AvisosPendentes";
+import { BlocoNaFila } from "@/components/partidas/BlocoNaFila";
+import { minhaFila } from "@/lib/fila";
 import {
   statusDaPartida,
   statusDoPagamento,
@@ -76,38 +78,43 @@ export default async function PaginaMinhasPartidas({
     .filter((p) => !!p && p.status !== "cancelada");
 
   // Avisos ainda não lidos (resultado registrado, votação aberta).
+  // A partida vem direto do aviso (script 032): o aviso de promoção não tem
+  // set, e pelo caminho antigo ficaria sem para onde apontar.
   const { data: avisosRaw } = await supabase
     .from("avisos")
     .select(
-      "id, tipo, sets ( partida_id, ordem, games_a, games_b, partidas ( quadras ( clubes ( nome ) ), inicio ) )"
+      "id, tipo, partida_id, partidas ( inicio, quadras ( clubes ( nome ) ) ), sets ( ordem, games_a, games_b )"
     )
     .eq("jogador_id", user.id)
     .is("lido_em", null);
 
   const avisos = (avisosRaw ?? []).map((a) => {
+    const p = a.partidas as unknown as {
+      inicio: string;
+      quadras: { clubes: { nome: string } };
+    } | null;
     const s = a.sets as unknown as {
-      partida_id: string;
       ordem: number;
       games_a: number;
       games_b: number;
-      partidas: { inicio: string; quadras: { clubes: { nome: string } } } | null;
     } | null;
-    // O aviso diz DE QUAL jogo é — e, dentro dele, de qual set: dois avisos
-    // da mesma partida apareciam como duas linhas idênticas.
-    const nome = s?.partidas
-      ? `${s.partidas.quadras.clubes.nome} · ${new Date(
-          s.partidas.inicio
-        ).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`
+    const nome = p
+      ? `${p.quadras.clubes.nome} · ${new Date(p.inicio).toLocaleDateString(
+          "pt-BR",
+          { day: "2-digit", month: "2-digit" }
+        )}`
       : null;
     const setRotulo = s ? `Set ${s.ordem} · ${s.games_a}x${s.games_b}` : null;
     return {
       id: a.id,
       tipo: a.tipo,
-      partidaId: s?.partida_id ?? null,
+      partidaId: a.partida_id ?? null,
       partidaNome: nome,
       setRotulo,
     };
   });
+
+  const fila = await minhaFila(user.id);
 
   // Meus pagamentos (para saber o que está pago).
   const { data: pagos } = await supabase
@@ -164,6 +171,10 @@ export default async function PaginaMinhasPartidas({
         {/* O aviso dentro do app existe sempre — é o que torna justo o
             "quem não contestar em 24h concordou". */}
         <AvisosPendentes avisos={avisos} />
+
+        {/* Fila em bloco próprio: estar na fila não é ter jogo, e por isso
+            não entra na lista abaixo nem nos filtros de status/pagamento. */}
+        <BlocoNaFila itens={fila} />
 
         {convites.length > 0 && (
           <section className="mt-4">

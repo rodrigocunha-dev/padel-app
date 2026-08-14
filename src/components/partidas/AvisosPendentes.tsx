@@ -15,6 +15,7 @@ export type Aviso = {
 const TITULO: Record<string, string> = {
   set_registrado: "Registraram um resultado do seu jogo",
   votacao_aberta: "Há um placar em disputa — seu voto decide",
+  promovido: "Você saiu da fila e entrou no jogo",
 };
 
 const DETALHE: Record<string, string> = {
@@ -22,11 +23,13 @@ const DETALHE: Record<string, string> = {
     "Confira. Se não estiver certo, você tem 24h para contestar.",
   votacao_aberta:
     "Você estava lá. Toque para dizer qual placar está certo.",
+  promovido: "Abriu vaga e ela é sua. Confira o horário e a quadra.",
 };
 
 const ICONE: Record<string, string> = {
   set_registrado: "📋",
   votacao_aberta: "🗳️",
+  promovido: "🎉",
 };
 
 // Um bloco por TIPO, não um por aviso: com 3 resultados registrados a tela

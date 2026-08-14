@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
+import { dispararPush } from "@/lib/push";
 import {
   faixaCategoria,
   ROTULO_SEXO_JOGO,
@@ -122,6 +123,10 @@ export function PartidaDetalhe({
     }
     posthog.capture(evento);
     if (rpc === "cancelar_partida" || rpc === "sair_da_partida") {
+      // Sair pode ter promovido o primeiro da fila. O aviso já nasceu no
+      // banco; aqui só pedimos que ele saia como notificação — senão a
+      // pessoa só descobriria abrindo o app sem motivo para abrir.
+      if (rpc === "sair_da_partida") dispararPush();
       router.push("/app/partidas");
     } else {
       router.refresh();

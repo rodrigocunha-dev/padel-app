@@ -3,6 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { AvisosPendentes } from "@/components/partidas/AvisosPendentes";
+import { BlocoNaFila } from "@/components/partidas/BlocoNaFila";
+import { minhaFila } from "@/lib/fila";
 import {
   ROTULO_NIVEL,
   statusDaPartida,
@@ -80,38 +82,46 @@ export default async function PaginaApp() {
     .eq("estado", "convidado");
 
   // Avisos ainda não lidos — os mesmos de Minhas partidas, mesma consulta.
+  // A partida vem direto do aviso, e não pelo caminho aviso → set → partida:
+  // o aviso de promoção não tem set, e pelo caminho antigo ele ficaria sem
+  // para onde apontar (script 032).
   const { data: avisosRaw } = await supabase
     .from("avisos")
     .select(
-      "id, tipo, sets ( partida_id, ordem, games_a, games_b, partidas ( quadras ( clubes ( nome ) ), inicio ) )"
+      "id, tipo, partida_id, partidas ( inicio, quadras ( clubes ( nome ) ) ), sets ( ordem, games_a, games_b )"
     )
     .eq("jogador_id", user.id)
     .is("lido_em", null);
 
   const avisos = (avisosRaw ?? []).map((a) => {
+    const p = a.partidas as unknown as {
+      inicio: string;
+      quadras: { clubes: { nome: string } };
+    } | null;
     const s = a.sets as unknown as {
-      partida_id: string;
       ordem: number;
       games_a: number;
       games_b: number;
-      partidas: { inicio: string; quadras: { clubes: { nome: string } } } | null;
     } | null;
-    // O aviso diz DE QUAL jogo é — e, dentro dele, de qual set: dois avisos
-    // da mesma partida apareciam como duas linhas idênticas.
-    const nome = s?.partidas
-      ? `${s.partidas.quadras.clubes.nome} · ${new Date(
-          s.partidas.inicio
-        ).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`
+    // O aviso diz DE QUAL jogo é — e, quando vem de um set, também de qual
+    // set: dois avisos da mesma partida apareciam como linhas idênticas.
+    const nome = p
+      ? `${p.quadras.clubes.nome} · ${new Date(p.inicio).toLocaleDateString(
+          "pt-BR",
+          { day: "2-digit", month: "2-digit" }
+        )}`
       : null;
     const setRotulo = s ? `Set ${s.ordem} · ${s.games_a}x${s.games_b}` : null;
     return {
       id: a.id,
       tipo: a.tipo,
-      partidaId: s?.partida_id ?? null,
+      partidaId: a.partida_id ?? null,
       partidaNome: nome,
       setRotulo,
     };
   });
+
+  const fila = await minhaFila(user.id);
 
   const convites = (convitesRaw ?? [])
     .map(
@@ -296,6 +306,10 @@ export default async function PaginaApp() {
             isto, "quem não contestar concordou" dependia de ela ir
             procurar — o oposto do que a regra pretende. */}
         <AvisosPendentes avisos={avisos} />
+
+        {/* Junto dos convites porque é da mesma família: algo pendente que
+            ainda não é jogo seu. E a Início é onde a pessoa cai ao abrir. */}
+        <BlocoNaFila itens={fila} />
 
         {convites.length > 0 && (
           <section className="mt-4">
