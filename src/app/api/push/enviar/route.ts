@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -33,14 +34,35 @@ type Pendente = {
   tag: string;
 };
 
-export async function POST() {
-  // Precisa de sessão só para não deixar a rota aberta à internet inteira.
-  const supabase = await criarClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ erro: "não autenticado" }, { status: 401 });
+// Comparação em tempo constante: comparar segredo com `===` vaza, pelo
+// tempo de resposta, quantos caracteres iniciais estavam certos.
+function segredoConfere(recebido: string | null, esperado: string | undefined) {
+  if (!recebido || !esperado) return false;
+  const a = Buffer.from(recebido);
+  const b = Buffer.from(esperado);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
+
+export async function POST(request: Request) {
+  // Dois caminhos de entrada. O primeiro é o banco, que dispara sozinho
+  // quando um aviso nasce (gatilho) e a cada 15 min (varredura) — ele não
+  // tem sessão de usuário, então se identifica por um segredo.
+  const peloBanco = segredoConfere(
+    request.headers.get("x-push-secret"),
+    process.env.PUSH_SECRET
+  );
+
+  if (!peloBanco) {
+    // O segundo é o próprio app, logo depois de uma ação que gera aviso.
+    // A sessão existe só para a rota não ficar aberta à internet inteira.
+    const supabase = await criarClienteServidor();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ erro: "não autenticado" }, { status: 401 });
+    }
   }
 
   const chavePublica = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
