@@ -52,6 +52,35 @@ Tem filtros por esses dois status. Fecha um buraco real: antes, a partida vencid
 
 **Decisão registrada (CLAUDE.md):** não haverá seção "Financeira" separada — "Minhas partidas" filtrada por "Inadimplente" já é a visão financeira.
 
+## A fila de substitutos ficou invisível por um sprint inteiro (corrigido em 12/08/2026, script `032`)
+
+A promoção automática funcionava desde o Sprint 4 — e mesmo assim **quem estava na fila não conseguia chegar na partida**. Dois filtros escritos em lugares diferentes se somavam:
+
+- **"Minhas partidas"** exige `papel = 'jogador'`, então nunca listou quem está na fila.
+- **O feed** só mostra partidas que ainda não começaram.
+
+Resultado: assim que o jogo começava, o substituto perdia o único acesso que tinha. E antes disso, só encontraria a partida caçando no meio do feed, sem nada indicando que era a dele.
+
+**O pior não era a navegação.** A promoção acontecia em silêncio: alguém saía, o primeiro da fila virava jogador, e ele não ficava sabendo. Só descobriria abrindo o app por conta própria — sem ter motivo nenhum para abrir.
+
+### O que existe agora
+
+**Bloco próprio** (`BlocoNaFila`), na Início e em Minhas partidas, com clube, horário e a posição na fila. Decisão do fundador: **fila é possibilidade, não jogo** — por isso não entra na lista de "Minhas partidas", que contaminaria os filtros de status e pagamento.
+
+Isso traz uma propriedade de graça: quando a pessoa é promovida, o `papel` vira `jogador`, ela **sai do bloco e entra na lista sozinha**, sem nenhuma regra escrita para isso.
+
+**A posição é derivada**, não gravada — sai da `ordem` de entrada. Guardar posições convida ao bug de alguém sair da fila e os números gravados passarem a mentir.
+
+**Aviso de promoção**, criado dentro do `sair_da_partida`, na mesma transação da promoção. Não dá para existir "avisei que você subiu" sem a pessoa ter subido. E só nasce quando alguém de fato sobe: substituto saindo, ou fila vazia, não geram aviso.
+
+### O que isso quebrou, e como foi resolvido
+
+Todo aviso até então vinha de um **set**, e a partida era descoberta pelo caminho `aviso → set → partida`. O aviso de promoção **não tem set**.
+
+A partida passou a ser gravada direto no aviso (`avisos.partida_id`), e quem preenche é um **gatilho** — assim `registrar_set`, `contestar_set` e `avisar_votacao` seguem intocadas e o campo nunca fica vazio por esquecimento.
+
+⚠️ **Um efeito colateral que só apareceu no teste do fundador:** a marcação de "aviso lido" procurava por set (`in("set_id", ...)`). O aviso de promoção nunca era encontrado, então o bloco ficava na tela para sempre, mesmo depois de a pessoa abrir o jogo. Agora a marcação é **por partida** — cobre os três tipos e não quebra quando surgir um quarto.
+
 ## O que ficou para o sprint do gateway real
 Ver "Ideias Futuras" no CLAUDE.md — o pacote do modelo de pagamento: quem assume o risco do calote, partida aberta com estranhos exigindo pagar-ao-entrar, e o que o clube vê sobre pagamentos.
 

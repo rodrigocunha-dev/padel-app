@@ -81,7 +81,8 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] ✅ **Tela do rating** — categoria, barra de progresso e a trilha do "quanto mudou e por quê", com o número privado
 - [ ] ⏳ **Agendar o recálculo** — hoje é chamada manual no SQL Editor. Depende de decidir a frequência, que depende do bloco diário
 - [x] ✅ **Web Push + PWA instalável** (`031`) — testado no iPhone do fundador com um aviso real. Junto veio o PWA, que **não existia**: sem manifesto, ícones e service worker o push nem é possível no iPhone
-- [ ] ⏳ **Agendar o envio do push** — hoje depende de alguém usar o app; falta uma tarefa periódica para o caso de o app de quem registrou fechar antes
+- [x] ✅ **Push automático** (`033`) — gatilho no banco no instante em que o aviso nasce (medido: 6s) e varredura a cada 15 min como rede de segurança. Não depende mais de ninguém estar com o app aberto
+- [x] ✅ **A fila de substitutos ficou visível** (`032`) — bloco próprio na Início e em Minhas partidas, com a posição, e **aviso quando a promoção acontece**. Antes o substituto perdia o acesso à partida quando o jogo começava, e subia a jogador em silêncio
 - [ ] ⏳ **Decidir o fallback para quem não instala no iPhone** — aceitar a imperfeição ou antecipar o BSP. Com o número real de alcance, antes do beta
 - [ ] ⏳ **Entrega B** — convite por telefone com link de cadastro (banco já preparado)
 

@@ -110,8 +110,46 @@ De propósito. Cache offline é outro assunto, com outros riscos — tela velha,
 
 ---
 
+## Quem dispara o envio (script `033`)
+
+Antes, quem pedia o envio era o **navegador de quem agiu**. Se essa pessoa fechasse o app antes, a notificação ficava esperando alguém fazer outra ação. Agora quem pede é o **banco**, por dois caminhos:
+
+**1. Gatilho, no instante em que avisos são criados.** É o mecanismo principal — a notificação sai em segundos. Medido: 6 segundos entre a promoção e o `push_enviado_em` preenchido, sem ninguém chamar a rota.
+
+É um gatilho **por comando, não por linha**: `registrar_set` cria três avisos de uma vez, e um gatilho por linha faria três chamadas idênticas. A rota é idempotente, então não geraria notificação repetida — mas seria desperdício.
+
+**2. Varredura a cada 15 minutos.** Rede de segurança. O `pg_net` é *dispara e esquece*: **não tenta de novo**. Se a rota estiver fora do ar naquele segundo (um deploy acontecendo, por exemplo), sem a varredura aquele aviso **nunca** viraria notificação — não seria atraso, seria perda silenciosa e permanente. E se o `pg_net` não estiver disponível no projeto, a varredura deixa de ser rede e vira o mecanismo.
+
+⚠️ **15 minutos e não uma vez por dia**: o limite diário é da Vercel, não do agendador do Postgres. Um push sobre um prazo de 24h que chega 20h depois avisa que sobraram 4 horas — quase inútil.
+
+### A rota aprendeu a reconhecer o banco
+
+Além da sessão de usuário, ela aceita um **segredo no cabeçalho** (`x-push-secret`). A comparação é em tempo constante: comparar segredo com `===` vaza, pelo tempo de resposta, quantos caracteres iniciais estavam certos.
+
+O segredo e o endereço moram em `push_config`, com RLS ligada e **nenhuma política** — inalcançável pelo app, só pelo SQL Editor e pelas funções `security definer`. O mesmo valor vai na Vercel como `PUSH_SECRET`; se os dois não baterem, o banco chama e a rota recusa **em silêncio**.
+
+### Como conferir
+
+```sql
+-- avisos esperando push (deve ficar perto de zero)
+select count(*) from public.avisos
+where push_enviado_em is null and lido_em is null
+  and criado_em > now() - interval '24 hours';
+
+-- as últimas chamadas HTTP que o banco fez
+select id, created, status_code from net._http_response order by created desc limit 10;
+
+-- a varredura está agendada?
+select jobname, schedule, active from cron.job;
+```
+
+## Quando o aviso deixa de aparecer
+
+A marcação de "lido" acontece na **chegada** à página do jogo, e é **por partida** — não por set.
+
+⚠️ Era por set até 12/08/2026, e isso escondia um defeito: o aviso de promoção não tem set, então nunca era encontrado e o bloco ficava na tela para sempre. Marcar por partida cobre os três tipos e não quebra quando surgir um quarto.
+
 ## O que ainda não existe
 
-- **Agendamento.** O envio depende de alguém usar o app. Uma tarefa periódica batendo na mesma rota cobriria o caso de o aplicativo de quem registrou fechar antes do disparo.
 - **Fallback por WhatsApp** para quem não instala o app no iPhone. Decisão de produto em aberto, com prazo de beta.
-- **Aviso de convite recebido.** Hoje só resultado registrado e votação aberta viram push.
+- **Aviso de convite recebido.** Hoje só resultado registrado, votação aberta e promoção viram push.
