@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { criarClienteServidor } from "@/lib/supabase/server";
+import { criarClienteServidor, usuarioAtual } from "@/lib/supabase/server";
 import { PartidaDetalhe } from "@/components/partidas/PartidaDetalhe";
 import { ConvidarParticipantes } from "@/components/partidas/ConvidarParticipantes";
 import { SetsDaSessao } from "@/components/partidas/SetsDaSessao";
@@ -20,28 +20,84 @@ export default async function PaginaPartida({
 }) {
   const { id } = await params;
   const supabase = await criarClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+
+  // ⚡ Esta tela tem dependências DE VERDADE — os nomes só podem ser buscados
+  // depois que a partida diz quem são, e os votos dependem de quais sets
+  // existem. Então aqui não dá para mandar tudo junto: o que dá é agrupar em
+  // ondas, e não fazer uma consulta de cada vez. Eram nove passos em fila.
+  //
+  // ONDA 1 — tudo que só precisa do id que veio no endereço.
+  const [user, { data: partida }, { data: setsRaw }, { data: teto }] =
+    await Promise.all([
+      usuarioAtual(),
+
+      supabase
+        .from("partidas")
+        .select(
+          "id, tipo, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, status, organizador_id, inicio, fim, preco_centavos, quadras ( nome, clubes ( id, nome, cidade ) ), partida_jogadores ( jogador_id, papel, ordem, estado, desistiu_em )"
+        )
+        .eq("id", id)
+        .maybeSingle(),
+
+      // ============================================================
+      // SETS — carregados para os DOIS tipos de partida
+      // ============================================================
+      // Desde 08/08/2026 a unidade do rating é sempre o set, em qualquer
+      // contexto (regra nº 5). Antes disto a área de sets só existia na sessão
+      // privada, e a partida aberta não gravava resultado nenhum — o que
+      // deixava o motor de rating sem fonte de dado justamente para o jogo
+      // entre desconhecidos, que é o que mais interessa medir.
+      supabase
+        .from("sets")
+        .select(
+          "id, ordem, a1, a2, b1, b2, games_a, games_b, registrado_por, registrado_em"
+        )
+        .eq("partida_id", id)
+        .order("ordem", { ascending: true }),
+
+      supabase.rpc("teto_de_sets", { p_partida_id: id }),
+    ]);
+
   if (!user) redirect("/entrar");
-
-  const { data: partida } = await supabase
-    .from("partidas")
-    .select(
-      "id, tipo, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, status, organizador_id, inicio, fim, preco_centavos, quadras ( nome, clubes ( id, nome, cidade ) ), partida_jogadores ( jogador_id, papel, ordem, estado, desistiu_em )"
-    )
-    .eq("id", id)
-    .maybeSingle();
-
   if (!partida) notFound();
 
-  // Os nomes vêm à parte: partida_jogadores.jogador_id aponta para
-  // auth.users, então não dá para juntar direto com a tabela jogadores.
-  const ids = partida.partida_jogadores.map((j) => j.jogador_id);
-  const { data: perfis } = await supabase
-    .from("jogadores")
-    .select("id, nome, foto_url, categoria")
-    .in("id", ids);
+  const setIds = (setsRaw ?? []).map((s) => s.id);
+
+  // ONDA 2 — o que precisava saber quem joga e quais sets existem.
+  const [{ data: perfis }, { data: contestacoes }, { data: meusVotos }, situacoes] =
+    await Promise.all([
+      // Os nomes vêm à parte: partida_jogadores.jogador_id aponta para
+      // auth.users, então não dá para juntar direto com a tabela jogadores.
+      supabase
+        .from("jogadores")
+        .select("id, nome, foto_url, categoria")
+        .in(
+          "id",
+          partida.partida_jogadores.map((j) => j.jogador_id)
+        ),
+
+      setIds.length
+        ? supabase
+            .from("set_contestacoes")
+            .select("set_id, contestado_por, games_a, games_b")
+            .in("set_id", setIds)
+        : Promise.resolve({ data: [] }),
+
+      setIds.length
+        ? supabase
+            .from("set_votos")
+            .select("set_id, voto")
+            .in("set_id", setIds)
+            .eq("votante_id", user.id)
+        : Promise.resolve({ data: [] }),
+
+      // A situação de cada set (qual placar vale e se conta) é calculada no
+      // servidor — não replico a regra aqui para as duas não divergirem.
+      Promise.all(
+        setIds.map((sid) => supabase.rpc("situacao_do_set", { p_set_id: sid }))
+      ),
+    ]);
+
   const porId = new Map((perfis ?? []).map((p) => [p.id, p]));
 
   const jogadores = partida.partida_jogadores.map((j) => ({
@@ -67,48 +123,6 @@ export default async function PaginaPartida({
   const aceitos = jogadores
     .filter((j) => j.papel === "jogador" && j.estado === "aceito" && j.perfil)
     .map((j) => ({ id: j.jogador_id, nome: j.perfil!.nome }));
-
-  // ============================================================
-  // SETS — carregados para os DOIS tipos de partida
-  // ============================================================
-  // Desde 08/08/2026 a unidade do rating é sempre o set, em qualquer
-  // contexto (regra nº 5). Antes disto a área de sets só existia na sessão
-  // privada, e a partida aberta não gravava resultado nenhum — o que deixava
-  // o motor de rating sem fonte de dado justamente para o jogo entre
-  // desconhecidos, que é o que mais interessa medir.
-  const { data: setsRaw } = await supabase
-    .from("sets")
-    .select(
-      "id, ordem, a1, a2, b1, b2, games_a, games_b, registrado_por, registrado_em"
-    )
-    .eq("partida_id", partida.id)
-    .order("ordem", { ascending: true });
-
-  const setIds = (setsRaw ?? []).map((s) => s.id);
-
-  const { data: contestacoes } = setIds.length
-    ? await supabase
-        .from("set_contestacoes")
-        .select("set_id, contestado_por, games_a, games_b")
-        .in("set_id", setIds)
-    : { data: [] };
-
-  const { data: meusVotos } = setIds.length
-    ? await supabase
-        .from("set_votos")
-        .select("set_id, voto")
-        .in("set_id", setIds)
-        .eq("votante_id", user.id)
-    : { data: [] };
-
-  // A situação de cada set (qual placar vale e se conta) é calculada no
-  // servidor — não replico a regra aqui para as duas não divergirem.
-  const situacoes = await Promise.all(
-    setIds.map((sid) => supabase.rpc("situacao_do_set", { p_set_id: sid }))
-  );
-  const { data: teto } = await supabase.rpc("teto_de_sets", {
-    p_partida_id: partida.id,
-  });
 
   const sets = (setsRaw ?? []).map((s, i) => {
     const c = (contestacoes ?? []).find((x) => x.set_id === s.id) ?? null;
@@ -164,20 +178,22 @@ export default async function PaginaPartida({
       clubes: { id: string; nome: string; cidade: string };
     };
 
-    // O divisor vem do servidor: mínimo 4 e congelado no 1º pagamento.
-    // A tela não recalcula por conta própria — foi assim que a conta de
-    // quem já tinha pago mudou sozinha no teste.
-    const { data: divisor } = await supabase.rpc("divisor_da_partida", {
-      p_partida_id: partida.id,
-    });
+    // ONDA 3 — só da sessão privada, e as duas juntas.
+    const [{ data: divisor }, { data: pagamentosDaPartida }] =
+      await Promise.all([
+        // O divisor vem do servidor: mínimo 4 e congelado no 1º pagamento.
+        // A tela não recalcula por conta própria — foi assim que a conta de
+        // quem já tinha pago mudou sozinha no teste.
+        supabase.rpc("divisor_da_partida", { p_partida_id: partida.id }),
 
-    // A divisão do valor vale para a sessão igual à partida aberta: a quadra
-    // é paga do mesmo jeito. Onde ela aparece na tela depende de eu já ter
-    // pago ou não — devendo, ela vem antes de tudo.
-    const { data: pagamentosDaPartida } = await supabase
-      .from("pagamentos")
-      .select("jogador_id, status")
-      .eq("partida_id", partida.id);
+        // A divisão do valor vale para a sessão igual à partida aberta: a
+        // quadra é paga do mesmo jeito. Onde ela aparece na tela depende de eu
+        // já ter pago ou não — devendo, ela vem antes de tudo.
+        supabase
+          .from("pagamentos")
+          .select("jogador_id, status")
+          .eq("partida_id", partida.id),
+      ]);
 
     const jaPagaram = (pagamentosDaPartida ?? [])
       .filter((p) => p.status === "pago")
