@@ -84,7 +84,8 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] ✅ **Push automático** (`033`) — gatilho no banco no instante em que o aviso nasce (medido: 6s) e varredura a cada 15 min como rede de segurança. Não depende mais de ninguém estar com o app aberto
 - [x] ✅ **A fila de substitutos ficou visível** (`032`) — bloco próprio na Início e em Minhas partidas, com a posição, e **aviso quando a promoção acontece**. Antes o substituto perdia o acesso à partida quando o jogo começava, e subia a jogador em silêncio
 - [ ] ⏳ **Decidir o fallback para quem não instala no iPhone** — aceitar a imperfeição ou antecipar o BSP. Com o número real de alcance, antes do beta
-- [ ] ⏳ **Entrega B** — convite por telefone com link de cadastro (banco já preparado)
+- [x] ✅ **Entrega B** (`034`–`036`) — convite por telefone em sessão privada, com vinculação automática quando a pessoa cria a conta. Testado de ponta a ponta com um número que nunca existira no app
+- [x] ✅ **Chamar um amigo para o app** — convite genérico, com código no link para o dono do app saber quem trouxe quem (sem tela, sem exposição a ninguém)
 
 ---
 
@@ -149,7 +150,8 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] ✅ 🔍 **Web Push** (`031`) — service worker, inscrições por aparelho, envio idempotente e limpeza de inscrição morta. Testado em produção no iPhone, com um aviso real. Doc em `docs/interno/web-push.md`
 - [x] ✅ 🔍 **PWA instalável** — manifesto, ícones e meta tags. **Não existia nada disso**; o "PWA primeiro" da stack era intenção, não código. ⚠️ Ícone e nome são **provisórios** e agora aparecem na tela de início do usuário, o que torna visíveis as pendências de marca e cor
 - [x] ✅ 🔒 **Next.js 16.2.10 → 16.3.0** — fecha o *Middleware/Proxy bypass* (GHSA-6gpp-xcg3-4w24), que afetava justamente a proteção de `/app` e `/clube`. De 5 vulnerabilidades para zero. Verificado que, sem sessão, as rotas protegidas continuam caindo no login
-- [ ] ⏳ **Entrega B**: convite por telefone de quem ainda não tem conta, com link de cadastro. O banco já nasceu preparado (`telefone` em `partida_jogadores`)
+- [x] ✅ 🔍 **Entrega B** (`034`–`036`): convite por telefone de quem ainda não tem conta. Só em sessão privada; o convite fica pendente até existir conta e, mesmo depois, a pessoa ainda precisa **aceitar**. Doc em `docs/interno/convite-por-telefone.md`
+  - ⚠️ Três correções achadas testando: `revoke` de coluna sem revogar a tabela **não fecha nada** (o telefone do convidado ficou visível para o grupo); coluna nova em `jogadores` **nasce fechada** para o app; e o telefone tinha **dois formatos** que nunca bateriam (13 dígitos contra 11), o que deixaria o convite pendente para sempre sem erro nenhum
 - [x] ✅ 🔍 **Sets em partida aberta** (`024`) — a área de sets vale para os dois tipos. Junto veio a trava que faltava: o substituto da fila tem `estado = 'aceito'` e, sem olhar o `papel`, registrava set, era escalado em set que não jogou, contestava e votava
 - [x] ✅ 🔍 **Motor de rating Glicko-1** (`025`–`030`) — conta refeita do zero em blocos de um dia, força da dupla, placar mexendo na intensidade, calibração e proteção de queda por peso acumulado, número privado. Doc em `docs/interno/motor-de-rating.md`
 - [x] ✅ 🔍 **Onboarding com janela de ±2 degraus** — as 4 perguntas de fato definem o degrau, a autoavaliação virou o ajuste. Antes a escolha era livre e o questionário não decidia nada

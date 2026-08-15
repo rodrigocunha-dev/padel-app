@@ -64,6 +64,7 @@ Releia antes de escrever ou revisar qualquer artigo:
 - [Navegação do app (Sprint 5)](interno/navegacao-app.md) — barra fixa, regra de camadas e telas de perfil.
 - [Motor de rating (Sprint 5)](interno/motor-de-rating.md) — Glicko-1, escala de 21 degraus, pesos, calibração, proteção de rebaixamento e a trilha da transparência.
 - [Web Push e PWA](interno/web-push.md) — app instalável, inscrições por aparelho, envio idempotente e a exigência do iPhone.
+- [Convite por telefone (Entrega B)](interno/convite-por-telefone.md) — convidar quem não tem conta, origem do cadastro, e as armadilhas de permissão de coluna.
 
 ---
 
