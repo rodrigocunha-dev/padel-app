@@ -321,7 +321,9 @@ export function PartidaDetalhe({
               disabled={acao}
               className="rounded-full px-4 py-3 text-sm font-medium text-tinta-suave hover:text-red-600"
             >
-              Sair da partida
+              {/* Quem está na fila não está numa partida — está esperando
+                  uma. O botão é o mesmo, o texto não pode ser. */}
+              {ehSubstituto ? "Sair da fila" : "Sair da partida"}
             </button>
           )}
         </div>

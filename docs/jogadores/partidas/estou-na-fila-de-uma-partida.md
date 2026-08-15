@@ -37,8 +37,8 @@ poderia se programar para uma partida que talvez não aconteça para você.
 
 ## Quero sair da fila
 
-Abra a partida pelo bloco e toque em **sair**. Ninguém é avisado, e você pode entrar de novo depois
-se ainda houver espaço.
+Abra a partida pelo bloco e toque em **Sair da fila**. Ninguém é avisado, e você pode entrar de novo
+depois se ainda houver espaço.
 
 ## Perguntas relacionadas
 
