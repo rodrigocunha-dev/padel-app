@@ -1,9 +1,13 @@
 import { ListaEsperaForm } from "@/components/ListaEsperaForm";
 import { TemaToggle } from "@/components/TemaToggle";
+import { GuardarOrigem } from "@/components/GuardarOrigem";
 
 export default function Home() {
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo">
+      {/* O link de convite cai aqui. O código precisa sobreviver até o
+          cadastro terminar, vários passos adiante. */}
+      <GuardarOrigem />
       <TemaToggle />
 
       <section className="flex flex-1 flex-col items-center justify-center gap-12 px-6 py-16 lg:flex-row lg:items-start lg:gap-20 lg:py-24">

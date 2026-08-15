@@ -143,6 +143,29 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
       raio_km: raioKm,
       tem_foto: !!fotoUrl,
     });
+
+    // De onde essa pessoa veio. Dado para o dono do app; nenhuma tela
+    // mostra isso a ninguém.
+    let veioDe: string | null = null;
+    try {
+      veioDe = sessionStorage.getItem("convite_de");
+      sessionStorage.removeItem("convite_de");
+    } catch {
+      // Armazenamento bloqueado: segue sem atribuição.
+    }
+    await supabase.rpc("registrar_origem", {
+      p_codigo: veioDe,
+      p_origem: veioDe ? "link_de_convite" : "direto",
+    });
+
+    // Fecha o ciclo do convite por telefone: quem foi convidado antes de
+    // ter conta encontra os convites esperando por ele agora. Eles seguem
+    // como CONVITE — criar conta não é dizer sim para um jogo.
+    const { data: ligados } = await supabase.rpc("vincular_convites_do_telefone");
+    if (ligados && ligados > 0) {
+      posthog.capture("convites_vinculados", { quantidade: ligados });
+    }
+
     router.replace("/app");
   }
 

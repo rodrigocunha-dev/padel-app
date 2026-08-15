@@ -7,6 +7,7 @@ import { criarClienteNavegador } from "@/lib/supabase/client";
 import { ROTULO_CATEGORIA } from "@/lib/partidas";
 import { AvisoPendencia } from "@/components/partidas/AvisoPendencia";
 import { MensagemFlutuante } from "@/components/MensagemFlutuante";
+import { ConvidarPorTelefone } from "@/components/partidas/ConvidarPorTelefone";
 
 export type Participante = {
   jogador_id: string | null;
@@ -61,12 +62,15 @@ export function ConvidarParticipantes({
   jaComecou,
   participantes,
   jaPagaram,
+  nomeDoJogo,
 }: {
   partidaId: string;
   meuId: string;
   souOrganizador: boolean;
   jaComecou: boolean;
   participantes: Participante[];
+  // Vai na mensagem de convite: "te convidei para jogar padel: <isto>".
+  nomeDoJogo: string;
   // Quem já pagou não pode ser removido (o dinheiro está naquela vaga).
   // Some o ✕ em vez de deixá-lo tocável e mostrar erro depois.
   jaPagaram: string[];
@@ -428,9 +432,14 @@ export function ConvidarParticipantes({
 
           {busca.trim().length >= 3 && achados.length === 0 && (
             <p className="mt-3 text-sm text-tinta-suave">
-              Ninguém com esse nome. Quem ainda não tem conta não aparece aqui.
+              Ninguém com esse nome. Quem ainda não tem conta não aparece aqui —
+              use o convite por telefone abaixo.
             </p>
           )}
+
+          {/* A busca por nome só acha quem já está no app. No jogo de grupo
+              fixo sempre falta alguém que ainda não se cadastrou. */}
+          <ConvidarPorTelefone partidaId={partidaId} nomeDoJogo={nomeDoJogo} />
         </div>
       )}
 

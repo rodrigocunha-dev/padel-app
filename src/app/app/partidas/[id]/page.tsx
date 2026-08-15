@@ -256,6 +256,7 @@ export default async function PaginaPartida({
             meuId={user.id}
             souOrganizador={partida.organizador_id === user.id}
             jaComecou={jaComecou}
+            nomeDoJogo={`${local.clubes.nome}, ${quando}`}
             participantes={JSON.parse(
               JSON.stringify(
                 jogadores

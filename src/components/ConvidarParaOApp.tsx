@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import posthog from "posthog-js";
+import { criarClienteNavegador } from "@/lib/supabase/client";
 
 // ============================================================
 // "CHAMA UM AMIGO" — convite solto, sem partida nenhuma
@@ -24,9 +25,18 @@ export function ConvidarParaOApp() {
   const [copiado, setCopiado] = useState(false);
 
   async function convidar() {
+    // O código no link é o que permite saber, depois, quem trouxe quem.
+    // ⚠️ É dado para o dono do app, não para o usuário: ninguém vê quem
+    // convidou quem dentro do produto. Se um dia houver campanha de
+    // recompensa, aí se decide o que mostrar.
+    const supabase = criarClienteNavegador();
+    const { data: codigo } = await supabase.rpc("meu_codigo_convite");
+
     // No celular, `share` abre a folha do sistema — a pessoa escolhe
     // WhatsApp, mensagem, o que quiser. Não presumimos o canal.
-    const link = window.location.origin;
+    const link = codigo
+      ? `${window.location.origin}/?de=${codigo}`
+      : window.location.origin;
     const texto = `${MENSAGEM} ${link}`;
 
     if (navigator.share) {
