@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { criarClienteServidor } from "@/lib/supabase/server";
+import {
+  criarClienteServidor,
+  perfilAtual,
+  usuarioAtual,
+} from "@/lib/supabase/server";
 import { AvisosPendentes } from "@/components/partidas/AvisosPendentes";
 import { BlocoNaFila } from "@/components/partidas/BlocoNaFila";
 import { minhaFila } from "@/lib/fila";
@@ -42,56 +46,97 @@ function formatarQuando(inicio: string): string {
 
 export default async function PaginaApp() {
   const supabase = await criarClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await usuarioAtual();
 
   // O proxy garante que só chega aqui logado, mas o TypeScript não sabe.
   if (!user) return null;
 
-  const { data: jogador } = await supabase
-    .from("jogadores")
-    .select("nome, foto_url, categoria, nivel_categoria, em_calibracao, sexo")
-    .eq("id", user.id)
-    .maybeSingle();
+  // ⚡ TUDO DE UMA VEZ, e não uma consulta esperando a outra.
+  // Nenhuma delas depende do resultado da anterior — só do user.id, que já
+  // temos. Enfileiradas, cada ida e volta ao banco somava no tempo de abrir
+  // o app (medido: ~2s só de espera). Em paralelo, o custo passa a ser o da
+  // consulta mais lenta, não a soma de todas.
+  const agora = new Date().toISOString();
+  const [
+    jogador,
+    { data: vinculos },
+    { data: convitesRaw },
+    { data: avisosRaw },
+    fila,
+    { data: pagos },
+    { data: reservas },
+    { data: ultima },
+  ] = await Promise.all([
+    // Já veio no layout, nesta mesma renderização: `perfilAtual` devolve o
+    // resultado de lá sem ir ao banco de novo.
+    perfilAtual(user.id),
+
+    // Partidas em que sou jogador ativo (substituto não conta).
+    supabase
+      .from("partida_jogadores")
+      .select(
+        "partidas ( id, reserva_id, inicio, fim, status, quadras ( nome, clubes ( nome ) ) )"
+      )
+      .eq("jogador_id", user.id)
+      .eq("papel", "jogador")
+      // Convite pendente NÃO é jogo seu: sem este filtro, um convite que você
+      // ainda não aceitou apareceria entre os "próximos jogos".
+      .eq("estado", "aceito"),
+
+    // Convites esperando resposta — bloco próprio, porque é uma AÇÃO pendente,
+    // não um compromisso já marcado.
+    supabase
+      .from("partida_jogadores")
+      .select("partidas ( id, inicio, status, quadras ( clubes ( nome ) ) )")
+      .eq("jogador_id", user.id)
+      .eq("estado", "convidado"),
+
+    // Avisos ainda não lidos — os mesmos de Minhas partidas, mesma consulta.
+    // A partida vem direto do aviso, e não pelo caminho aviso → set → partida:
+    // o aviso de promoção não tem set, e pelo caminho antigo ele ficaria sem
+    // para onde apontar (script 032).
+    supabase
+      .from("avisos")
+      .select(
+        "id, tipo, partida_id, partidas ( inicio, quadras ( clubes ( nome ) ) ), sets ( ordem, games_a, games_b )"
+      )
+      .eq("jogador_id", user.id)
+      .is("lido_em", null),
+
+    minhaFila(user.id),
+
+    supabase
+      .from("pagamentos")
+      .select("partida_id, status")
+      .eq("jogador_id", user.id)
+      .eq("status", "pago"),
+
+    // Minhas reservas futuras.
+    supabase
+      .from("reservas")
+      .select("id, inicio, quadras ( nome, clubes ( nome ) )")
+      .eq("jogador_id", user.id)
+      .eq("status", "confirmada")
+      .gte("fim", agora)
+      .order("inicio", { ascending: true }),
+
+    // Clube da reserva mais recente — alimenta o atalho "Reservar".
+    // Quando favoritar clubes existir, troca a fonte e o atalho melhora.
+    supabase
+      .from("reservas")
+      .select("quadras ( clubes ( id, nome ) )")
+      .eq("jogador_id", user.id)
+      .eq("status", "confirmada")
+      .order("inicio", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   // Logou mas ainda não tem perfil → onboarding.
   if (!jogador) redirect("/app/onboarding");
 
   // Perfil criado antes do campo "sexo" existir → completar antes de seguir.
   if (!jogador.sexo) redirect("/app/completar-perfil");
-
-  // Partidas em que sou jogador ativo (substituto não conta).
-  const { data: vinculos } = await supabase
-    .from("partida_jogadores")
-    .select(
-      "partidas ( id, reserva_id, inicio, fim, status, quadras ( nome, clubes ( nome ) ) )"
-    )
-    .eq("jogador_id", user.id)
-    .eq("papel", "jogador")
-    // Convite pendente NÃO é jogo seu: sem este filtro, um convite que você
-    // ainda não aceitou apareceria entre os "próximos jogos".
-    .eq("estado", "aceito");
-
-  // Convites esperando resposta — bloco próprio, porque é uma AÇÃO pendente,
-  // não um compromisso já marcado.
-  const { data: convitesRaw } = await supabase
-    .from("partida_jogadores")
-    .select("partidas ( id, inicio, status, quadras ( clubes ( nome ) ) )")
-    .eq("jogador_id", user.id)
-    .eq("estado", "convidado");
-
-  // Avisos ainda não lidos — os mesmos de Minhas partidas, mesma consulta.
-  // A partida vem direto do aviso, e não pelo caminho aviso → set → partida:
-  // o aviso de promoção não tem set, e pelo caminho antigo ele ficaria sem
-  // para onde apontar (script 032).
-  const { data: avisosRaw } = await supabase
-    .from("avisos")
-    .select(
-      "id, tipo, partida_id, partidas ( inicio, quadras ( clubes ( nome ) ) ), sets ( ordem, games_a, games_b )"
-    )
-    .eq("jogador_id", user.id)
-    .is("lido_em", null);
 
   const avisos = (avisosRaw ?? []).map((a) => {
     const p = a.partidas as unknown as {
@@ -121,8 +166,6 @@ export default async function PaginaApp() {
     };
   });
 
-  const fila = await minhaFila(user.id);
-
   const convites = (convitesRaw ?? [])
     .map(
       (c) =>
@@ -135,11 +178,6 @@ export default async function PaginaApp() {
     )
     .filter((p) => !!p && p.status !== "cancelada");
 
-  const { data: pagos } = await supabase
-    .from("pagamentos")
-    .select("partida_id, status")
-    .eq("jogador_id", user.id)
-    .eq("status", "pago");
   const pagouSet = new Set((pagos ?? []).map((p) => p.partida_id));
 
   const partidas = (vinculos ?? [])
@@ -167,15 +205,6 @@ export default async function PaginaApp() {
   const aguardando = jogadas.filter(
     (p) => statusDoPagamento(p.fim, pagouSet.has(p.id)) === "aguardando"
   ).length;
-
-  // Minhas reservas futuras.
-  const { data: reservas } = await supabase
-    .from("reservas")
-    .select("id, inicio, quadras ( nome, clubes ( nome ) )")
-    .eq("jogador_id", user.id)
-    .eq("status", "confirmada")
-    .gte("fim", new Date().toISOString())
-    .order("inicio", { ascending: true });
 
   // A reserva que existe POR BAIXO de uma partida minha é descartada aqui:
   // quem cria partida aberta também vira dono da reserva, e sem isto o
@@ -214,17 +243,6 @@ export default async function PaginaApp() {
   ]
     .sort((a, b) => new Date(a.inicio).getTime() - new Date(b.inicio).getTime())
     .slice(0, 4);
-
-  // Clube da reserva mais recente — alimenta o atalho "Reservar".
-  // Quando favoritar clubes existir, troca a fonte e o atalho melhora.
-  const { data: ultima } = await supabase
-    .from("reservas")
-    .select("quadras ( clubes ( id, nome ) )")
-    .eq("jogador_id", user.id)
-    .eq("status", "confirmada")
-    .order("inicio", { ascending: false })
-    .limit(1)
-    .maybeSingle();
 
   const clubeRecente =
     (
