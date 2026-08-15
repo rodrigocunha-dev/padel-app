@@ -5,6 +5,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { BotaoSair } from "@/components/BotaoSair";
 import { BarraDeProgresso } from "@/components/rating/BarraDeProgresso";
 import { AtivarNotificacoes } from "@/components/AtivarNotificacoes";
+import { ConvidarParaOApp } from "@/components/ConvidarParaOApp";
 import { estadoDoRating } from "@/lib/rating";
 
 export const metadata: Metadata = {
@@ -107,6 +108,8 @@ export default async function PaginaPerfil() {
             Seus jogos e pagamentos — futuros e passados
           </p>
         </Link>
+
+        <ConvidarParaOApp />
 
         <div className="mt-8 border-t border-black/5 pt-6">
           <BotaoSair />
