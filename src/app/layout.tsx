@@ -22,7 +22,36 @@ export const metadata: Metadata = {
   // conforto: sem estar na tela de início, o Safari não deixa nem PEDIR
   // permissão de notificação.
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Padel", statusBarStyle: "default" },
+  appleWebApp: {
+    capable: true,
+    title: "Padel",
+    statusBarStyle: "default",
+    // Tela de abertura. O iPhone pinta ESTAS imagens no instante do toque no
+    // ícone, do próprio aparelho, sem internet nenhuma — é o que substitui o
+    // tempo de tela preta enquanto a página não chega.
+    //
+    // ⚠️ Exige uma imagem por tamanho de aparelho, com a media query exata.
+    // Não existe uma que sirva para todos: se faltar a do aparelho, ele não
+    // mostra nada e a tela preta volta. Por isso a lista é longa — ela cobre
+    // do iPhone SE ao 16 Pro Max, só em pé (o manifesto trava a orientação).
+    //
+    // Gerador: scripts/gerar-abertura.js (roda com `node`, usa o sharp que já
+    // vem com o Next). Quando a marca for decidida, é regerar e trocar.
+    startupImage: [
+      { url: "/abertura/abertura-640x1136.png", media: "(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
+      { url: "/abertura/abertura-750x1334.png", media: "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
+      { url: "/abertura/abertura-1242x2208.png", media: "(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
+      { url: "/abertura/abertura-1125x2436.png", media: "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
+      { url: "/abertura/abertura-828x1792.png", media: "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
+      { url: "/abertura/abertura-1242x2688.png", media: "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
+      { url: "/abertura/abertura-1170x2532.png", media: "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
+      { url: "/abertura/abertura-1284x2778.png", media: "(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
+      { url: "/abertura/abertura-1179x2556.png", media: "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
+      { url: "/abertura/abertura-1290x2796.png", media: "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
+      { url: "/abertura/abertura-1206x2622.png", media: "(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
+      { url: "/abertura/abertura-1320x2868.png", media: "(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
+    ],
+  },
   icons: {
     icon: [
       { url: "/icone-192.png", sizes: "192x192", type: "image/png" },
