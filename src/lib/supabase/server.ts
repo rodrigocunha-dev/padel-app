@@ -48,14 +48,22 @@ export const usuarioAtual = cache(async () => {
 });
 
 // O perfil de quem está logado, pelo mesmo motivo e com a mesma regra.
-// A barra de navegação pede nome e foto; a Início pede categoria e nível.
-// Buscar as colunas das duas de uma vez custa o mesmo que buscar as de uma —
-// o caro é a viagem até o banco, não o tamanho da linha.
+// A barra de navegação pede nome e foto; a Início pede categoria e nível; o
+// Descobrir pede a cidade. Buscar as colunas de todas de uma vez custa o
+// mesmo que buscar as de uma — o caro é a viagem até o banco, não o tamanho
+// da linha.
+//
+// ⚠️ Coluna nova em `jogadores` NASCE FECHADA para o app (a tabela é revogada
+// e as colunas liberadas uma a uma, desde o script 008). Ao acrescentar algo
+// aqui, confira o `grant` — senão a consulta falha inteira, com "permission
+// denied" para a tabela, e não para a coluna.
 export const perfilAtual = cache(async (jogadorId: string) => {
   const supabase = await criarClienteServidor();
   const { data } = await supabase
     .from("jogadores")
-    .select("nome, foto_url, categoria, nivel_categoria, em_calibracao, sexo")
+    .select(
+      "nome, foto_url, categoria, nivel_categoria, em_calibracao, sexo, cidade"
+    )
     .eq("id", jogadorId)
     .maybeSingle();
   return data;

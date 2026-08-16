@@ -39,6 +39,26 @@
   --font-display: var(--font-archivo);
 }
 
+/* Por que a tela ficava PRETA ao abrir o app no celular.
+ *
+ * Medido, não deduzido: `color-scheme` estava "normal" (ou seja, o app nunca
+ * dizia que é um app claro) e o <html> tinha fundo transparente — só o <body>
+ * era pintado. Enquanto a página não chega, quem aparece é a tela do próprio
+ * navegador, e com o aparelho no modo escuro essa tela é PRETA.
+ *
+ * Daí a queixa ser "branca OU preta": era o aparelho no modo claro ou escuro,
+ * não dois problemas diferentes.
+ *
+ * Isto não deixa o app mais rápido — a espera foi encurtada no servidor. Isto
+ * faz a espera ter a cor do app em vez de um buraco preto.
+ *
+ * O dia em que houver modo escuro de verdade, este é o lugar de mexer. */
+:root {
+  color-scheme: light;
+  background-color: var(--cor-fundo);
+}
+
 body {
+  background-color: var(--cor-fundo);
   transition: background-color 0.2s ease, color 0.2s ease;
 }

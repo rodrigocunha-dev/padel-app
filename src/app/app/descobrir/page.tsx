@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { criarClienteServidor } from "@/lib/supabase/server";
+import {
+  criarClienteServidor,
+  perfilAtual,
+  usuarioAtual,
+} from "@/lib/supabase/server";
 import { Descobrir } from "@/components/mapa/Descobrir";
 import type { ClubeDescoberta } from "@/lib/descoberta";
 
@@ -16,26 +20,24 @@ export default async function PaginaDescobrir({
 }) {
   const { agora } = await searchParams;
   const supabase = await criarClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await usuarioAtual();
   if (!user) redirect("/entrar");
 
-  // Só clubes com localização definida aparecem no mapa.
-  const { data: clubes } = await supabase
-    .from("clubes")
-    .select(
-      "id, nome, cidade, latitude, longitude, telefone, quadras ( id, esporte, tipo, coberta, quadra_precos ( dias, hora_inicio, hora_fim, preco_centavos ) )"
-    )
-    .not("latitude", "is", null)
-    .not("longitude", "is", null);
+  // ⚡ Os clubes do mapa não têm nada a ver com o meu perfil, então saem
+  // juntos. E a cidade (usada no filtro "só na minha cidade") já veio no
+  // layout: `perfilAtual` devolve o de lá sem ir ao banco de novo.
+  const [{ data: clubes }, jogador] = await Promise.all([
+    // Só clubes com localização definida aparecem no mapa.
+    supabase
+      .from("clubes")
+      .select(
+        "id, nome, cidade, latitude, longitude, telefone, quadras ( id, esporte, tipo, coberta, quadra_precos ( dias, hora_inicio, hora_fim, preco_centavos ) )"
+      )
+      .not("latitude", "is", null)
+      .not("longitude", "is", null),
 
-  // Cidade do jogador para o filtro "só na minha cidade".
-  const { data: jogador } = await supabase
-    .from("jogadores")
-    .select("cidade")
-    .eq("id", user.id)
-    .maybeSingle();
+    perfilAtual(user.id),
+  ]);
 
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo">
