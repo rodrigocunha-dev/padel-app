@@ -26,9 +26,22 @@ export const metadata: Metadata = {
     capable: true,
     title: "Padel",
     statusBarStyle: "default",
-    // Tela de abertura. O iPhone pinta ESTAS imagens no instante do toque no
-    // ícone, do próprio aparelho, sem internet nenhuma — é o que substitui o
-    // tempo de tela preta enquanto a página não chega.
+    // ⚠️ MEDIDO NO IPHONE DO FUNDADOR (13 Pro, iOS 18.7) E **NÃO FUNCIONA**.
+    //
+    // Estava tudo certo — aparelho instalado, as 13 tags na página, e uma
+    // casando com o aparelho (conferido pela página de diagnóstico, com
+    // `matchMedia` rodando no próprio iPhone). Mesmo assim, nenhuma abertura.
+    //
+    // Conclusão: com manifesto presente, o iOS 18 monta a tela de abertura
+    // SOZINHO, a partir do `background_color` e do ícone do manifesto, e
+    // ignora estas imagens. Era por isso que o fundador via BRANCO: a
+    // abertura existia, e era a nossa cor `#f5f8f2`.
+    //
+    // A cor do manifesto passou para o verde-quadra, que é o caminho que o
+    // sistema de fato usa. Esta lista fica por ora, sem custo (só é baixada
+    // se for usada), porque cobre iOS antigo e Android. **Se o teste com o
+    // manifesto confirmar, apagar esta lista e as 12 imagens** — carregar
+    // 300 KB de arte que ninguém pinta é peso morto.
     //
     // ⚠️ Exige uma imagem por tamanho de aparelho, com a media query exata.
     // Não existe uma que sirva para todos: se faltar a do aparelho, ele não
