@@ -38,6 +38,19 @@ export const metadata: Metadata = {
     // Gerador: scripts/gerar-abertura.js (roda com `node`, usa o sharp que já
     // vem com o Next). Quando a marca for decidida, é regerar e trocar.
     startupImage: [
+      // CORINGA, sem media query — vem primeiro de propósito.
+      //
+      // As entradas abaixo só valem se o tamanho da tela bater EXATAMENTE.
+      // Aparelho fora da lista (modelo novo, iPad, iPhone que eu não previ)
+      // não casa com nenhuma e volta a abrir no preto — foi o que aconteceu
+      // no primeiro teste. Este coringa fecha esse buraco: quem não casa com
+      // nada usa ele, esticado para o tamanho do aparelho.
+      //
+      // Esticar não estraga o desenho porque ele é fundo liso com a marca no
+      // centro — não tem borda nem detalhe de canto para deformar. Foi por
+      // isso que a arte nasceu assim.
+      { url: "/abertura/abertura-1320x2868.png" },
+
       { url: "/abertura/abertura-640x1136.png", media: "(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
       { url: "/abertura/abertura-750x1334.png", media: "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
       { url: "/abertura/abertura-1242x2208.png", media: "(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
