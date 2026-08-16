@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PainelDiagnostico } from "./PainelDiagnostico";
 
 export const metadata: Metadata = {
@@ -19,7 +20,14 @@ export default function PaginaDiagnostico() {
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-10">
       <div className="mx-auto w-full max-w-md">
-        <h1 className="font-display text-2xl font-extrabold text-tinta">
+        <Link
+          href="/app/perfil"
+          className="text-sm font-medium text-tinta-suave hover:text-tinta"
+        >
+          ← Perfil
+        </Link>
+
+        <h1 className="mt-4 font-display text-2xl font-extrabold text-tinta">
           Diagnóstico do aparelho
         </h1>
         <p className="mt-2 text-sm text-tinta-suave">
