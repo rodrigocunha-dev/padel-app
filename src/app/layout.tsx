@@ -34,6 +34,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#0e5c46",
+  // Também está no CSS (`globals.css`), e não é repetição inútil: o arquivo
+  // de CSS é um download à parte, então até ele chegar a tela ainda seria a
+  // do navegador — preta, no aparelho em modo escuro. Aqui a informação vai
+  // junto com os primeiros bytes da página, sem esperar mais nada.
+  colorScheme: "light",
 };
 
 export default function RootLayout({
