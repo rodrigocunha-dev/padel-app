@@ -191,9 +191,34 @@ O placar é **gravado**, não lido de `sets`: quando uma votação resolve uma c
 
 ---
 
-## Como rodar
+## Quando o recálculo roda
 
-O recálculo é **manual**, no SQL Editor:
+**Sozinho, de hora em hora**, aos :07 de cada hora (script `037`, mesmo `pg_cron` que o push já usa). Os :07 evitam disputar o banco com a varredura do push, que bate em :00, :15, :30 e :45.
+
+Antes do `037` era só manual — e isso deixava o motor inerte na prática: o jogador registrava o set, esperava as 24h da janela de contestação, e a categoria dele **não mudava até alguém lembrar de rodar o comando**. Não era defeito do cálculo; ele nunca tinha sido agendado.
+
+### Por que de hora em hora, se o bloco é de um dia
+
+São perguntas diferentes, e confundi-las é fácil. O **bloco** é a unidade da conta (item 11): tudo o que aconteceu num dia conta junto. A **frequência** é só quando a conta é refeita. Rodar mais vezes **nunca produz números diferentes** — faz o mesmo resultado aparecer mais cedo.
+
+Com rodada diária, quem jogou às 21h esperaria até dois dias para ver a categoria mexer: as 24h da janela mais o tempo até a próxima rodada. Isso briga com a regra nº 4, que só vale se a mudança aparecer perto do jogo. De hora em hora, a espera extra é de no máximo uma hora.
+
+### Cada rodada fica registrada
+
+`rating_execucoes` grava quando rodou, quanto demorou, quantos blocos, quantos jogadores e o erro, se houver. Não é enfeite: a conta é **refeita do zero** a cada vez (item 10), o que é barato hoje e vai encarecendo conforme os sets se acumulam. Sem medir cada rodada, o dia de mudar a frequência chegaria como surpresa — provavelmente na forma de execuções se atropelando.
+
+```sql
+select rodou_em, duracao_ms, blocos, jogadores, origem, erro
+from public.rating_execucoes order by rodou_em desc limit 20;
+```
+
+⚠️ **Quando `duracao_ms` passar de poucos segundos**, a saída não é rodar menos vezes — é o recálculo deixar de refazer tudo do zero. Isso é decisão de arquitetura (item 10), não ajuste de agenda, e custa a reprodutibilidade que nos fez escolher o "do zero".
+
+**Rodada que falha grava o erro e devolve o controle**, em vez de derrubar o agendamento. Sem isso, uma falha apareceria só como "a categoria de todo mundo parou de mudar", dias depois.
+
+### Rodar na mão
+
+Continua possível, e é o que se usa ao testar:
 
 ```sql
 select public.recalcular_ratings();
@@ -221,7 +246,6 @@ A função é `security definer` e está **revogada de `public`, `anon` e `authe
 
 ## O que ainda não existe
 
-- **Quando o recálculo roda.** Hoje é chamada manual. Agendar é peça própria e depende de decidir a frequência — que por sua vez depende do bloco diário: não adianta recalcular de hora em hora se o bloco é de um dia.
 - **Liga e torneio** como tipo de partida.
 - **Índice de confiabilidade na tela.** Existe por dentro; decisão reversível de não mostrar.
 - **Validação por pares.** Proposta registrada e não aprovada — a resposta do adversário tende a seguir o placar, que o motor já leu. Decidir depois do beta.
@@ -237,3 +261,4 @@ A função é `security definer` e está **revogada de `public`, `anon` e `authe
 | `028` | `peso_do_mais_fraco` (em 0,5, desligado) |
 | `029` | variação por set na trilha |
 | `030` | placar de cada set na trilha |
+| `037` | o recálculo passa a rodar sozinho, de hora em hora, com registro de cada rodada |
