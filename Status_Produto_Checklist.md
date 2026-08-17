@@ -49,12 +49,14 @@ sinal de alerta — pare e me chame antes de aprovar.
 ## Onde estamos e o que trava o quê
 *Esta seção substitui a ordem que o antigo Comandos_de_Retomada_Sprints.md codificava. Ler antes de escolher o próximo bloco — item sem dependência atendida não deve ser iniciado.*
 
-- **Chat e notificações pedem a BARRA DE NAVEGAÇÃO FIXA antes** — hoje não há onde eles morarem
-- **Rating (Módulo 1.5) depende do registro de resultado**, que não existe — os dois andam juntos
-- **Repasse ao clube e reembolso dependem do gateway real** (fornecedor não decidido)
+*Revisado em 17/08/2026: os três primeiros itens da lista antiga já foram resolvidos (barra de navegação, registro de resultado e push existem). Sobrou o que segue.*
+
+- **Tudo que envolve dinheiro real depende do GATEWAY** (fornecedor não decidido): repasse ao clube, reembolso, e o pacote do modelo de pagamento — que o fundador definiu em 09/08 como **pré-requisito de beta**. A homologação leva dias que não dependem de nós, então a decisão do fornecedor é o gargalo mais caro em aberto
 - **WhatsApp automático destrava DOIS módulos ao mesmo tempo** (1.3 e 1.4) — depende de contratar um BSP
-- **Chat e push NÃO dependem de fornecedor nenhum** — Supabase Realtime já roda no projeto (3 canais) e Web Push é nativo do navegador. Só o *fallback* WhatsApp precisa de BSP
-- **LGPD (Módulo 1.8) não depende de nada** — pode ser feito a qualquer momento, e trava o lançamento
+- **Chat NÃO depende de fornecedor nenhum** — o Supabase Realtime já roda no projeto (3 canais). Só o *fallback* WhatsApp precisa de BSP
+- **LGPD (Módulo 1.8) não depende de nada** — pode ser feito a qualquer momento, e **trava o lançamento**. É o maior bloco pronto-para-começar que existe hoje
+- **Liga e torneio (Fase 2) destravam dois pesos do rating** que já existem nos parâmetros e hoje não têm de onde vir
+- **A análise de UX/design do app inteiro** foi decidida para **depois** de o produto estar pronto — e o cache da casca do app foi adiado para depois dela. Não redesenhar por conta própria antes dessa conversa
 
 ---
 
@@ -79,7 +81,7 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] ✅ **Motor de rating (Glicko-1)** — scripts `025` a `030`. Fórmula conferida contra o exemplo publicado do autor do Glicko; recálculo reproduzível; proteção de queda vista funcionando com dados reais. Detalhe em `docs/interno/motor-de-rating.md`
 - [x] ✅ **Sets em partida aberta** — a área de sets passou a valer para os dois tipos de partida (`024`); sem isso o motor nasceria cego para o jogo entre desconhecidos
 - [x] ✅ **Tela do rating** — categoria, barra de progresso e a trilha do "quanto mudou e por quê", com o número privado
-- [ ] ⏳ **Agendar o recálculo** — hoje é chamada manual no SQL Editor. Depende de decidir a frequência, que depende do bloco diário
+- [x] ✅ **Agendar o recálculo** (`037`) — de hora em hora, aos :07. A dúvida que travava ("não adianta rodar de hora em hora se o bloco é de um dia") era confusão entre duas coisas: o **bloco** é a unidade da conta, a **frequência** é só quando ela é refeita. Rodar mais vezes nunca muda o resultado, só o faz aparecer mais cedo
 - [x] ✅ **Web Push + PWA instalável** (`031`) — testado no iPhone do fundador com um aviso real. Junto veio o PWA, que **não existia**: sem manifesto, ícones e service worker o push nem é possível no iPhone
 - [x] ✅ **Push automático** (`033`) — gatilho no banco no instante em que o aviso nasce (medido: 6s) e varredura a cada 15 min como rede de segurança. Não depende mais de ninguém estar com o app aberto
 - [x] ✅ **A fila de substitutos ficou visível** (`032`) — bloco próprio na Início e em Minhas partidas, com a posição, e **aviso quando a promoção acontece**. Antes o substituto perdia o acesso à partida quando o jogo começava, e subia a jogador em silêncio
@@ -156,24 +158,30 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] ✅ 🔍 **Motor de rating Glicko-1** (`025`–`030`) — conta refeita do zero em blocos de um dia, força da dupla, placar mexendo na intensidade, calibração e proteção de queda por peso acumulado, número privado. Doc em `docs/interno/motor-de-rating.md`
 - [x] ✅ 🔍 **Onboarding com janela de ±2 degraus** — as 4 perguntas de fato definem o degrau, a autoavaliação virou o ajuste. Antes a escolha era livre e o questionário não decidia nada
 - [x] ✅ 🔍 **Tela do rating** — categoria + barra dentro da faixa (só para o dono) e a trilha do "quanto mudou e por quê", com placar e impacto de cada set
-- [ ] ⏳ **Agendar o recálculo do rating** — hoje é `select public.recalcular_ratings();` no SQL Editor
+- [x] ✅ 🔍 **Recálculo agendado** (`037`, 17/08/2026) — roda sozinho de hora em hora via `pg_cron`, aos :07. Cada rodada fica registrada em `rating_execucoes`. **Comprovado disparando sozinho**, não só agendado
 - [ ] ⏳ **Conversa das âncoras** — usar jogadores de nível conhecido nos clubes-piloto para calibrar a largura das faixas. Decide também a força do anti-farming
-- [ ] ⏳ 🔍 Motor de rating Elo/Glicko para duplas — não existe. A palavra "rating" só aparece em texto de tela ("Competitiva — vale rating"), sem cálculo por trás
-- [ ] ⏳ Pesos do rating: nível dos adversários, tipo de jogo (amistoso 1x / liga 1,5x / torneio 2–3x), placar (regra nº 4)
-- [ ] ⏳ **Índice de confiabilidade** do rating (regra nº 4)
-- [ ] ⏳ **Transparência: mostrar quanto o rating mudou e por quê** após cada jogo (regra nº 4)
-- [ ] ⏳ 🔍 Categorias 7 × Forte/Médio/Fraco (21 degraus) — não existe
-- [ ] ⏳ Proteção de rebaixamento (janela de 10 partidas)
-- [ ] ⏳ 🔍 Calibração por pares (validação por 2 jogadores) — não existe. Só o questionário do Sprint 1 (`calibracao_respostas`) e o selo (`em_calibracao`); a validação aparece apenas como comentário em `calibracao.ts:4`
-- [ ] ⏳ 🔍 **Saída do selo "em calibração"** — hoje o selo NÃO TEM COMO SAIR: não há validação por pares nem contagem das 5 primeiras partidas. Todo jogador fica marcado para sempre
-- [ ] ⏳ **Reputação de conduta** (paga? aparece? comportamento?) — **EIXO SEPARADO do rating de habilidade, nunca misturar** (decisão registrada no CLAUDE.md)
+- [ ] ⏳ **Reputação de conduta** (paga? aparece? comportamento?) — **EIXO SEPARADO do rating de habilidade, nunca misturar** (decisão registrada no CLAUDE.md). Os dados que ela vai usar (quem registrou, contestou, votou o quê) **já estão sendo gravados** desde a Entrega A
+- [ ] ⏳ 🔍 **Calibração por pares (validação por 2 jogadores)** — não existe, e **está em avaliação, não aprovada** (item 5 do motor no CLAUDE.md): a resposta do adversário tende a seguir o placar, que o motor já leu, então pode ser eco em vez de informação nova. Decidir depois do beta
+- [ ] ⏳ **Peso de liga (1,5x) e torneio (2–3x)** — os pesos existem na tabela de parâmetros, mas **não há como marcar um jogo como de liga ou torneio**: falta o tipo de partida, que é Fase 2 (Módulos 2.1 e 2.2)
+
+> ⚠️ **CORRIGIDO EM 17/08/2026 — este bloco listava sete itens como "não existe" que existem desde 08–12/08.** Auditado linha a linha contra o código:
+> - *"Motor de rating Elo/Glicko não existe"* → **existe** (`025`–`030`, Glicko-1, tabelas `rating_*`)
+> - *"Categorias 21 degraus não existe"* → **existe** (`categoria_do_degrau`, escala inteira no `025`)
+> - *"Transparência: quanto mudou e por quê"* → **existe** (trilha em `/app/perfil/rating`, com placar e impacto por set)
+> - *"Índice de confiabilidade"* → **existe por dentro** (o RD do Glicko); só não aparece na tela, o que é decisão reversível registrada
+> - *"Proteção de rebaixamento (janela de 10 partidas)"* → **existe**, com desenho diferente do previsto: período de prova por peso acumulado (peso 5), não janela de 10 partidas
+> - *"Pesos do rating"* → **existem** os de contexto, placar e calibração; só liga e torneio não têm de onde vir
+> - *"O selo 'em calibração' não tem como sair"* → **sai sozinho** desde o `030` (`em_calibracao = peso < calibracao_alvo`)
+>
+> **Por que aconteceu:** o bloco antigo foi escrito na auditoria de 29/07, antes do motor existir, e os itens novos foram **acrescentados por cima** sem apagar os antigos. O documento passou a afirmar as duas coisas ao mesmo tempo. É exatamente o risco que a regra "não confiar no documento contra o código" existe para pegar.
 
 ## Módulo 1.6 — Social Básico *(ADIADO — não entra no Sprint 5)*
 *Lugar canônico do chat e das notificações. Nenhum dos dois depende de fornecedor externo (Supabase Realtime já roda; Web Push é nativo do navegador) — só o fallback WhatsApp depende de BSP.*
 
-- [ ] ⏳ 🔍 **Chat automático da partida** (grupo dos participantes) — não existe. Nenhuma tabela de mensagens, nenhum componente
-- [ ] ⏳ 🔍 **Notificações push** — não existem. Nenhum service worker, nenhuma inscrição de push
+- [ ] ⏳ 🔍 **Chat automático da partida** (grupo dos participantes) — **não existe** (reconfirmado em 17/08/2026: nenhuma tabela de mensagens no banco, nenhum componente). Não depende de fornecedor: o Supabase Realtime já roda no projeto
+- [x] ✅ 🔍 **Notificações push** — **existem** (`031` + `033`). ⚠️ Esta linha dizia "não existem, nenhum service worker" até 17/08/2026, quando o push já estava em produção e testado no iPhone do fundador desde 12/08. Mesma causa do bloco corrigido no Módulo 1.5
 - [ ] ⚠️ 🔍 **Fallback WhatsApp** — só manual: o organizador clica um botão e abre o WhatsApp com texto pronto. Nada dispara sozinho (sem BSP/Z-API ligado)
+- [ ] ⏳ **Decidir o fallback para quem não instala o app no iPhone** — sem instalar na tela de início, o Safari não deixa nem pedir permissão de notificação. Aceitar a imperfeição ou antecipar o BSP, com o número real de alcance na mão, antes do beta
 
 ## Módulo 1.7 — Painel do Clube
 - [x] ✅ 🔍 Agenda visual unificada multiesporte (Dia/Semana/Mês)
@@ -239,11 +247,19 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] Descobre clube ✅
 - [x] Entra/cria partida ✅
 - [x] Reserva e paga dividido ✅ (com pagamento simulado)
-- [ ] Registra resultado ⏳ ← **Sprint 5**
-- [ ] Vê categoria evoluir ⏳ ← **Sprint 5**
+- [x] Registra resultado ✅ (set a set, com contestação e votação — Entrega A)
+- [x] Vê categoria evoluir ✅ (motor Glicko-1 + trilha do "quanto mudou e por quê", rodando sozinho desde o `037`)
 - [x] Clube opera agenda sem caderno ✅ (relatórios e bloqueio de horário ainda faltam)
 
-**Resumindo:** o "trilho de descoberta e organização" do MVP está pronto. O "trilho de competição" (resultado/rating/categoria) é o Sprint 5 e fecha o critério acima. O "trilho de comunicação" (chat/notificação) foi conscientemente adiado — não está no critério de pronto.
+**Os cinco passos do critério de MVP estão fechados** (atualizado em 17/08/2026 — os dois últimos ainda apareciam como pendentes). Mas **isso não significa MVP pronto para o mundo**, e a diferença importa:
+
+| O que fecha | O que ainda falta para valer |
+|---|---|
+| O trilho de competição funciona ponta a ponta | O dinheiro é **simulado** — sem gateway real não há produto |
+| Descoberta e organização funcionam | **LGPD (1.8) não existe** e trava o lançamento |
+| O clube opera a agenda | Falta a **Fase B da autenticação** (prazo 31/10/2026) |
+
+O "trilho de comunicação" (chat) segue conscientemente adiado — não está no critério. As **notificações**, que estavam nesse mesmo trilho, acabaram sendo feitas antes, porque a Decisão 1 do rating passou a depender delas: "silêncio vale como concordância" só é justo se a pessoa tiver chance real de saber.
 
 ---
 
