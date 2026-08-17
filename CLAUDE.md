@@ -232,7 +232,11 @@ Quatro mudanças: (1) consultas que estavam em **fila indiana** passaram a sair 
 
 ⚠️ **Lição registrada: nas quatro telas sem ganho, quem manda no tempo é UMA consulta pesada** (no Descobrir, todos os clubes com todas as quadras e todos os preços). Tirar uma viagem pequena de perto de uma consulta grande não muda nada — a variação normal entre medidas naquelas telas ia de 530ms a 1276ms. **Contar consultas não é medir**; olhar o tamanho delas antes teria evitado o trabalho.
 
-**A tela preta era nossa, e isso foi corrigido:** `color-scheme` estava `normal` e o `<html>` tinha fundo transparente — só o `<body>` era pintado. Enquanto a página não chega, quem aparece é a tela do navegador, **preta no aparelho em modo escuro**. Daí a queixa ser "branca OU preta": era o mesmo problema, com o aparelho no modo claro ou escuro. Declarado `color-scheme: light` no CSS **e no cabeçalho** (o arquivo de CSS é download à parte; até ele chegar a tela ainda seria a do navegador).
+**A TELA PRETA CONTINUA — corrigido só um pedaço dela, e é importante não confundir os dois.** `color-scheme` estava `normal` e o `<html>` tinha fundo transparente (só o `<body>` era pintado), então o navegador mostrava a tela dele, **preta no aparelho em modo escuro**. Declarado `color-scheme: light` no CSS **e no cabeçalho**.
+
+⚠️ **Mas isso só vale a partir do instante em que a página chega.** Antes disso não existe página nossa para declarar coisa alguma — e é justamente esse trecho, de **2 a 5 segundos medidos pelo fundador**, que ele continua vendo preto ao abrir. Ou seja: na percepção dele, praticamente nada mudou. O que a correção garante é que a espera não volte a ficar preta *depois* que o app começou a carregar.
+
+**Os dois assuntos estão amarrados (correção do fundador, 17/08/2026):** a tela de abertura existe justamente para cobrir esses 2–5s. Enquanto ela não funcionar, a queixa original segue de pé — tratar "tela preta" como resolvida é ler o código em vez de olhar o celular.
 
 ### ⏸️ TELA DE ABERTURA — TENTADA, NÃO RESOLVIDA, PARADA PELO FUNDADOR
 Depois de várias tentativas sem sucesso, o fundador decidiu não gastar mais tempo agora. **Retomar depois.** O que já se sabe, para ninguém repetir o caminho:
