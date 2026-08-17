@@ -111,22 +111,6 @@ export default async function PaginaPerfil() {
 
         <ConvidarParaOApp />
 
-        {/* ⚠️ TEMPORÁRIO — apagar junto com /app/diagnostico.
-            Está aqui porque o app instalado na tela de início não tem barra
-            de endereço: sem um link por dentro, não há como chegar numa
-            página que não esteja no menu. */}
-        <Link
-          href="/app/diagnostico"
-          className="mt-3 block rounded-2xl bg-superficie p-5 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"
-        >
-          <p className="font-display text-base font-bold text-tinta">
-            🔧 Diagnóstico do aparelho
-          </p>
-          <p className="mt-1 text-sm text-tinta-suave">
-            Página de apoio, temporária — não faz parte do app
-          </p>
-        </Link>
-
         <div className="mt-8 border-t border-black/5 pt-6">
           <BotaoSair />
         </div>

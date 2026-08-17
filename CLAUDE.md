@@ -215,6 +215,40 @@ Gateway de pagamento ainda não decidido → **PIX simulado** (mock isolado para
 
 **⚠️ A numeração dos sprints divergiu do plano original (auditado no código em 29/07/2026).** O Sprint 4 executado absorveu parte do que o plano antigo chamava de Sprint 5 (criar partida, feed, entrar em 1 toque) e o primeiro item do Sprint 6 (fila de substitutos). Em compensação, deixou para trás o que era o próprio Sprint 4: gateway real, repasse ao clube e reembolso. Registrado aqui para ninguém reconstruir o que já existe.
 
+## Velocidade de abertura do app (16/08/2026)
+
+**Queixa do fundador:** abrir pelo atalho da tela de início demorava, com tela preta ou branca antes de qualquer coisa aparecer.
+
+**O que foi CORRIGIDO E MEDIDO em produção** (7 a 15 amostras por tela, antes e depois, com a build nova confirmada no ar):
+
+| Tela | Antes | Depois |
+|---|---|---|
+| **Início** — tela vazia | 2,1s (3,4s na 1ª) | **0,34s** |
+| **Início** — conteúdo completo | 2,1s | **1,0s** |
+| Partida (sessão privada) | 1,63s | **1,08s** |
+| Minhas partidas · partida aberta · Descobrir · Partidas abertas | — | **sem ganho que dê para medir** |
+
+Quatro mudanças: (1) consultas que estavam em **fila indiana** passaram a sair juntas — a Início tinha oito, e nenhuma dependia da anterior; (2) `usuarioAtual` e `perfilAtual` com `cache()` do React, porque o layout e a página perguntavam a mesma coisa duas vezes; (3) a barra de navegação saiu para um `Suspense` próprio — como o layout envolve todas as telas, enquanto ele esperava o banco **nada** podia ser pintado; (4) `loading.tsx`, que faz a tela aparecer desenhada na hora com o conteúdo entrando por cima.
+
+⚠️ **Lição registrada: nas quatro telas sem ganho, quem manda no tempo é UMA consulta pesada** (no Descobrir, todos os clubes com todas as quadras e todos os preços). Tirar uma viagem pequena de perto de uma consulta grande não muda nada — a variação normal entre medidas naquelas telas ia de 530ms a 1276ms. **Contar consultas não é medir**; olhar o tamanho delas antes teria evitado o trabalho.
+
+**A tela preta era nossa, e isso foi corrigido:** `color-scheme` estava `normal` e o `<html>` tinha fundo transparente — só o `<body>` era pintado. Enquanto a página não chega, quem aparece é a tela do navegador, **preta no aparelho em modo escuro**. Daí a queixa ser "branca OU preta": era o mesmo problema, com o aparelho no modo claro ou escuro. Declarado `color-scheme: light` no CSS **e no cabeçalho** (o arquivo de CSS é download à parte; até ele chegar a tela ainda seria a do navegador).
+
+### ⏸️ TELA DE ABERTURA — TENTADA, NÃO RESOLVIDA, PARADA PELO FUNDADOR
+Depois de várias tentativas sem sucesso, o fundador decidiu não gastar mais tempo agora. **Retomar depois.** O que já se sabe, para ninguém repetir o caminho:
+
+- **Não é tamanho de aparelho, não é deploy, não é erro de digitação.** Medido no iPhone do fundador (13 Pro, iOS 18.7) por uma página de diagnóstico que rodou `matchMedia` no próprio aparelho: app instalado ✔, 13 tags na página ✔, **uma casando com o aparelho** ✔ — e nenhuma abertura.
+- **Trocar o `background_color` do manifesto para o verde também não resolveu** (a hipótese era que o iOS 18 montasse a abertura sozinho a partir dele). Revertido para `#f5f8f2`, que é a cor real do app.
+- **O que sobrou de material:** `scripts/gerar-abertura.js` + as 12 imagens em `public/abertura/`. A lista de `startupImage` foi **removida do layout** porque punha 13 tags no cabeçalho de toda página sem o iPhone usar nenhuma. Para retomar, é só religar a lista.
+- **A pista ainda não testada:** o app instalado guarda o que leu **no momento da instalação**. Se o Safari serviu página em cache ali, o iPhone gravou uma versão sem as imagens — e reinstalar sem forçar recarregamento repetiria o erro.
+
+### 💡 Guardar a casca do app no aparelho — ADIADO DE PROPÓSITO, para depois do redesenho
+O app **não guarda nada** no celular (medido: 0 caches; o `sw.js` não intercepta rede, por decisão consciente do Web Push). Toda abertura espera a rede para desenhar o primeiro pixel.
+
+**Por que adiar, decidido com o fundador:** a única falha possível dessa peça é **mostrar versão velha do app** — e o redesenho é justamente quando o app vai mudar de cara várias vezes seguidas. Instalá-la antes disso é escolher o pior momento: mexeria numa tela, abriria o celular, veria a antiga, e não saberia se errou o código ou se é o cache. Tecnicamente o redesenho não estragaria o cache (cada publicação gera nomes de arquivo novos, e o cache acompanha sozinho), então nada do trabalho se perde ao esperar.
+
+**Dimensão real do ganho, medida:** dos ~5s que o fundador contou com o celular já ligado, **o servidor é ~0,5s** — o resto é o iPhone abrindo o app e a rede subindo. A casca corta parte da fatia da rede, **não** o tempo do iPhone. Ela ajuda menos do que eu havia dado a entender quando o número na mesa era 17s (celular recém-ligado, caso em que ~12s eram o aparelho acordando).
+
 **Sprint 5 — 🔜 PRÓXIMO. Escopo decidido em 29/07/2026: Resultados + Rating + Categorias + barra de navegação fixa.**
 
 > ✅ **DESBLOQUEADO EM 01/08/2026.** O bloqueio era a **regra nº 5**, que definia a arquitetura da função de cálculo. As duas decisões que faltavam foram fechadas na mesma conversa, na ordem que tinha sido combinada em 30/07:
@@ -348,5 +382,10 @@ O fator escala o quanto o set move **os dois lados**: quem ganhou 6x0 sobe mais,
 - **Não confiar no documento contra o código.** Antes de afirmar que algo existe ou não, verificar no código — a auditoria de 29/07/2026 achou funcionalidade marcada como pronta que não existia, e funcionalidade pronta que não estava documentada em lugar nenhum. Item marcado `📄` no Checklist nunca foi auditado.
 - **Não confiar na própria dedução contra o teste** (aprendido em 12/08/2026). A regra acima olha para o documento; esta olha para o Claude Code. Testando o aviso de promoção, eu afirmei que havia um SEGUNDO defeito — a tela mostrando versão em cache ao voltar — e troquei a solução por uma peça mais complexa por causa disso. O fundador perguntou: *"você confirmou essa segunda parte?"*. Eu não tinha: deduzi pelo funcionamento do Next.js e apresentei como fato. Ao medir, a página **já** se atualizava ao voltar, e o bloco que restava era de outro aviso. A peça extra foi desfeita.
   - **Por que aconteceu, e o que evita:** eu vinha de uma sequência em que quase toda suspeita se confirmava no banco, e fiquei confortável demais para afirmar sem medir. Quando o fundador questionar uma afirmação minha, o certo não é argumentar — é ir medir. E vale a mesma distinção de sempre: *"reproduzi X"* e *"acho que acontece X"* são frases diferentes e não podem sair com o mesmo tom.
+- **Medir no ambiente CERTO, e conferir que o teste testou o que devia (16/08/2026).** Três episódios na mesma sessão, todos da mesma família:
+  1. Medi o tempo de duas telas e deu 175ms e 151ms — rápido demais. O navegador estava **sem sessão** e eu media o desvio para o login, não as telas. Passei a conferir `redirected` dentro da própria medição. É irmão do teste da Entrega B que passou pelo motivo errado.
+  2. Todas as minhas medições de velocidade eram com rede quente e servidor quente. O caso do fundador (celular recém-ligado) nunca foi coberto por elas — **e eu só descobri quando ele relatou 17s**. Bancada quente não mede partida fria.
+  3. Errei **dois palpites seguidos** sobre a tela de abertura (o tamanho do aparelho; depois o coringa). O que fechou o diagnóstico não foi um terceiro palpite melhor — foi construir uma página que mediu no aparelho dele. Depois de errar uma vez, o próximo passo é instrumentar, não adivinhar de novo.
+- **Ao mandar o fundador abrir um endereço, lembrar de ONDE ele está (16/08/2026).** Pedi para digitar a URL de uma página de diagnóstico — mas o app instalado na tela de início **não tem barra de endereço**. Era justamente o modo que estávamos depurando. Página fora do menu precisa de link por dentro do app.
 - **LEMBRETE PERMANENTE — vale para todo sprint:** se o Claude Code sugerir pular alguma regra deste arquivo (cobrar taxa do jogador, deixar o painel do clube mono-esporte "para simplificar", adiar LGPD), isso é **sinal de alerta**: o fundador deve parar e questionar antes de aprovar. As regras existem para proteger o posicionamento do produto mesmo quando parece mais fácil no curto prazo não segui-las.
 - Documentos de referência completos (escopo, plano de execução, protótipo, diagrama de fluxo) estão no Projeto do Claude.ai e no Google Drive do fundador. O status por funcionalidade fica no `Status_Produto_Checklist.md`, na raiz deste repositório.

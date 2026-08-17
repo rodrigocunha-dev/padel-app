@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Archivo, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -22,62 +22,11 @@ export const metadata: Metadata = {
   // conforto: sem estar na tela de início, o Safari não deixa nem PEDIR
   // permissão de notificação.
   manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    title: "Padel",
-    statusBarStyle: "default",
-    // ⚠️ MEDIDO NO IPHONE DO FUNDADOR (13 Pro, iOS 18.7) E **NÃO FUNCIONA**.
-    //
-    // Estava tudo certo — aparelho instalado, as 13 tags na página, e uma
-    // casando com o aparelho (conferido pela página de diagnóstico, com
-    // `matchMedia` rodando no próprio iPhone). Mesmo assim, nenhuma abertura.
-    //
-    // Conclusão: com manifesto presente, o iOS 18 monta a tela de abertura
-    // SOZINHO, a partir do `background_color` e do ícone do manifesto, e
-    // ignora estas imagens. Era por isso que o fundador via BRANCO: a
-    // abertura existia, e era a nossa cor `#f5f8f2`.
-    //
-    // A cor do manifesto passou para o verde-quadra, que é o caminho que o
-    // sistema de fato usa. Esta lista fica por ora, sem custo (só é baixada
-    // se for usada), porque cobre iOS antigo e Android. **Se o teste com o
-    // manifesto confirmar, apagar esta lista e as 12 imagens** — carregar
-    // 300 KB de arte que ninguém pinta é peso morto.
-    //
-    // ⚠️ Exige uma imagem por tamanho de aparelho, com a media query exata.
-    // Não existe uma que sirva para todos: se faltar a do aparelho, ele não
-    // mostra nada e a tela preta volta. Por isso a lista é longa — ela cobre
-    // do iPhone SE ao 16 Pro Max, só em pé (o manifesto trava a orientação).
-    //
-    // Gerador: scripts/gerar-abertura.js (roda com `node`, usa o sharp que já
-    // vem com o Next). Quando a marca for decidida, é regerar e trocar.
-    startupImage: [
-      // CORINGA, sem media query — vem primeiro de propósito.
-      //
-      // As entradas abaixo só valem se o tamanho da tela bater EXATAMENTE.
-      // Aparelho fora da lista (modelo novo, iPad, iPhone que eu não previ)
-      // não casa com nenhuma e volta a abrir no preto — foi o que aconteceu
-      // no primeiro teste. Este coringa fecha esse buraco: quem não casa com
-      // nada usa ele, esticado para o tamanho do aparelho.
-      //
-      // Esticar não estraga o desenho porque ele é fundo liso com a marca no
-      // centro — não tem borda nem detalhe de canto para deformar. Foi por
-      // isso que a arte nasceu assim.
-      { url: "/abertura/abertura-1320x2868.png" },
-
-      { url: "/abertura/abertura-640x1136.png", media: "(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
-      { url: "/abertura/abertura-750x1334.png", media: "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
-      { url: "/abertura/abertura-1242x2208.png", media: "(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { url: "/abertura/abertura-1125x2436.png", media: "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { url: "/abertura/abertura-828x1792.png", media: "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" },
-      { url: "/abertura/abertura-1242x2688.png", media: "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { url: "/abertura/abertura-1170x2532.png", media: "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { url: "/abertura/abertura-1284x2778.png", media: "(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { url: "/abertura/abertura-1179x2556.png", media: "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { url: "/abertura/abertura-1290x2796.png", media: "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { url: "/abertura/abertura-1206x2622.png", media: "(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-      { url: "/abertura/abertura-1320x2868.png", media: "(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
-    ],
-  },
+  // Tela de abertura do iPhone: TENTADA E NAO RESOLVIDA (16/08/2026).
+  // O detalhe completo esta no CLAUDE.md; as imagens e o gerador seguem no
+  // repositorio para quando o assunto voltar. Aqui nao fica nada, porque as
+  // 13 tags iam no cabecalho de TODA pagina sem o iPhone usar nenhuma.
+  appleWebApp: { capable: true, title: "Padel", statusBarStyle: "default" },
   icons: {
     icon: [
       { url: "/icone-192.png", sizes: "192x192", type: "image/png" },
