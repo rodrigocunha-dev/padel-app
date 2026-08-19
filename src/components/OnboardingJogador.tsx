@@ -11,6 +11,7 @@ import {
   rotuloDoDegrau,
   categoriaDoDegrau,
 } from "@/lib/calibracao";
+import { VERSAO_POLITICA } from "@/lib/politica";
 
 const DIAS = [
   { id: "seg", rotulo: "Seg" },
@@ -134,6 +135,14 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
       setErro("Não conseguimos salvar seu perfil. Tente de novo.");
       return;
     }
+
+    // O aceite é gravado DEPOIS do perfil existir, e de propósito: se
+    // gravasse antes e o perfil falhasse, ficaria um consentimento solto de
+    // alguém que nunca entrou. A versão vai junto — quando o texto mudar, é
+    // o que permite pedir o aceite de novo só a quem viu o antigo.
+    await supabase
+      .from("consentimentos")
+      .insert({ jogador_id: usuarioId, versao: VERSAO_POLITICA });
 
     posthog.capture("onboarding_concluido", {
       degrau_sugerido: degrauSugerido,
@@ -518,6 +527,24 @@ export function OnboardingJogador({ usuarioId, telefone }: Props) {
         >
           {salvando ? "Salvando..." : "Concluir meu perfil 🎾"}
         </button>
+
+        {/* O consentimento fica JUNTO do botão que cria o perfil, e não numa
+            tela própria antes: aceitar algo que você ainda não sabe se vai
+            usar é aceite no vazio. Aqui a pessoa já viu o que o app pede e
+            está decidindo entrar. O aceite é gravado com a VERSÃO do texto,
+            para dar de pedir de novo quando ele mudar. */}
+        <p className="mt-4 text-center text-xs text-tinta-suave">
+          Ao concluir, você aceita nossa{" "}
+          <a
+            href="/politica-privacidade"
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-primaria underline"
+          >
+            política de privacidade
+          </a>
+          .
+        </p>
       </div>
     </div>
   );

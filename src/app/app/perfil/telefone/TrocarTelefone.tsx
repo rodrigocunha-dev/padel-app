@@ -6,7 +6,7 @@ import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
 import { mascararTelefoneBr, paraFormatoInternacional } from "@/lib/telefone";
 
-type Etapa = "novo-numero" | "codigo";
+type Etapa = "novo-numero" | "confirmar-numero" | "codigo";
 
 // Trocar o telefone é diferente de editar nome ou cidade: o número é a
 // CHAVE DE ENTRADA no app. Por isso o número novo precisa ser confirmado
@@ -22,6 +22,21 @@ export function TrocarTelefone({ atual }: { atual: string }) {
   const [codigo, setCodigo] = useState("");
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  // Antes de mandar o código, a pessoa relê o número em destaque.
+  //
+  // O erro comum aqui não é má-fé, é dígito trocado — e um dígito trocado
+  // manda o código para o celular de um estranho, deixando a pessoa sem
+  // conseguir concluir e sem entender por quê. Reler é barato; descobrir
+  // depois, não.
+  function revisar() {
+    if (!paraFormatoInternacional(novo)) {
+      setErro("Digite o número com DDD.");
+      return;
+    }
+    setErro(null);
+    setEtapa("confirmar-numero");
+  }
 
   async function pedirCodigo() {
     const numero = paraFormatoInternacional(novo);
@@ -41,9 +56,14 @@ export function TrocarTelefone({ atual }: { atual: string }) {
     setOcupado(false);
 
     if (error) {
+      // Número já ligado a outra conta: a troca não tem como acontecer, nem
+      // com o código. O telefone é único no login — duas contas com o mesmo
+      // número não podem existir. Voltar para a digitação é o único caminho.
+      const emUso = error.message.toLowerCase().includes("already");
+      setEtapa("novo-numero");
       setErro(
-        error.message.toLowerCase().includes("already")
-          ? "Esse número já está em uso por outra conta."
+        emUso
+          ? "Este número já está ligado a outra conta. Se ele é seu e você perdeu o acesso àquela conta, fale com a gente."
           : "Não conseguimos enviar o código. Confira o número e tente de novo."
       );
       return;
@@ -89,11 +109,60 @@ export function TrocarTelefone({ atual }: { atual: string }) {
         );
         return;
       }
+
+      // Convites que alguém mandou para o número NOVO, quando ele ainda não
+      // era seu, passam a ser seus agora.
+      //
+      // É a mesma função que roda no fim do cadastro (Entrega B) e ela lê o
+      // telefone do PERFIL — por isso vem depois do update acima, e não
+      // antes: rodar antes procuraria pelo número velho.
+      const { data: ligados } = await supabase.rpc(
+        "vincular_convites_do_telefone"
+      );
+      if (typeof ligados === "number" && ligados > 0) {
+        posthog.capture("convites_migrados_na_troca", { quantidade: ligados });
+      }
     }
 
     posthog.capture("telefone_trocado");
     router.replace("/app/perfil");
     router.refresh();
+  }
+
+  if (etapa === "confirmar-numero") {
+    return (
+      <div className="mt-6 rounded-2xl bg-superficie p-5 shadow-lg ring-1 ring-black/5">
+        <p className="text-sm text-tinta">
+          Vamos mandar um código para este número. Confira antes:
+        </p>
+
+        <p className="mt-4 rounded-xl bg-fundo px-4 py-4 text-center font-display text-2xl font-extrabold tracking-wide text-tinta">
+          {novo}
+        </p>
+
+        <p className="mt-3 text-xs text-tinta-suave">
+          Um dígito trocado manda o código para o celular de outra pessoa, e
+          você não consegue concluir a troca.
+        </p>
+
+        <button
+          type="button"
+          disabled={ocupado}
+          onClick={pedirCodigo}
+          className="mt-4 w-full rounded-2xl bg-primaria px-5 py-4 font-display font-bold text-white shadow-lg disabled:opacity-40"
+        >
+          {ocupado ? "Enviando…" : "Está certo, mandar o código"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setEtapa("novo-numero")}
+          className="mt-3 w-full text-sm font-medium text-tinta-suave"
+        >
+          Corrigir o número
+        </button>
+      </div>
+    );
   }
 
   if (etapa === "codigo") {
@@ -170,10 +239,10 @@ export function TrocarTelefone({ atual }: { atual: string }) {
       <button
         type="button"
         disabled={novo.length < 14 || ocupado}
-        onClick={pedirCodigo}
+        onClick={revisar}
         className="mt-4 w-full rounded-2xl bg-primaria px-5 py-4 font-display font-bold text-white shadow-lg disabled:opacity-40"
       >
-        {ocupado ? "Enviando…" : "Receber código no número novo"}
+        Continuar
       </button>
 
       <p className="mt-3 text-xs text-tinta-suave">

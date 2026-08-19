@@ -41,9 +41,8 @@ export default async function PaginaTelefone() {
         <TrocarTelefone atual={jogador.telefone} />
 
         <p className="mt-6 text-xs text-tinta-suave">
-          Convites que amigos mandaram para o número antigo e você ainda não
-          aceitou não vão te encontrar depois da troca — peça para convidarem
-          de novo pelo número novo.
+          Se alguém já tinha te convidado pelo número novo, o convite aparece
+          para você assim que a troca terminar.
         </p>
       </div>
     </main>

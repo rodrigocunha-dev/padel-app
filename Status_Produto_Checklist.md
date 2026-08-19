@@ -54,7 +54,7 @@ sinal de alerta — pare e me chame antes de aprovar.
 - **Tudo que envolve dinheiro real depende do GATEWAY** (fornecedor não decidido): repasse ao clube, reembolso, e o pacote do modelo de pagamento — que o fundador definiu em 09/08 como **pré-requisito de beta**. A homologação leva dias que não dependem de nós, então a decisão do fornecedor é o gargalo mais caro em aberto
 - **WhatsApp automático destrava DOIS módulos ao mesmo tempo** (1.3 e 1.4) — depende de contratar um BSP
 - **Chat NÃO depende de fornecedor nenhum** — o Supabase Realtime já roda no projeto (3 canais). Só o *fallback* WhatsApp precisa de BSP
-- **LGPD (Módulo 1.8): exportação e exclusão FEITAS** (`038`, 17/08/2026). Falta a **tela de consentimento**, que depende do **texto da política** — e esse depende da marca decidida e de revisão jurídica. É o único pedaço da LGPD que ainda trava o lançamento
+- **LGPD (Módulo 1.8): construída** (`038`, 17/08/2026) — exportação, exclusão por anonimização e consentimento versionado. **O que ainda trava o lançamento não é código: é o TEXTO jurídico da política**, que depende da marca decidida e de revisão de advogado. A página existe com texto provisório e avisa o usuário disso
 - **Bloquear a exclusão de quem deve encosta na revisão jurídica (CDC)** já registrada no CLAUDE.md: a dívida costuma ser entre jogadores, não com a plataforma. A trava está construída; a validação legal não
 - **Liga e torneio (Fase 2) destravam dois pesos do rating** que já existem nos parâmetros e hoje não têm de onde vir
 - **A análise de UX/design do app inteiro** foi decidida para **depois** de o produto estar pronto — e o cache da casca do app foi adiado para depois dela. Não redesenhar por conta própria antes dessa conversa
@@ -201,7 +201,10 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
   - **Dívida aberta bloqueia a exclusão** (`TEM_DIVIDA`). Sem isso havia a saída perfeita para o caloteiro: apagar, recadastrar com o mesmo número e voltar limpo
   - **Dono de clube é recusado** (`DONO_DE_CLUBE`): o clube ficaria órfão
   - ⚠️ **O que a trava NÃO resolve, e não tem conserto técnico:** abandonar a conta e criar outra com outro número. Nenhuma âncora funciona (telefone muda, CPF é opcional e não verificado, aparelho é trocável). Quem fecha isso é a POLÍTICA de pagamento — o pagar-ao-entrar em partida aberta, já registrado no CLAUDE.md
-- [ ] ⏳ **Tela de consentimento** — a estrutura existe no banco (tabela `consentimentos`, com versão), falta a tela. Depende do texto da política
+- [x] ✅ 🔍 **Consentimento** — o aceite é gravado **com a versão do texto** ao fim do cadastro, junto do botão que cria o perfil (aceitar numa tela isolada antes seria aceite no vazio). Gravado **depois** de o perfil existir, senão sobraria consentimento de quem nunca entrou
+- [x] ✅ 🔍 **Página da política** (`/politica-privacidade`) — ⚠️ **texto PROVISÓRIO**, com aviso disso no topo para o usuário. Descreve com honestidade o que o app faz hoje e serve de rascunho para o advogado
+- [ ] ⏳ **Texto jurídico definitivo da política** — depende da marca decidida e de revisão jurídica. Ao publicar, trocar `VERSAO_POLITICA` de `rascunho-1` para `1.0`: é isso que faz o app pedir o aceite de novo a quem só viu o rascunho
+- [x] ✅ 🔍 **Tela dos dados fiscais** (`/app/perfil/dados-fiscais`) — nome completo, CPF, e-mail e endereço, com máscara. Entra e sai **por função**; leitura direta da coluna dá 403, testado com sessão real
 - [x] ✅ 🔍 **Registro financeiro do clube sobrevive à exclusão** (`038`) — o pagamento tira uma **fotografia** de quem pagou (nome, telefone, CPF, e-mail) no instante do pagamento, e a reserva pelo app passa a gravar nome e telefone como já fazia a de balcão. A costura entre fotografias é o código da conta, que nunca muda. Extrato por `pagamentos_do_clube()`, só para o dono
 - [x] ✅ 🔍 **Campos fiscais no perfil** (`038`) — nome completo, CPF, e-mail e endereço, **todos opcionais** até a emissão de nota ser ligada. Ficam **fechados por permissão** e voltam por função: a tabela `jogadores` é legível por qualquer pessoa logada, então um `grant` deixaria o CPF de todos visível para todos. Falta a tela de preenchimento
 - [x] ✅ 🔍 Privacidade por design (RLS em todas as tabelas, telefone fechado por column privileges, `agenda_publica` sem dado pessoal, evento de métrica sem nome/telefone) — existe e está bem-feito, **mas é OUTRA coisa**: protege dado de terceiro, não dá direito ao titular
@@ -230,7 +233,10 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 ## Perfil e Estatísticas do Jogador
 - [x] ✅ 🔍 **Tela de perfil mínima** (`/app/perfil`, 01/08/2026): nome, foto, cidade, categoria, selo de calibração, atalhos e o botão Sair (que saiu da tela inicial)
 - [x] ✅ 🔍 **Editar perfil** (`/app/perfil/editar`, 17/08/2026) — nome, foto, cidade, lado que joga, disponibilidade e raio. ⚠️ **Até esta data NÃO EXISTIA edição nenhuma:** o jogador preenchia tudo no cadastro e não podia mudar nem o nome. O buraco passou por duas auditorias sem ser visto e só apareceu quando o fundador perguntou como alguém trocaria de telefone. **A categoria não é editável de propósito** — ela vem do motor de rating; se fosse escolha, o matchmaking passaria a valer o que cada um digita
-- [x] ✅ 🔍 **Trocar telefone** (`/app/perfil/telefone`) — com confirmação por código no número NOVO, senão bastaria digitar o número de outra pessoa. O telefone vive em dois lugares (login e perfil) e os dois mudam juntos. A tela avisa que convites pendentes mandados ao número antigo não vão encontrar a pessoa
+- [x] ✅ 🔍 **Trocar telefone** (`/app/perfil/telefone`) — com confirmação por código no número NOVO, senão bastaria digitar o número de outra pessoa. O telefone vive em dois lugares (login e perfil) e os dois mudam juntos
+  - **Passo de revisão antes de enviar o código**, com o número em destaque: o erro comum aqui não é má-fé, é dígito trocado — e dígito trocado manda o código para o celular de um estranho
+  - **Convites pendentes migram sozinhos**: depois da troca, o app roda a mesma vinculação do fim do cadastro, então convite mandado para o número novo (antes de ele ser seu) aparece na hora
+  - **Número já ligado a outra conta é recusado** — o telefone é único no login, então a troca não aconteceria nem com o código certo
 - [ ] ⏳ 🔍 Histórico, estatísticas e conquistas — não existem. **De propósito:** dependem do rating, que depende da regra nº 5. Não colocar placeholder na tela de perfil antes dessa decisão
 
 ---

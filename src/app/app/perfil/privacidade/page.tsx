@@ -51,7 +51,33 @@ export default function PaginaPrivacidade() {
           </p>
         </section>
 
-        <section className="mt-4">
+        <Link
+          href="/app/perfil/dados-fiscais"
+          className="mt-4 block rounded-2xl bg-superficie p-5 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"
+        >
+          <p className="font-display text-base font-bold text-tinta">
+            🧾 Dados para nota
+          </p>
+          <p className="mt-1 text-sm text-tinta-suave">
+            Opcional — só se quiser nota fiscal das suas reservas
+          </p>
+        </Link>
+
+        <a
+          href="/politica-privacidade"
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 block rounded-2xl bg-superficie p-5 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"
+        >
+          <p className="font-display text-base font-bold text-tinta">
+            📘 Política de privacidade
+          </p>
+          <p className="mt-1 text-sm text-tinta-suave">
+            O que guardamos, quem enxerga e quais são seus direitos
+          </p>
+        </a>
+
+        <section className="mt-6">
           <h2 className="font-display text-base font-bold text-tinta">
             Sair do app de vez
           </h2>
