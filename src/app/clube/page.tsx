@@ -74,6 +74,20 @@ export default async function PaginaClube() {
           </p>
         </Link>
 
+        {/* O caminho de volta. O dono do clube também é jogador, e até aqui
+            ia e voltava digitando o endereço na mão. */}
+        <Link
+          href="/app"
+          className="mt-3 block rounded-2xl bg-superficie p-5 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"
+        >
+          <p className="font-display text-lg font-bold text-tinta">
+            🎾 Ir para o app do jogador
+          </p>
+          <p className="mt-1 text-sm text-tinta-suave">
+            Suas partidas, reservas e categoria
+          </p>
+        </Link>
+
         <Link
           href="/clube/relatorios"
           className="mt-3 block rounded-2xl bg-superficie p-5 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"

@@ -27,6 +27,15 @@ export default async function PaginaPerfil() {
 
   if (!jogador) redirect("/app/onboarding");
 
+  // Dono de clube vive nos dois lados do produto e hoje troca na unha,
+  // digitando o endereço. O atalho só aparece para quem tem clube — para
+  // quem não tem, seria uma porta para lugar nenhum.
+  const { data: meuClube } = await supabase
+    .from("clubes")
+    .select("id, nome")
+    .eq("dono_id", user.id)
+    .maybeSingle();
+
   // O rating bruto fica no servidor: daqui sai só categoria, nível e
   // posições em porcentagem (ver `src/lib/rating.ts`).
   const rating = await estadoDoRating(user.id);
@@ -72,6 +81,18 @@ export default async function PaginaPerfil() {
             antes de a pessoa entender para quê rende um "não" que o
             navegador guarda para sempre. */}
         <AtivarNotificacoes />
+
+        {meuClube && (
+          <Link
+            href="/clube"
+            className="mt-3 block rounded-2xl bg-primaria p-5 shadow-lg transition hover:brightness-110"
+          >
+            <p className="font-display text-base font-bold text-white">
+              🏟️ Ir para o painel do clube
+            </p>
+            <p className="mt-1 text-sm text-white/80">{meuClube.nome}</p>
+          </Link>
+        )}
 
         <Link
           href="/app/perfil/editar"
