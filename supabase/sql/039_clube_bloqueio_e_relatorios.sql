@@ -178,6 +178,11 @@ begin
 
     -- De onde veio cada reserva. É o número que diz se o app está trazendo
     -- gente nova ou só digitalizando quem já ligava.
+    --
+    -- ⚠️ Bloqueio fica de fora AQUI TAMBÉM. Sem este filtro, a soma deste
+    -- bloco não bateria com o campo `reservas` acima (que já exclui
+    -- bloqueio), e o clube teria dois números que deveriam concordar e não
+    -- concordam. Bloqueio é reportado só em `horas_bloqueadas`.
     'por_origem', coalesce((
       select jsonb_object_agg(origem, qtd) from (
         select r.origem, count(*) qtd
@@ -185,6 +190,7 @@ begin
         join public.quadras q on q.id = r.quadra_id
         where q.clube_id = p_clube_id
           and r.status = 'confirmada'
+          and r.origem <> 'bloqueio'
           and (r.inicio at time zone 'America/Sao_Paulo')::date between p_de and p_ate
         group by r.origem
       ) t
