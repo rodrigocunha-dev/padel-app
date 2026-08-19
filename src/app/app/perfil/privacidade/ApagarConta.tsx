@@ -27,13 +27,20 @@ export function ApagarConta() {
 
     if (error) {
       setEstado("parado");
-      // O servidor recusa quem é dono de clube: o clube ficaria órfão, com
-      // as quadras e a agenda de outras pessoas dependendo dele.
-      setErro(
-        error.message.includes("DONO_DE_CLUBE")
-          ? "Sua conta é dona de um clube. Fale com a gente antes: é preciso transferir ou encerrar o clube primeiro, senão a agenda e as reservas dos jogadores ficariam sem dono."
-          : "Não conseguimos apagar agora. Tente de novo em alguns minutos."
-      );
+      // Os dois motivos de recusa são decididos no SERVIDOR, e cada um tem
+      // uma saída diferente — por isso a mensagem é específica em vez de um
+      // "não deu certo" genérico.
+      if (error.message.includes("TEM_DIVIDA")) {
+        setErro(
+          "Você tem jogo com pagamento em aberto. Acerte primeiro e depois volte aqui — a conta some, mas a conta de pagar fica com quem jogou."
+        );
+      } else if (error.message.includes("DONO_DE_CLUBE")) {
+        setErro(
+          "Sua conta é dona de um clube. Fale com a gente antes: é preciso transferir ou encerrar o clube primeiro, senão a agenda e as reservas dos jogadores ficariam sem dono."
+        );
+      } else {
+        setErro("Não conseguimos apagar agora. Tente de novo em alguns minutos.");
+      }
       return;
     }
 
@@ -75,6 +82,11 @@ export function ApagarConta() {
         nome. Isso não é uma escolha nossa por comodidade: o resultado de um
         jogo pertence também aos outros três, e apagá-lo mudaria a categoria
         de gente que não pediu nada.
+      </p>
+
+      <p className="mt-3 text-sm text-red-900/80">
+        O clube onde você jogou mantém o registro das suas reservas e
+        pagamentos, como qualquer comércio precisa manter.
       </p>
 
       <p className="mt-3 text-sm font-bold text-red-900">
