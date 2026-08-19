@@ -20,6 +20,7 @@ const TITULO: Record<string, string> = {
   votacao_aberta: "Há um placar em disputa — seu voto decide",
   promovido: "Você saiu da fila e entrou no jogo",
   horario_livre: "Um clube perto de você tem quadra livre",
+  edicao_proposta: "O organizador quer mudar uma partida sua",
 };
 
 const DETALHE: Record<string, string> = {
@@ -29,6 +30,7 @@ const DETALHE: Record<string, string> = {
     "Você estava lá. Toque para dizer qual placar está certo.",
   promovido: "Abriu vaga e ela é sua. Confira o horário e a quadra.",
   horario_livre: "Sobrou horário. Toque para ver a agenda e reservar.",
+  edicao_proposta: "Nada muda sem a sua aprovação. Toque para ver o que ele pediu.",
 };
 
 const ICONE: Record<string, string> = {
@@ -36,6 +38,7 @@ const ICONE: Record<string, string> = {
   votacao_aberta: "🗳️",
   promovido: "🎉",
   horario_livre: "🎾",
+  edicao_proposta: "✏️",
 };
 
 // Um bloco por TIPO, não um por aviso: com 3 resultados registrados a tela

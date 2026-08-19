@@ -120,7 +120,10 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] ✅ 🔍 **Minhas partidas** (`/app/partidas/minhas`) com status de partida (Futura/Jogada) e de pagamento (Paga/Aguardando/Inadimplente) + filtros por ambos — CLAUDE.md registra como FEITA em 26/07/2026
 - [ ] ⏳ 🔍 **Notificação em cascata aos compatíveis quando abre vaga** — não existe. O plano original definia a fila incluindo isso; só o mecanismo de promoção foi feito
 - [ ] ⏳ 🔍 **Filtro por região no feed** — hoje mostra partidas de todas as cidades (busca a cidade do jogador mas não usa). Travado: o fundador quer pesquisar referências de filtros antes (🔍 Em avaliação no CLAUDE.md)
-- [ ] ⏳ **Editar partida aberta** — só o organizador; com jogadores dentro, vira solicitação aprovada por TODOS. ✅ Aprovada no CLAUDE.md
+- [x] ✅ 🔍 **Editar partida aberta** (`040`) — só o organizador. **Sozinho, vale na hora; com outros jogadores, vira solicitação aprovada por TODOS**, e uma recusa encerra sem esperar o resto. A tela descreve a mudança em palavras ("de 1ª–7ª para 1ª–5ª") em vez de só mostrar os valores novos, porque quem vota não lembra como era
+  - **Testado de ponta a ponta com 4 contas:** Carlos propôs → a partida NÃO mudou → Rodrigo aprovou ("falta o resto") → Diego aprovou ("faltam 1") → Eduardo aprovou → aplicada, e só aí a partida mudou
+  - **Travas:** uma proposta por vez (índice único), não dá para encolher abaixo de quem já está dentro, e **competitiva só com 4** — a mesma regra que `criar_partida` tem desde o `008`, repetida aqui para a edição não virar a porta dos fundos
+- [ ] ⏳ **Editar HORÁRIO e QUADRA da partida aberta** — fora do recorte por decisão do fundador (17/08/2026), que quer pensar melhor. Mexe na reserva por baixo, no preço, na trava de overbooking e no divisor congelado de quem já pagou. Detalhe no CLAUDE.md
 - [ ] ⏳ **Partida "grupo de amigos + vagas abertas"** — convidar 1–3 conhecidos e deixar o resto aberto. ✅ Aprovada no CLAUDE.md
 - [ ] ⏳ Filtros gerais no feed (esporte, quadra, categoria, dia, cidade) — ✅ Aprovada, mesmo travamento do filtro por região
 
@@ -230,7 +233,7 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] ✅ 🔍 Barra de navegação fixa — ver o bloco do Sprint 5 no topo
 - [x] ✅ 🔍 **Tela de Início como resumo** (01/08/2026): deixou de ser menu de links e passou a mostrar categoria, pendência de pagamento, atalhos "Jogar agora" e "Reservar", e a lista de próximos jogos
 - [x] ✅ 🔍 **Lista única de próximos jogos** juntando reservas e partidas — **união só visual**, nada muda no banco. Não presume a decisão de partida privada; se ela acontecer, a tela já está no formato certo
-- [ ] ⏳ Botão de troca de modo jogador ↔ painel do clube (para donos e funcionários)
+- [x] ✅ 🔍 **Botão de troca de modo jogador ↔ clube** (17/08/2026) — no Perfil (para o painel) e no painel (para o app). Só aparece para quem TEM clube; para os demais seria porta para lugar nenhum. Pendência aberta desde o Sprint 3
 
 ## Perfil e Estatísticas do Jogador
 - [x] ✅ 🔍 **Tela de perfil mínima** (`/app/perfil`, 01/08/2026): nome, foto, cidade, categoria, selo de calibração, atalhos e o botão Sair (que saiu da tela inicial)

@@ -7,6 +7,7 @@ import { ConvidarParticipantes } from "@/components/partidas/ConvidarParticipant
 import { SetsDaSessao } from "@/components/partidas/SetsDaSessao";
 import { PagamentoPartida } from "@/components/partidas/PagamentoPartida";
 import { MarcarAvisosLidos } from "@/components/partidas/MarcarAvisosLidos";
+import { EditarPartidaAberta } from "@/components/partidas/EditarPartidaAberta";
 import { statusDaPartida, partidaComecou } from "@/lib/partidas";
 
 export const metadata: Metadata = {
@@ -64,8 +65,13 @@ export default async function PaginaPartida({
   const setIds = (setsRaw ?? []).map((s) => s.id);
 
   // ONDA 2 — o que precisava saber quem joga e quais sets existem.
-  const [{ data: perfis }, { data: contestacoes }, { data: meusVotos }, situacoes] =
-    await Promise.all([
+  const [
+    { data: perfis },
+    { data: contestacoes },
+    { data: meusVotos },
+    situacoes,
+    { data: edicaoAberta },
+  ] = await Promise.all([
       // Os nomes vêm à parte: partida_jogadores.jogador_id aponta para
       // auth.users, então não dá para juntar direto com a tabela jogadores.
       supabase
@@ -96,6 +102,19 @@ export default async function PaginaPartida({
       Promise.all(
         setIds.map((sid) => supabase.rpc("situacao_do_set", { p_set_id: sid }))
       ),
+
+      // Mudança de partida esperando resposta. Uma por vez, garantido por
+      // índice único no banco (script 040).
+      supabase
+        .from("partida_edicoes")
+        .select(
+          "id, proposta_por, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, partida_edicao_votos ( jogador_id )"
+        )
+        .eq("partida_id", id)
+        .is("aplicada_em", null)
+        .is("recusada_em", null)
+        .is("cancelada_em", null)
+        .maybeSingle(),
     ]);
 
   const porId = new Map((perfis ?? []).map((p) => [p.id, p]));
@@ -319,6 +338,21 @@ export default async function PaginaPartida({
   // só visita a partida não tem o que registrar.
   const souJogador = aceitos.some((p) => p.id === user.id);
 
+  const proposta = edicaoAberta
+    ? {
+        id: edicaoAberta.id,
+        proposta_por: edicaoAberta.proposta_por,
+        categoria_min: edicaoAberta.categoria_min,
+        categoria_max: edicaoAberta.categoria_max,
+        competitiva: edicaoAberta.competitiva,
+        sexo_jogo: edicaoAberta.sexo_jogo,
+        max_jogadores: edicaoAberta.max_jogadores,
+        jaVotei: (
+          (edicaoAberta.partida_edicao_votos ?? []) as { jogador_id: string }[]
+        ).some((v) => v.jogador_id === user.id),
+      }
+    : null;
+
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-8">
       <div className="mx-auto w-full max-w-md">
@@ -336,6 +370,24 @@ export default async function PaginaPartida({
           meuId={user.id}
           jaComecou={jaComecou}
           jaAconteceu={jaAconteceu}
+        />
+
+        {/* Editar vem ANTES dos sets: mexer nas condições da partida é coisa
+            de antes do jogo, e registrar set é de depois. */}
+        <EditarPartidaAberta
+          partidaId={partida.id}
+          meuId={user.id}
+          souOrganizador={partida.organizador_id === user.id}
+          souJogador={souJogador}
+          jaComecou={jaComecou}
+          atual={{
+            categoria_min: partida.categoria_min,
+            categoria_max: partida.categoria_max,
+            competitiva: partida.competitiva,
+            sexo_jogo: partida.sexo_jogo,
+            max_jogadores: partida.max_jogadores,
+          }}
+          proposta={proposta}
         />
 
         {/* Amistosa também registra set: o resultado entra no histórico e na
