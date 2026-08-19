@@ -54,7 +54,8 @@ sinal de alerta — pare e me chame antes de aprovar.
 - **Tudo que envolve dinheiro real depende do GATEWAY** (fornecedor não decidido): repasse ao clube, reembolso, e o pacote do modelo de pagamento — que o fundador definiu em 09/08 como **pré-requisito de beta**. A homologação leva dias que não dependem de nós, então a decisão do fornecedor é o gargalo mais caro em aberto
 - **WhatsApp automático destrava DOIS módulos ao mesmo tempo** (1.3 e 1.4) — depende de contratar um BSP
 - **Chat NÃO depende de fornecedor nenhum** — o Supabase Realtime já roda no projeto (3 canais). Só o *fallback* WhatsApp precisa de BSP
-- **LGPD (Módulo 1.8) não depende de nada** — pode ser feito a qualquer momento, e **trava o lançamento**. É o maior bloco pronto-para-começar que existe hoje
+- **LGPD (Módulo 1.8): exportação e exclusão FEITAS** (`038`, 17/08/2026). Falta a **tela de consentimento**, que depende do **texto da política** — e esse depende da marca decidida e de revisão jurídica. É o único pedaço da LGPD que ainda trava o lançamento
+- **Bloquear a exclusão de quem deve encosta na revisão jurídica (CDC)** já registrada no CLAUDE.md: a dívida costuma ser entre jogadores, não com a plataforma. A trava está construída; a validação legal não
 - **Liga e torneio (Fase 2) destravam dois pesos do rating** que já existem nos parâmetros e hoje não têm de onde vir
 - **A análise de UX/design do app inteiro** foi decidida para **depois** de o produto estar pronto — e o cache da casca do app foi adiado para depois dela. Não redesenhar por conta própria antes dessa conversa
 
@@ -195,9 +196,14 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 ## Módulo 1.8 — LGPD e Direitos do Titular *(regra nº 10 — NÃO INICIADO)*
 *Regra inegociável do CLAUDE.md desde o dia 1. Estava ausente deste Checklist até 29/07/2026 — é justamente o tipo de coisa que o documento existe para não deixar passar.*
 
-- [ ] ⏳ 🔍 **Tela de consentimento** — não existe
-- [ ] ⏳ 🔍 **Exportação dos dados do jogador** — não existe
-- [ ] ⏳ 🔍 **Exclusão de conta e dados** — não existe
+- [x] ✅ 🔍 **Exportação dos dados do jogador** (`038`) — `/app/perfil/privacidade` baixa um arquivo com perfil, reservas, partidas, sets, pagamentos e avaliações. A regra do que entra fica na função `meus_dados()`, no banco. **Não inclui contato de terceiros** nem partida da qual o titular não participou
+- [x] ✅ 🔍 **Exclusão de conta** (`038`) — por **anonimização**, e não apagando. Conferido no esquema: quase toda tabela aponta para `auth.users` com `on delete cascade`, então apagar o login levaria junto os sets da pessoa e **reescreveria o rating de terceiros**. Some nome, foto, telefone, cidade, preferências, dados fiscais, avisos e inscrições de push — inclusive o telefone em `auth.users`, senão guardaríamos o dado de quem pediu para sair
+  - **Dívida aberta bloqueia a exclusão** (`TEM_DIVIDA`). Sem isso havia a saída perfeita para o caloteiro: apagar, recadastrar com o mesmo número e voltar limpo
+  - **Dono de clube é recusado** (`DONO_DE_CLUBE`): o clube ficaria órfão
+  - ⚠️ **O que a trava NÃO resolve, e não tem conserto técnico:** abandonar a conta e criar outra com outro número. Nenhuma âncora funciona (telefone muda, CPF é opcional e não verificado, aparelho é trocável). Quem fecha isso é a POLÍTICA de pagamento — o pagar-ao-entrar em partida aberta, já registrado no CLAUDE.md
+- [ ] ⏳ **Tela de consentimento** — a estrutura existe no banco (tabela `consentimentos`, com versão), falta a tela. Depende do texto da política
+- [x] ✅ 🔍 **Registro financeiro do clube sobrevive à exclusão** (`038`) — o pagamento tira uma **fotografia** de quem pagou (nome, telefone, CPF, e-mail) no instante do pagamento, e a reserva pelo app passa a gravar nome e telefone como já fazia a de balcão. A costura entre fotografias é o código da conta, que nunca muda. Extrato por `pagamentos_do_clube()`, só para o dono
+- [x] ✅ 🔍 **Campos fiscais no perfil** (`038`) — nome completo, CPF, e-mail e endereço, **todos opcionais** até a emissão de nota ser ligada. Ficam **fechados por permissão** e voltam por função: a tabela `jogadores` é legível por qualquer pessoa logada, então um `grant` deixaria o CPF de todos visível para todos. Falta a tela de preenchimento
 - [x] ✅ 🔍 Privacidade por design (RLS em todas as tabelas, telefone fechado por column privileges, `agenda_publica` sem dado pessoal, evento de métrica sem nome/telefone) — existe e está bem-feito, **mas é OUTRA coisa**: protege dado de terceiro, não dá direito ao titular
 - [ ] ⏳ Política de privacidade LGPD (texto) — depende da marca decidida
 
@@ -223,6 +229,8 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 
 ## Perfil e Estatísticas do Jogador
 - [x] ✅ 🔍 **Tela de perfil mínima** (`/app/perfil`, 01/08/2026): nome, foto, cidade, categoria, selo de calibração, atalhos e o botão Sair (que saiu da tela inicial)
+- [x] ✅ 🔍 **Editar perfil** (`/app/perfil/editar`, 17/08/2026) — nome, foto, cidade, lado que joga, disponibilidade e raio. ⚠️ **Até esta data NÃO EXISTIA edição nenhuma:** o jogador preenchia tudo no cadastro e não podia mudar nem o nome. O buraco passou por duas auditorias sem ser visto e só apareceu quando o fundador perguntou como alguém trocaria de telefone. **A categoria não é editável de propósito** — ela vem do motor de rating; se fosse escolha, o matchmaking passaria a valer o que cada um digita
+- [x] ✅ 🔍 **Trocar telefone** (`/app/perfil/telefone`) — com confirmação por código no número NOVO, senão bastaria digitar o número de outra pessoa. O telefone vive em dois lugares (login e perfil) e os dois mudam juntos. A tela avisa que convites pendentes mandados ao número antigo não vão encontrar a pessoa
 - [ ] ⏳ 🔍 Histórico, estatísticas e conquistas — não existem. **De propósito:** dependem do rating, que depende da regra nº 5. Não colocar placeholder na tela de perfil antes dessa decisão
 
 ---

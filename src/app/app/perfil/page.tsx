@@ -74,6 +74,18 @@ export default async function PaginaPerfil() {
         <AtivarNotificacoes />
 
         <Link
+          href="/app/perfil/editar"
+          className="mt-3 block rounded-2xl bg-superficie p-5 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"
+        >
+          <p className="font-display text-base font-bold text-tinta">
+            ✏️ Editar perfil
+          </p>
+          <p className="mt-1 text-sm text-tinta-suave">
+            Nome, foto, cidade, disponibilidade e telefone
+          </p>
+        </Link>
+
+        <Link
           href="/app/perfil/rating"
           className="mt-3 block rounded-2xl bg-superficie p-5 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"
         >

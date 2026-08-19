@@ -4,21 +4,12 @@ import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
-import { mascararTelefoneBr } from "@/lib/telefone";
+import {
+  mascararTelefoneBr,
+  paraFormatoInternacional,
+} from "@/lib/telefone";
 
 type Etapa = "telefone" | "codigo";
-
-// Converte "(51) 99999-8888" para o formato internacional "+5551999998888".
-function paraFormatoInternacional(bruto: string): string | null {
-  const digitos = bruto.replace(/\D/g, "");
-  if (digitos.length === 10 || digitos.length === 11) return `+55${digitos}`;
-  if (
-    (digitos.length === 12 || digitos.length === 13) &&
-    digitos.startsWith("55")
-  )
-    return `+${digitos}`;
-  return null;
-}
 
 export function LoginOtp() {
   const router = useRouter();
