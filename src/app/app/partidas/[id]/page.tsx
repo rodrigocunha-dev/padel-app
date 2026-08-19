@@ -8,6 +8,7 @@ import { SetsDaSessao } from "@/components/partidas/SetsDaSessao";
 import { PagamentoPartida } from "@/components/partidas/PagamentoPartida";
 import { MarcarAvisosLidos } from "@/components/partidas/MarcarAvisosLidos";
 import { EditarPartidaAberta } from "@/components/partidas/EditarPartidaAberta";
+import { ChatPartida } from "@/components/partidas/ChatPartida";
 import { statusDaPartida, partidaComecou } from "@/lib/partidas";
 
 export const metadata: Metadata = {
@@ -165,6 +166,15 @@ export default async function PaginaPartida({
       },
     };
   });
+
+  // Quem está DENTRO do jogo conversa. É a mesma regra que o servidor aplica
+  // em `estou_na_conversa` (script 041) — a tela não decide nada por conta
+  // própria, só evita desenhar o que o banco recusaria.
+  const souParticipante = aceitos.some((p) => p.id === user.id);
+
+  const areaDeChat = souParticipante ? (
+    <ChatPartida partidaId={partida.id} meuId={user.id} participantes={aceitos} />
+  ) : null;
 
   // As duas telas mostram a mesma área de sets, com as mesmas travas.
   const areaDeSets = (
@@ -328,6 +338,8 @@ export default async function PaginaPartida({
             )}
 
           {areaDeSets}
+
+          {areaDeChat}
         </div>
       </main>
     );
@@ -394,6 +406,8 @@ export default async function PaginaPartida({
             gamificação, e só não encosta no rating. Quem decide isso é o
             servidor (`situacao_do_set`), não esta tela. */}
         {souJogador && areaDeSets}
+
+        {areaDeChat}
       </div>
     </main>
   );

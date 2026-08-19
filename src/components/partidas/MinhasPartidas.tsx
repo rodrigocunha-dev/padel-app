@@ -166,7 +166,14 @@ export function MinhasPartidas({
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-display font-bold text-tinta">{i.clube}</p>
+                <p className="flex items-center gap-2 font-display font-bold text-tinta">
+                  {i.clube}
+                  {i.naoLidas > 0 && (
+                    <span className="rounded-full bg-primaria px-2 py-0.5 text-[11px] font-bold text-white">
+                      💬 {i.naoLidas}
+                    </span>
+                  )}
+                </p>
                 <p className="text-sm text-tinta-suave">
                   {i.quadra} · {i.cidade}
                 </p>

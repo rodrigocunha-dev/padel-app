@@ -28,6 +28,7 @@ export type ItemMinhaPartida = {
   preco_centavos: number | null;
   statusPartida: StatusPartida;
   statusPagamento: StatusPagamento;
+  naoLidas: number;
 };
 
 export default async function PaginaMinhasPartidas({
@@ -47,6 +48,7 @@ export default async function PaginaMinhasPartidas({
     { data: convitesRaw },
     { data: avisosRaw },
     fila,
+    naoLidasRpc,
     { data: pagos },
   ] = await Promise.all([
     // Partidas em que sou/fui JOGADOR ativo (substituto que nunca jogou não
@@ -84,6 +86,10 @@ export default async function PaginaMinhasPartidas({
       .is("lido_em", null),
 
     minhaFila(user.id),
+
+    // Mensagens que eu ainda nao li, por partida. Uma consulta so para a
+    // lista inteira - ver meus_nao_lidos no script 041.
+    supabase.rpc("meus_nao_lidos"),
 
     // Meus pagamentos (para saber o que está pago).
     supabase
@@ -135,6 +141,12 @@ export default async function PaginaMinhasPartidas({
 
   const pagouSet = new Set((pagos ?? []).map((p) => p.partida_id));
 
+  const naoLidasPorPartida = new Map(
+    ((naoLidasRpc?.data ?? []) as { partida_id: string; nao_lidas: number }[]).map(
+      (n) => [n.partida_id, Number(n.nao_lidas)]
+    )
+  );
+
   const itens: ItemMinhaPartida[] = (vinculos ?? [])
     .map((v) => v.partidas as unknown)
     .filter(
@@ -158,6 +170,7 @@ export default async function PaginaMinhasPartidas({
         preco_centavos: part.preco_centavos,
         statusPartida: statusDaPartida(part.fim),
         statusPagamento: statusDoPagamento(part.fim, pagouSet.has(part.id)),
+        naoLidas: naoLidasPorPartida.get(part.id) ?? 0,
       };
     })
     .sort((a, b) => new Date(b.inicio).getTime() - new Date(a.inicio).getTime());

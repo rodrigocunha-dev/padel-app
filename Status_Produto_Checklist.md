@@ -182,7 +182,10 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 ## Módulo 1.6 — Social Básico *(ADIADO — não entra no Sprint 5)*
 *Lugar canônico do chat e das notificações. Nenhum dos dois depende de fornecedor externo (Supabase Realtime já roda; Web Push é nativo do navegador) — só o fallback WhatsApp depende de BSP.*
 
-- [ ] ⏳ 🔍 **Chat automático da partida** (grupo dos participantes) — **não existe** (reconfirmado em 17/08/2026: nenhuma tabela de mensagens no banco, nenhum componente). Não depende de fornecedor: o Supabase Realtime já roda no projeto
+- [x] ✅ 🔍 **Chat da partida** (`041` + `042`, 17/08/2026) — conversa por partida, nos dois tipos, em tempo real. **Quem conversa é mais estreito que quem VÊ:** entra quem está dentro do jogo (jogador aceito), e o substituto entra no instante em que for promovido, sem código a mais. Sem editar e sem apagar mensagem
+  - **Aviso: UM por conversa, não um por mensagem** (decisão do fundador). Medido: 5 mensagens seguidas geraram **1 aviso** e **5 não lidas** — que é exatamente o desenho. Também não avisa quem leu nos últimos 2 minutos
+  - **Privacidade testada com sessão real:** quem não está na partida lê **0 mensagens** e recebe **403** ao tentar escrever
+  - **O ciclo de leitura fecha nos DOIS marcadores** (a pergunta que o fundador fez antes de rodar): abrir a partida some com o aviso da Início E zera o selo de não lidas em Minhas partidas. São marcadores separados de propósito — um é "vi que tem mensagem", o outro é "li até aqui"
 - [x] ✅ 🔍 **Notificações push** — **existem** (`031` + `033`). ⚠️ Esta linha dizia "não existem, nenhum service worker" até 17/08/2026, quando o push já estava em produção e testado no iPhone do fundador desde 12/08. Mesma causa do bloco corrigido no Módulo 1.5
 - [ ] ⚠️ 🔍 **Fallback WhatsApp** — só manual: o organizador clica um botão e abre o WhatsApp com texto pronto. Nada dispara sozinho (sem BSP/Z-API ligado)
 - [ ] ⏳ **Decidir o fallback para quem não instala o app no iPhone** — sem instalar na tela de início, o Safari não deixa nem pedir permissão de notificação. Aceitar a imperfeição ou antecipar o BSP, com o número real de alcance na mão, antes do beta
