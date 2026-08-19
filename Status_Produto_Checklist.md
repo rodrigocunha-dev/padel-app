@@ -188,9 +188,11 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] ✅ 🔍 Agenda visual unificada multiesporte (Dia/Semana/Mês)
 - [x] ✅ 🔍 Reserva manual de balcão no mesmo calendário
 - [x] ✅ 🔍 Cancelamento de reserva pelo clube — `AgendaDia.tsx:178`
-- [ ] ⏳ 🔍 **Bloqueio de horário pelo clube** (manutenção, chuva, evento) — **não existe**. Hoje o único jeito é criar uma reserva de balcão falsa
-- [ ] ⏳ 🔍 **Relatórios (ocupação, faturamento, origem das reservas, horários ociosos)** — não existe. Só o mapa de calor da agenda, que mostra ocupação visualmente mas não é relatório de números
-- [ ] ⏳ 🔍 **Botão "promover horário ocioso" que notifica jogadores compatíveis** — não existe. "Ocioso" só aparece como texto de ajuda no mapa de calor
+- [x] ✅ 🔍 **Bloqueio de horário pelo clube** (`039`) — manutenção, chuva, evento, com motivo. Aba "Bloquear" na agenda do dia; aparece em cinza com 🚧. **É uma reserva com `origem = 'bloqueio'`, não tabela nova**: um bloqueio ocupa a quadra igual a uma reserva, e em tabela separada seria preciso reimplementar a trava de sobreposição cruzando duas fontes — o jeito de o furo de overbooking voltar. **Fica fora do faturamento, da contagem de reservas e da quebra por origem**
+- [x] ✅ 🔍 **Relatórios** (`/clube/relatorios`, `039`) — faturamento, número de reservas, ocupação, de onde vieram as reservas e horários que mais ficam vazios, em 7/30/90 dias. **A ocupação é calculada sobre as horas em que o clube ABRE** (derivadas das faixas de preço), não sobre 24h — senão todo clube pareceria ter 20% e o número não decidiria nada. Bloqueio sai dos dois lados da conta, e a tela mostra a conta aberta para o número não ser um palpite
+- [x] ✅ 🔍 **Promover horário ocioso** (`039`) — aba "Avisar" na agenda. Vira `avisos` e o push sai sozinho pelo gatilho do `033`. Avisa jogadores da cidade do clube, **sem filtrar por categoria** (horário livre não tem nível, é oferta de quadra), pulando inadimplentes e contas anonimizadas. Recusa horário já ocupado e horário no passado. **Cooldown de 6h por clube** — o mesmo intervalo das cobranças de set, para o produto ter uma noção só de "não encher o saco"
+  - **Testado de ponta a ponta:** clube avisou 4 jogadores → o aviso apareceu na Início de outra conta → levou à página do clube → sumiu ao chegar lá. A segunda tentativa devolveu `AGUARDE_6H`
+  - ⚠️ Dois buracos achados e fechados no caminho: o aviso novo não tinha ícone nem destino na tela (cairia como "Aviso" sem link), e **nunca seria marcado como lido**, porque a marcação buscava só por partida e este aviso não tem partida — ficaria na tela para sempre
 - [ ] ⏳ Evoluir a agenda: bloqueios recorrentes/mensalistas, arrastar para remarcar, filtro por esporte/quadra
 
 ## Módulo 1.8 — LGPD e Direitos do Titular *(regra nº 10 — NÃO INICIADO)*

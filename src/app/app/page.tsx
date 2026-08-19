@@ -98,7 +98,7 @@ export default async function PaginaApp() {
     supabase
       .from("avisos")
       .select(
-        "id, tipo, partida_id, partidas ( inicio, quadras ( clubes ( nome ) ) ), sets ( ordem, games_a, games_b )"
+        "id, tipo, partida_id, clube_id, clubes ( nome ), partidas ( inicio, quadras ( clubes ( nome ) ) ), sets ( ordem, games_a, games_b )"
       )
       .eq("jogador_id", user.id)
       .is("lido_em", null),
@@ -161,6 +161,8 @@ export default async function PaginaApp() {
       id: a.id,
       tipo: a.tipo,
       partidaId: a.partida_id ?? null,
+      clubeId: a.clube_id ?? null,
+      clubeNome: (a.clubes as unknown as { nome: string } | null)?.nome ?? null,
       partidaNome: nome,
       setRotulo,
     };

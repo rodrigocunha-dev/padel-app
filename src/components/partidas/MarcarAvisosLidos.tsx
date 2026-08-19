@@ -16,16 +16,31 @@ import { criarClienteNavegador } from "@/lib/supabase/client";
 // promoção não tem set, e pela busca antiga ele nunca era encontrado: o
 // bloco ficava na tela mesmo depois de a pessoa abrir o jogo. Marcar por
 // partida cobre os três tipos e não quebra quando surgir um quarto.
-export function MarcarAvisosLidos({ partidaId }: { partidaId: string }) {
+// ⚠️ Ganhou o clube em 17/08/2026, junto com o aviso de horário livre. Esse
+// aviso NÃO tem partida — ele aponta para o clube —, e sem isto ficaria na
+// tela para sempre, porque nada nunca o encontraria. Mesma armadilha da
+// correção anterior, com outro campo.
+export function MarcarAvisosLidos({
+  partidaId,
+  clubeId,
+}: {
+  partidaId?: string;
+  clubeId?: string;
+}) {
   useEffect(() => {
+    if (!partidaId && !clubeId) return;
+
     const supabase = criarClienteNavegador();
-    supabase
+    const consulta = supabase
       .from("avisos")
       .update({ lido_em: new Date().toISOString() })
-      .eq("partida_id", partidaId)
-      .is("lido_em", null)
-      .then(() => {});
-  }, [partidaId]);
+      .is("lido_em", null);
+
+    (partidaId
+      ? consulta.eq("partida_id", partidaId)
+      : consulta.eq("clube_id", clubeId!)
+    ).then(() => {});
+  }, [partidaId, clubeId]);
 
   return null;
 }

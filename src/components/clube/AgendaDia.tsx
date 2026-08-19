@@ -17,6 +17,7 @@ type Reserva = {
   cliente_nome: string | null;
   origem: string;
   jogador_id: string | null;
+  motivo_bloqueio?: string | null;
   jogador_nome?: string | null;
 };
 
@@ -52,6 +53,9 @@ export function AgendaDia({
   } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  // O que o dono quer fazer com um horário livre: vender, fechar ou anunciar.
+  const [modo, setModo] = useState<"reserva" | "bloqueio" | "avisar">("reserva");
+  const [avisados, setAvisados] = useState<number | null>(null);
 
   const carregar = useCallback(async () => {
     const supabase = criarClienteNavegador();
@@ -59,7 +63,7 @@ export function AgendaDia({
     const fimDia = new Date(`${dia}T23:59:59`);
     const { data } = await supabase
       .from("reservas")
-      .select("id, quadra_id, inicio, fim, cliente_nome, origem, jogador_id")
+      .select("id, quadra_id, inicio, fim, cliente_nome, origem, jogador_id, motivo_bloqueio")
       .in(
         "quadra_id",
         quadras.map((q) => q.id)
@@ -173,6 +177,85 @@ export function AgendaDia({
     posthog.capture("reserva_balcao_criada", { duracao_min: duracaoMin });
     setSlotAberto(null);
     carregar();
+  }
+
+  // Bloquear é chamada de função no servidor, e não `insert` direto como a
+  // reserva de balcão: só o dono do clube pode bloquear, e essa checagem
+  // precisa morar no banco. O 23P01 (sobreposição) vem traduzido de lá.
+  async function bloquear(dados: FormData) {
+    if (!slotAberto) return;
+    const motivo = String(dados.get("motivo") ?? "").trim();
+    const duracaoMin = Number(dados.get("duracao") ?? 60);
+
+    setErro(null);
+    setSalvando(true);
+
+    const inicio = new Date(
+      `${dia}T${String(slotAberto.hora).padStart(2, "0")}:00:00`
+    );
+    const fim = new Date(inicio.getTime() + duracaoMin * 60_000);
+
+    const supabase = criarClienteNavegador();
+    const { error } = await supabase.rpc("bloquear_horario", {
+      p_quadra_id: slotAberto.quadraId,
+      p_inicio: inicio.toISOString(),
+      p_fim: fim.toISOString(),
+      p_motivo: motivo || null,
+    });
+    setSalvando(false);
+
+    if (error) {
+      setErro(
+        error.message.includes("HORARIO_OCUPADO")
+          ? "Esse horário acabou de ser ocupado. Atualize a agenda."
+          : "Não conseguimos bloquear. Tente de novo."
+      );
+      return;
+    }
+
+    posthog.capture("horario_bloqueado", { duracao_min: duracaoMin });
+    setSlotAberto(null);
+    carregar();
+  }
+
+  // Avisa jogadores da cidade de que sobrou horário. O push sai sozinho pelo
+  // gatilho do banco — aqui é só o disparo.
+  async function promover(duracaoMin: number) {
+    if (!slotAberto) return;
+
+    setErro(null);
+    setSalvando(true);
+
+    const inicio = new Date(
+      `${dia}T${String(slotAberto.hora).padStart(2, "0")}:00:00`
+    );
+    const fim = new Date(inicio.getTime() + duracaoMin * 60_000);
+
+    const supabase = criarClienteNavegador();
+    const { data, error } = await supabase.rpc("promover_horario_ocioso", {
+      p_quadra_id: slotAberto.quadraId,
+      p_inicio: inicio.toISOString(),
+      p_fim: fim.toISOString(),
+    });
+    setSalvando(false);
+
+    if (error) {
+      if (error.message.includes("AGUARDE_6H")) {
+        setErro(
+          "Você já avisou jogadores nas últimas 6 horas. Espere um pouco para não cansar quem recebe."
+        );
+      } else if (error.message.includes("HORARIO_NO_PASSADO")) {
+        setErro("Esse horário já passou.");
+      } else if (error.message.includes("HORARIO_OCUPADO")) {
+        setErro("Esse horário não está mais livre.");
+      } else {
+        setErro("Não conseguimos avisar agora. Tente de novo.");
+      }
+      return;
+    }
+
+    posthog.capture("horario_ocioso_promovido", { avisados: data ?? 0 });
+    setAvisados(typeof data === "number" ? data : 0);
   }
 
   async function cancelarReserva(reservaId: string) {
@@ -314,17 +397,30 @@ export function AgendaDia({
                     if (reserva) {
                       const ehInicio =
                         new Date(reserva.inicio).getHours() === hora;
+                      // Bloqueio ocupa a quadra igual a uma reserva, mas não é
+                      // uma: cinza em vez de verde, para o dono bater o olho e
+                      // saber que ali não entrou dinheiro.
+                      const ehBloqueio = reserva.origem === "bloqueio";
                       return (
                         <td key={q.id} className="align-top">
-                          <div className="rounded-lg bg-primaria/90 px-2 py-1.5 text-xs font-medium text-white">
+                          <div
+                            className={`rounded-lg px-2 py-1.5 text-xs font-medium ${
+                              ehBloqueio
+                                ? "bg-tinta-suave/70 text-white"
+                                : "bg-primaria/90 text-white"
+                            }`}
+                          >
                             {ehInicio ? (
                               <>
                                 {reserva.origem === "app" && (
                                   <span title="Reserva feita pelo app">📱 </span>
                                 )}
-                                {reserva.cliente_nome ??
-                                  reserva.jogador_nome ??
-                                  "Reservado"}
+                                {ehBloqueio && <span>🚧 </span>}
+                                {ehBloqueio
+                                  ? (reserva.motivo_bloqueio ?? "Bloqueado")
+                                  : (reserva.cliente_nome ??
+                                    reserva.jogador_nome ??
+                                    "Reservado")}
                                 <button
                                   type="button"
                                   onClick={() => cancelarReserva(reserva.id)}
@@ -369,43 +465,115 @@ export function AgendaDia({
       {slotAberto && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
           <form
-            action={criarReserva}
+            action={modo === "bloqueio" ? bloquear : criarReserva}
             className="w-full max-w-sm rounded-2xl bg-superficie p-5 shadow-xl"
           >
             <h2 className="font-display text-lg font-bold text-tinta">
-              Reservar{" "}
               {quadras.find((q) => q.id === slotAberto.quadraId)?.nome} ·{" "}
               {String(slotAberto.hora).padStart(2, "0")}:00
             </h2>
 
-            <label className="mt-4 flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-tinta">
-                Nome de quem reservou
-              </span>
-              <input
-                name="nome"
-                type="text"
-                required
-                autoFocus
-                placeholder="Ex.: João da Silva"
-                className="w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm text-tinta focus:border-primaria focus:outline-none"
-              />
-            </label>
+            {/* Três coisas diferentes para o mesmo horário vazio: vender,
+                fechar ou anunciar. Antes só existia a primeira, e fechar a
+                quadra só dava criando uma reserva falsa. */}
+            <div className="mt-3 flex gap-1 rounded-xl bg-fundo p-1">
+              {(
+                [
+                  ["reserva", "Reservar"],
+                  ["bloqueio", "Bloquear"],
+                  ["avisar", "Avisar"],
+                ] as const
+              ).map(([id, rotulo]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    setModo(id);
+                    setErro(null);
+                    setAvisados(null);
+                  }}
+                  className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-bold transition ${
+                    modo === id
+                      ? "bg-superficie text-primaria shadow"
+                      : "text-tinta-suave"
+                  }`}
+                >
+                  {rotulo}
+                </button>
+              ))}
+            </div>
 
-            <label className="mt-3 flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-tinta">
-                WhatsApp <span className="text-tinta-suave">(opcional)</span>
-              </span>
-              <input
-                name="telefone"
-                type="tel"
-                onChange={(e) =>
-                  (e.target.value = mascararTelefoneBr(e.target.value))
-                }
-                placeholder="(51) 99999-8888"
-                className="w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm text-tinta focus:border-primaria focus:outline-none"
-              />
-            </label>
+            {modo === "reserva" && (
+              <>
+                <label className="mt-4 flex flex-col gap-1.5">
+                  <span className="text-sm font-medium text-tinta">
+                    Nome de quem reservou
+                  </span>
+                  <input
+                    name="nome"
+                    type="text"
+                    required
+                    autoFocus
+                    placeholder="Ex.: João da Silva"
+                    className="w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm text-tinta focus:border-primaria focus:outline-none"
+                  />
+                </label>
+
+                <label className="mt-3 flex flex-col gap-1.5">
+                  <span className="text-sm font-medium text-tinta">
+                    WhatsApp <span className="text-tinta-suave">(opcional)</span>
+                  </span>
+                  <input
+                    name="telefone"
+                    type="tel"
+                    onChange={(e) =>
+                      (e.target.value = mascararTelefoneBr(e.target.value))
+                    }
+                    placeholder="(51) 99999-8888"
+                    className="w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm text-tinta focus:border-primaria focus:outline-none"
+                  />
+                </label>
+              </>
+            )}
+
+            {modo === "bloqueio" && (
+              <label className="mt-4 flex flex-col gap-1.5">
+                <span className="text-sm font-medium text-tinta">
+                  Motivo <span className="text-tinta-suave">(opcional)</span>
+                </span>
+                <input
+                  name="motivo"
+                  type="text"
+                  autoFocus
+                  placeholder="Ex.: manutenção, chuva, torneio"
+                  className="w-full rounded-lg border border-black/10 bg-white px-3 py-2 text-sm text-tinta focus:border-primaria focus:outline-none"
+                />
+                <span className="text-xs text-tinta-suave">
+                  A quadra fica ocupada na agenda e some para os jogadores.
+                  Bloqueio não entra no faturamento nem na taxa de ocupação.
+                </span>
+              </label>
+            )}
+
+            {modo === "avisar" && (
+              <div className="mt-4">
+                <p className="text-sm text-tinta">
+                  Avisamos os jogadores da sua cidade que esta quadra está
+                  livre neste horário.
+                </p>
+                <p className="mt-2 text-xs text-tinta-suave">
+                  Só dá para avisar uma vez a cada 6 horas, para não cansar
+                  quem recebe. O horário continua livre até alguém reservar.
+                </p>
+                {avisados !== null && (
+                  <p className="mt-3 rounded-xl bg-primaria/10 p-3 text-sm font-bold text-primaria">
+                    {avisados === 0
+                      ? "Nenhum jogador da sua cidade para avisar ainda."
+                      : `${avisados} ${avisados === 1 ? "jogador avisado" : "jogadores avisados"} ✓`}
+                  </p>
+                )}
+              </div>
+            )}
 
             <label className="mt-3 flex flex-col gap-1.5">
               <span className="text-sm font-medium text-tinta">Duração</span>
@@ -425,13 +593,44 @@ export function AgendaDia({
             )}
 
             <div className="mt-4 flex gap-2">
-              <button
-                type="submit"
-                disabled={salvando}
-                className="flex-1 rounded-full bg-destaque px-4 py-2.5 font-display font-bold text-destaque-tinta transition hover:brightness-95 disabled:opacity-60"
-              >
-                {salvando ? "Reservando..." : "Confirmar reserva"}
-              </button>
+              {modo === "avisar" ? (
+                // Fora do fluxo do formulário: avisar não cria nada na
+                // agenda, então não é "enviar" o mesmo formulário.
+                <button
+                  type="button"
+                  disabled={salvando || avisados !== null}
+                  onClick={() =>
+                    promover(
+                      Number(
+                        (
+                          document.querySelector(
+                            'select[name="duracao"]'
+                          ) as HTMLSelectElement | null
+                        )?.value ?? 60
+                      )
+                    )
+                  }
+                  className="flex-1 rounded-full bg-destaque px-4 py-2.5 font-display font-bold text-destaque-tinta transition hover:brightness-95 disabled:opacity-60"
+                >
+                  {salvando
+                    ? "Avisando..."
+                    : avisados !== null
+                      ? "Avisado ✓"
+                      : "Avisar jogadores"}
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={salvando}
+                  className="flex-1 rounded-full bg-destaque px-4 py-2.5 font-display font-bold text-destaque-tinta transition hover:brightness-95 disabled:opacity-60"
+                >
+                  {salvando
+                    ? "Salvando..."
+                    : modo === "bloqueio"
+                      ? "Bloquear horário"
+                      : "Confirmar reserva"}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setSlotAberto(null)}

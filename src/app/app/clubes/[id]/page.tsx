@@ -5,6 +5,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { AvaliarClube } from "@/components/AvaliarClube";
 import { ClubeMiniMapa } from "@/components/mapa/ClubeMiniMapa";
 import { mascararTelefoneBr } from "@/lib/telefone";
+import { MarcarAvisosLidos } from "@/components/partidas/MarcarAvisosLidos";
 
 export const metadata: Metadata = {
   title: "Clube — padel",
@@ -113,6 +114,11 @@ export default async function PaginaClubeJogador({
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-8">
       <div className="mx-auto w-full max-w-md">
+        {/* Chegou no clube → o aviso de horário livre DESTE clube cumpriu o
+            papel. Sem isto ele ficaria na tela para sempre: não tem partida,
+            então nada o encontraria. */}
+        <MarcarAvisosLidos clubeId={clube.id} />
+
         <Link
           href="/app/descobrir"
           className="text-sm font-medium text-tinta-suave hover:text-tinta"

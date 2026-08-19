@@ -70,7 +70,19 @@ export default async function PaginaClube() {
             📅 Agenda do dia
           </p>
           <p className="mt-1 text-sm text-white/80">
-            Veja as reservas e anote reservas de balcão
+            Reservas, bloqueios e promoção de horário vazio
+          </p>
+        </Link>
+
+        <Link
+          href="/clube/relatorios"
+          className="mt-3 block rounded-2xl bg-superficie p-5 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"
+        >
+          <p className="font-display text-lg font-bold text-tinta">
+            📊 Relatórios
+          </p>
+          <p className="mt-1 text-sm text-tinta-suave">
+            Faturamento, ocupação e horários que ficam vazios
           </p>
         </Link>
 

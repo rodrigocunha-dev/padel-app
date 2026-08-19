@@ -7,6 +7,9 @@ export type Aviso = {
   id: string;
   tipo: string;
   partidaId: string | null;
+  // Aviso de horário livre não tem partida: ele aponta para o CLUBE.
+  clubeId?: string | null;
+  clubeNome?: string | null;
   partidaNome: string | null;
   // Qual set — dois avisos do mesmo jogo apareciam como linhas idênticas.
   setRotulo: string | null;
@@ -16,6 +19,7 @@ const TITULO: Record<string, string> = {
   set_registrado: "Registraram um resultado do seu jogo",
   votacao_aberta: "Há um placar em disputa — seu voto decide",
   promovido: "Você saiu da fila e entrou no jogo",
+  horario_livre: "Um clube perto de você tem quadra livre",
 };
 
 const DETALHE: Record<string, string> = {
@@ -24,12 +28,14 @@ const DETALHE: Record<string, string> = {
   votacao_aberta:
     "Você estava lá. Toque para dizer qual placar está certo.",
   promovido: "Abriu vaga e ela é sua. Confira o horário e a quadra.",
+  horario_livre: "Sobrou horário. Toque para ver a agenda e reservar.",
 };
 
 const ICONE: Record<string, string> = {
   set_registrado: "📋",
   votacao_aberta: "🗳️",
   promovido: "🎉",
+  horario_livre: "🎾",
 };
 
 // Um bloco por TIPO, não um por aviso: com 3 resultados registrados a tela
@@ -50,9 +56,13 @@ export function AvisosPendentes({ avisos }: { avisos: Aviso[] }) {
       {tipos.map((tipo) => {
         const doTipo = avisos.filter((a) => a.tipo === tipo);
         const unico = doTipo.length === 1;
-        const destino = unico && doTipo[0].partidaId
-          ? `/app/partidas/${doTipo[0].partidaId}`
-          : null;
+        const destino = !unico
+          ? null
+          : doTipo[0].partidaId
+            ? `/app/partidas/${doTipo[0].partidaId}`
+            : doTipo[0].clubeId
+              ? `/app/clubes/${doTipo[0].clubeId}`
+              : null;
 
         const conteudo = (
           <>
@@ -95,7 +105,7 @@ export function AvisosPendentes({ avisos }: { avisos: Aviso[] }) {
                     {doTipo.map((a) => (
                       <li key={a.id}>
                         <Link
-                          href={a.partidaId ? `/app/partidas/${a.partidaId}` : "#"}
+                          href={a.partidaId ? `/app/partidas/${a.partidaId}` : a.clubeId ? `/app/clubes/${a.clubeId}` : "#"}
                           className="flex items-center justify-between gap-3 rounded-xl bg-superficie p-3 shadow ring-1 ring-black/5 transition hover:ring-primaria/40"
                         >
                           <span className="min-w-0">
