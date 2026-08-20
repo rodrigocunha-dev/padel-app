@@ -94,7 +94,16 @@ $fn$;
 -- 3) O TEXTO PASSA A CONTAR
 -- ============================================================
 
-create or replace function public.push_pendentes(p_limite integer default 200)
+-- ⚠️ PRECISA APAGAR ANTES, e não é opcional: esta versão devolve uma coluna
+-- a mais (`silencioso`), e o Postgres recusa `create or replace` quando o
+-- formato do retorno muda — "cannot change return type of existing function".
+--
+-- Apagar é seguro aqui: nada no banco depende desta função. Quem a chama é o
+-- endpoint de envio, por RPC, em tempo de execução. Os `grant`/`revoke` são
+-- reaplicados no fim do script, porque o `drop` leva as permissões junto.
+drop function if exists public.push_pendentes(integer);
+
+create function public.push_pendentes(p_limite integer default 200)
 returns table (
   aviso_id uuid,
   inscricao_id uuid,
