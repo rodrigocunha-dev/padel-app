@@ -32,6 +32,8 @@ type Pendente = {
   corpo: string;
   url: string;
   tag: string;
+  // Reenvio: atualiza a notificacao que ja esta na tela, sem alertar de novo.
+  silencioso: boolean;
 };
 
 // Comparação em tempo constante: comparar segredo com `===` vaza, pelo
@@ -118,6 +120,7 @@ export async function POST(request: Request) {
             corpo: p.corpo,
             url: p.url,
             tag: p.tag,
+            silencioso: p.silencioso === true,
           })
         );
         enviados.push(p.aviso_id);

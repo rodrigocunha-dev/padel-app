@@ -37,6 +37,18 @@ self.addEventListener("push", (evento) => {
     // A tag agrupa avisos do mesmo tipo: em vez de cinco notificações
     // iguais empilhadas, a última substitui a anterior.
     tag: dados.tag || "aviso",
+
+    // ⚠️ O QUE FAZ A ATUALIZAÇÃO SER SILENCIOSA.
+    //
+    // Mesma tag = a notificação nova SUBSTITUI a que já está na tela. Mas
+    // substituir, sozinho, ainda pode alertar. `silent` desliga som e
+    // vibração desta entrega específica.
+    //
+    // Assim a primeira mensagem do chat avisa normalmente e as seguintes só
+    // atualizam o número na tela. Sem isto, "um aviso por conversa" viraria
+    // uma vibração por mensagem — exatamente o que a decisão evitou.
+    silent: dados.silencioso === true,
+    renotify: false,
     data: { url: dados.url || "/app" },
   };
 
