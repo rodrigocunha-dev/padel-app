@@ -248,7 +248,8 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
   - **Passo de revisão antes de enviar o código**, com o número em destaque: o erro comum aqui não é má-fé, é dígito trocado — e dígito trocado manda o código para o celular de um estranho
   - **Convites pendentes migram sozinhos**: depois da troca, o app roda a mesma vinculação do fim do cadastro, então convite mandado para o número novo (antes de ele ser seu) aparece na hora
   - **Número já ligado a outra conta é recusado** — o telefone é único no login, então a troca não aconteceria nem com o código certo
-- [ ] ⏳ 🔍 Histórico, estatísticas e conquistas — não existem. **De propósito:** dependem do rating, que depende da regra nº 5. Não colocar placeholder na tela de perfil antes dessa decisão
+- [x] ✅ 🔍 **Histórico de jogos com o rating de cada um** — é a trilha em `/app/perfil/rating`, que já mostrava resultado, placar, com quem e quanto cada set moveu. **Não foi criada tela nova** (seria duplicar): faltava só dizer ONDE foi o jogo e dar o caminho para abri-lo, e isso entrou em 20/08/2026. A queixa original do fundador (04/08) era "sem precisar abrir partida por partida" — e era exatamente o que faltava
+- [ ] ⏳ 🔍 Estatísticas e conquistas — não existem. Gamificação é Fase 2 (Módulo 2.3)
 
 ---
 

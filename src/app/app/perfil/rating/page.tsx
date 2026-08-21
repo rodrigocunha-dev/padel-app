@@ -87,6 +87,25 @@ export default async function PaginaTrilhaDoRating() {
                       </p>
                     </div>
 
+                    {/* Onde foi o jogo, e o caminho para abri-lo. Antes a
+                        trilha dizia quanto você subiu naquela noite sem dizer
+                        QUE noite — e a pessoa tinha que caçar partida por
+                        partida, que era exatamente a queixa. */}
+                    {d.clube && (
+                      <p className="mt-0.5 text-sm text-tinta-suave">
+                        {d.partidaId ? (
+                          <Link
+                            href={`/app/partidas/${d.partidaId}`}
+                            className="underline decoration-tinta-suave/40 hover:text-tinta"
+                          >
+                            {d.clube} →
+                          </Link>
+                        ) : (
+                          d.clube
+                        )}
+                      </p>
+                    )}
+
                     {/* O impacto de cada set aparece porque a conta do dia se
                         decompõe exatamente — a soma daqui fecha com o número
                         do topo. O motor continua contando por dia. */}

@@ -101,6 +101,11 @@ export async function estadoDoRating(
 export type DiaDaTrilha = {
   dia: string;
   variacao: number;      // em pontos de rating: é o SEU, pode aparecer
+  // ONDE foi o jogo daquele dia, e o caminho para abri-lo. Sem isto a
+  // trilha dizia "nesta noite você subiu 12 pontos" sem dizer que noite —
+  // e o jogador tinha que abrir partida por partida para descobrir.
+  clube: string | null;
+  partidaId: string | null;
   sets: {
     venceu: boolean;
     parceiro: string;    // categoria + nível
@@ -133,21 +138,35 @@ export async function trilhaDoRating(
   const { data: sets } = await supabase
     .from("rating_bloco_sets")
     .select(
-      "bloco_id, venceu, degrau_adversarios, degrau_parceiro, variacao, games_meus, games_deles"
+      "bloco_id, venceu, degrau_adversarios, degrau_parceiro, variacao, games_meus, games_deles, sets ( partida_id, partidas ( quadras ( clubes ( nome ) ) ) )"
     )
     .in(
       "bloco_id",
       blocos.map((b) => b.id)
     );
 
-  return blocos.map((b) => ({
+  return blocos.map((b) => {
+    const doDia = (sets ?? []).filter((s) => s.bloco_id === b.id);
+    // Todos os sets de um bloco são do mesmo dia, e na prática do mesmo
+    // jogo. Se um dia tiver jogos em clubes diferentes, mostra o primeiro:
+    // é melhor que não mostrar nada, e a lista de sets logo abaixo deixa
+    // claro que foi mais de um.
+    const origem = doDia
+      .map((s) => s.sets as unknown as {
+        partida_id: string;
+        partidas: { quadras: { clubes: { nome: string } } } | null;
+      } | null)
+      .find((x) => !!x);
+
+    return {
     dia: b.dia,
+    clube: origem?.partidas?.quadras?.clubes?.nome ?? null,
+    partidaId: origem?.partida_id ?? null,
     // A variação é do PRÓPRIO jogador, então o número dele pode aparecer:
     // a decisão fecha o rating absoluto, não o quanto ele se moveu — e sem
     // isto a regra nº 4 não teria como ser cumprida.
     variacao: Number(b.rating_depois) - Number(b.rating_antes),
-    sets: (sets ?? [])
-      .filter((s) => s.bloco_id === b.id)
+    sets: doDia
       .map((s) => ({
         venceu: s.venceu,
         parceiro: rotuloDoDegrau(s.degrau_parceiro),
@@ -158,5 +177,6 @@ export async function trilhaDoRating(
             ? null
             : `${s.games_meus} x ${s.games_deles}`,
       })),
-  }));
+    };
+  });
 }
