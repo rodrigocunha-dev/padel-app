@@ -118,7 +118,7 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] ✅ 🔍 Entrar na partida com 1 toque
 - [x] ✅ 🔍 Fila de substitutos: promoção automática do primeiro da fila — testada com 5 contas, `008_partidas.sql:328`
 - [x] ✅ 🔍 **Minhas partidas** (`/app/partidas/minhas`) com status de partida (Futura/Jogada) e de pagamento (Paga/Aguardando/Inadimplente) + filtros por ambos — CLAUDE.md registra como FEITA em 26/07/2026
-- [ ] ⏳ 🔍 **Notificação em cascata aos compatíveis quando abre vaga** — não existe. O plano original definia a fila incluindo isso; só o mecanismo de promoção foi feito
+- [x] ✅ 🔍 **Aviso quando abre vaga** (`046`) — quando alguém sai e **não há substituto na fila**, os compatíveis são avisados (com push). **Não avisa na criação da partida**, de propósito: o feed já mostra as novas, e virar push para a cidade inteira é o caminho mais curto para desligarem as notificações. Não avisa inadimplentes (não podem entrar), quem já está na partida, nem quem saiu dela. Cooldown de 6h por partida
 - [ ] ⏳ 🔍 **Filtro por região no feed** — hoje mostra partidas de todas as cidades (busca a cidade do jogador mas não usa). Travado: o fundador quer pesquisar referências de filtros antes (🔍 Em avaliação no CLAUDE.md)
 - [x] ✅ 🔍 **Editar partida aberta** (`040`) — só o organizador. **Sozinho, vale na hora; com outros jogadores, vira solicitação aprovada por TODOS**, e uma recusa encerra sem esperar o resto. A tela descreve a mudança em palavras ("de 1ª–7ª para 1ª–5ª") em vez de só mostrar os valores novos, porque quem vota não lembra como era
   - **Testado de ponta a ponta com 4 contas:** Carlos propôs → a partida NÃO mudou → Rodrigo aprovou ("falta o resto") → Diego aprovou ("faltam 1") → Eduardo aprovou → aplicada, e só aí a partida mudou
@@ -200,7 +200,9 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
 - [x] ✅ 🔍 **Promover horário ocioso** (`039`) — aba "Avisar" na agenda. Vira `avisos` e o push sai sozinho pelo gatilho do `033`. Avisa jogadores da cidade do clube, **sem filtrar por categoria** (horário livre não tem nível, é oferta de quadra), pulando inadimplentes e contas anonimizadas. Recusa horário já ocupado e horário no passado. **Cooldown de 6h por clube** — o mesmo intervalo das cobranças de set, para o produto ter uma noção só de "não encher o saco"
   - **Testado de ponta a ponta:** clube avisou 4 jogadores → o aviso apareceu na Início de outra conta → levou à página do clube → sumiu ao chegar lá. A segunda tentativa devolveu `AGUARDE_6H`
   - ⚠️ Dois buracos achados e fechados no caminho: o aviso novo não tinha ícone nem destino na tela (cairia como "Aviso" sem link), e **nunca seria marcado como lido**, porque a marcação buscava só por partida e este aviso não tem partida — ficaria na tela para sempre
-- [ ] ⏳ Evoluir a agenda: bloqueios recorrentes/mensalistas, arrastar para remarcar, filtro por esporte/quadra
+- [x] ✅ 🔍 **Bloqueio recorrente** (`047`) — "toda terça às 8h", com período e motivo. **Materializa os bloqueios um a um em vez de guardar uma regra**: a trava de zero overbooking é uma restrição do banco sobre LINHAS, e uma regra não é linha — respeitá-la exigiria reimplementar a checagem em todo lugar que cria reserva, e bastaria esquecer um para o furo voltar. Horário já ocupado é **pulado e contado**, não derruba a série: o clube fica sabendo quais datas ficaram de fora
+- [x] ✅ 🔍 **Filtro por esporte na agenda** — só aparece em clube com mais de um esporte; num clube só de padel seria um controle que nunca muda nada
+- [ ] ⏳ Evoluir a agenda: mensalistas, arrastar para remarcar
 
 ## Módulo 1.8 — LGPD e Direitos do Titular *(regra nº 10 — NÃO INICIADO)*
 *Regra inegociável do CLAUDE.md desde o dia 1. Estava ausente deste Checklist até 29/07/2026 — é justamente o tipo de coisa que o documento existe para não deixar passar.*

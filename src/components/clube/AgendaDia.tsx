@@ -5,6 +5,7 @@ import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
 import { mascararTelefoneBr } from "@/lib/telefone";
 import { AgendaOcupacao } from "@/components/clube/AgendaOcupacao";
+import { BloqueioRecorrente } from "@/components/clube/BloqueioRecorrente";
 import type { QuadraComFaixas } from "@/lib/ocupacao";
 
 type Quadra = QuadraComFaixas & { esporte: string };
@@ -56,6 +57,9 @@ export function AgendaDia({
   // O que o dono quer fazer com um horário livre: vender, fechar ou anunciar.
   const [modo, setModo] = useState<"reserva" | "bloqueio" | "avisar">("reserva");
   const [avisados, setAvisados] = useState<number | null>(null);
+  // Clube com muitas quadras nao cabe na largura do celular. O filtro nao
+  // muda o que existe na agenda, so o que a tela desenha.
+  const [esporteFiltro, setEsporteFiltro] = useState<string>("todos");
 
   const carregar = useCallback(async () => {
     const supabase = criarClienteNavegador();
@@ -281,9 +285,36 @@ export function AgendaDia({
     setSlotAberto(null);
   }
 
+  const esportes = [...new Set(quadras.map((q) => q.esporte))];
+  const quadrasVisiveis =
+    esporteFiltro === "todos"
+      ? quadras
+      : quadras.filter((q) => q.esporte === esporteFiltro);
+
   const horas = Array.from(
     { length: HORA_FINAL - HORA_INICIAL },
     (_, i) => HORA_INICIAL + i
+  );
+
+  // Só aparece quando há mais de um esporte: num clube só de padel, o
+  // seletor seria um controle que nunca muda nada.
+  const filtroDeEsporte = esportes.length > 1 && (
+    <div className="mt-3 flex flex-wrap justify-center gap-2">
+      {["todos", ...esportes].map((e) => (
+        <button
+          key={e}
+          type="button"
+          onClick={() => setEsporteFiltro(e)}
+          className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+            esporteFiltro === e
+              ? "bg-primaria text-white"
+              : "bg-superficie text-tinta-suave ring-1 ring-black/10"
+          }`}
+        >
+          {e === "todos" ? "Todas as quadras" : e}
+        </button>
+      ))}
+    </div>
   );
 
   return (
@@ -371,12 +402,14 @@ export function AgendaDia({
           Cadastre quadras no painel para ver a agenda.
         </p>
       ) : (
+        <>
+        {filtroDeEsporte}
         <div className="mt-4 overflow-x-auto rounded-2xl bg-superficie p-4 shadow-lg ring-1 ring-black/5">
           <table className="w-full min-w-[32rem] border-separate border-spacing-1">
             <thead>
               <tr>
                 <th className="w-14" />
-                {quadras.map((q) => (
+                {quadrasVisiveis.map((q) => (
                   <th
                     key={q.id}
                     className="pb-1 text-sm font-bold text-tinta"
@@ -392,7 +425,7 @@ export function AgendaDia({
                   <td className="pr-1 text-right align-top text-xs font-medium text-tinta-suave">
                     {String(hora).padStart(2, "0")}:00
                   </td>
-                  {quadras.map((q) => {
+                  {quadrasVisiveis.map((q) => {
                     const reserva = reservaNoSlot(q.id, hora);
                     if (reserva) {
                       const ehInicio =
@@ -460,6 +493,8 @@ export function AgendaDia({
             <p className="mt-2 text-xs text-tinta-suave">Atualizando...</p>
           )}
         </div>
+        <BloqueioRecorrente quadras={quadrasVisiveis} aoConcluir={carregar} />
+        </>
       )}
 
       {slotAberto && (
