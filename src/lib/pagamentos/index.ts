@@ -2,28 +2,24 @@ import type { GatewayPagamento } from "./tipos";
 import { gatewaySimulado } from "./simulado";
 
 // ============================================================
-// CHAVE DE TROCA DO GATEWAY
+// O QUE A TELA PODE SABER SOBRE PAGAMENTO
 // ============================================================
-// Uma variável de ambiente decide qual gateway o app usa. Hoje só existe
-// o "simulado". Quando o real chegar, importe-o aqui e adicione ao mapa —
-// nada além deste arquivo muda.
+// ⚠️ Este arquivo é importado por componentes de tela, então NÃO pode
+// conhecer o gateway real: ele carregaria o token de acesso junto, e token
+// no navegador é token entregue a quem quiser.
 //
-//   NEXT_PUBLIC_PAGAMENTO_PROVEDOR=simulado   (padrão)
-//   NEXT_PUBLIC_PAGAMENTO_PROVEDOR=iugu        (futuro)
+// Quem escolhe o gateway de verdade é `servidor.ts`, que é `server-only`.
+// Aqui fica só o que a tela precisa saber: se o pagamento é de mentira, para
+// mostrar ou esconder o botão "simular pagamento".
+//
+// A criação da cobrança passou para `POST /api/pagamentos/criar`.
 
-const PROVEDOR = process.env.NEXT_PUBLIC_PAGAMENTO_PROVEDOR ?? "simulado";
+// Diz apenas se estamos em modo simulado. Não decide nada — quem decide é o
+// servidor; esta é a informação que a tela usa para se desenhar.
+export const pagamentoEhSimulado =
+  (process.env.NEXT_PUBLIC_PAGAMENTO_SIMULADO ?? "sim") !== "nao";
 
-const gateways: Record<string, GatewayPagamento> = {
-  simulado: gatewaySimulado,
-  // iugu: gatewayIugu,          // ← futuro
-  // mercadopago: gatewayMercadoPago,
-};
-
-export const gatewayPagamento: GatewayPagamento =
-  gateways[PROVEDOR] ?? gatewaySimulado;
-
-// Atalho usado pelas telas para mostrar/esconder o botão "simular
-// pagamento" (que só existe enquanto o gateway é o simulado).
-export const pagamentoEhSimulado = gatewayPagamento.simulado;
+// Para telas que só precisam do rótulo do provedor simulado.
+export const gatewaySimuladoParaTela: GatewayPagamento = gatewaySimulado;
 
 export type { GatewayPagamento, CobrancaPix, DadosCobranca } from "./tipos";

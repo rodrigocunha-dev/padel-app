@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
-import { gatewayPagamento, pagamentoEhSimulado } from "@/lib/pagamentos";
+import { pagamentoEhSimulado } from "@/lib/pagamentos";
 import { dividirValor } from "@/lib/partidas";
 
 type JogadorPag = {
@@ -131,21 +131,49 @@ export function PagamentoPartida({
     setErro(null);
     setGerando(true);
     try {
-      // 1) Pede a cobrança ao gateway (hoje o simulado gera um QR fake).
-      const cob = await gatewayPagamento.criarCobranca({
-        valorCentavos: minhaParte,
-        descricao: `Sua parte — ${resumoPartida}`,
-        referencia: `${partidaId}:${meuId}`,
+      // 1) Pede a cobrança ao SERVIDOR.
+      //
+      // ⚠️ Mudou em 20/08/2026: antes a tela falava direto com o gateway.
+      // Isso só funcionava porque o gateway era simulado e não tinha
+      // segredo nenhum; um gateway real exige um token de acesso, e token
+      // no navegador é token entregue a quem quiser.
+      //
+      // O valor vai junto, mas quem manda é o servidor: ele recalcula a
+      // partir do preço da partida e do divisor congelado. Confiar no
+      // número do navegador deixaria alguém pagar R$ 0,01 e destravar o
+      // bloqueio de inadimplente.
+      const resposta = await fetch("/api/pagamentos/criar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          partidaId,
+          valorCentavos: minhaParte,
+          descricao: `Sua parte — ${resumoPartida}`,
+        }),
       });
+
+      if (!resposta.ok) {
+        const { erro } = await resposta.json().catch(() => ({ erro: null }));
+        throw new Error(erro ?? "Não conseguimos gerar o PIX.");
+      }
+
+      const cob = (await resposta.json()) as {
+        cobrancaId: string;
+        qrCode: string;
+        copiaECola: string;
+        valorCentavos: number;
+        provedor: string;
+      };
 
       // 2) Registra o pagamento como pendente (cria ou reaproveita a linha).
       const { error } = await supabase.from("pagamentos").upsert(
         {
           partida_id: partidaId,
           jogador_id: meuId,
-          valor_centavos: minhaParte,
+          // O valor que o SERVIDOR calculou, não o que a tela achava.
+          valor_centavos: cob.valorCentavos,
           status: "pendente",
-          provedor: gatewayPagamento.nome,
+          provedor: cob.provedor,
           cobranca_externa_id: cob.cobrancaId,
           qr_code: cob.qrCode,
           copia_e_cola: cob.copiaECola,
