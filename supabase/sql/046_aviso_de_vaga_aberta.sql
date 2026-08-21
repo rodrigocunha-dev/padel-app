@@ -160,7 +160,9 @@ as $fn$
       when 'vaga_aberta' then
         coalesce(
           b.clube || ', ' ||
-          to_char(b.inicio at time zone 'America/Sao_Paulo', 'DD/MM à\'s\' HH24h') ||
+          -- Em `to_char`, texto literal vai entre ASPAS DUPLAS. Sem elas, o
+          -- Postgres tenta ler cada letra como código de formato.
+          to_char(b.inicio at time zone 'America/Sao_Paulo', 'DD/MM "às" HH24"h"') ||
           ' · toque para entrar',
           'Toque para ver a partida.'
         )
