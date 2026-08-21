@@ -62,3 +62,25 @@ body {
   background-color: var(--cor-fundo);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+/* Por que o iPhone dava ZOOM ao tocar num campo — e por que ele não voltava.
+ *
+ * O Safari no iOS amplia a página sozinho quando o campo tem letra MENOR QUE
+ * 16px, para a pessoa conseguir ler o que digita. Nossos campos usavam
+ * `text-sm` (14px), então quase todo campo do app disparava isso: chat,
+ * login, busca, formulários do clube. Depois de enviar, o Safari desfaz o
+ * zoom só em parte — daí a tela ficar torta e exigir ajuste na mão.
+ *
+ * A correção é dar 16px aos campos. NÃO usamos `maximum-scale=1` no
+ * cabeçalho, que é o truque comum para o mesmo problema: ele resolve
+ * impedindo a pessoa de ampliar a tela, o que atrapalha quem enxerga mal.
+ *
+ * `pointer: coarse` limita a regra a telas de toque — no computador os
+ * campos continuam com o tamanho do desenho, onde não existe esse zoom. */
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
