@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { BotaoSair } from "@/components/BotaoSair";
+import { TrocaDeModo } from "@/components/TrocaDeModo";
 import { BarraDeProgresso } from "@/components/rating/BarraDeProgresso";
 import { AtivarNotificacoes } from "@/components/AtivarNotificacoes";
 import { ConvidarParaOApp } from "@/components/ConvidarParaOApp";
@@ -43,6 +44,8 @@ export default async function PaginaPerfil() {
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-8">
       <div className="mx-auto w-full max-w-md">
+        {meuClube && <TrocaDeModo modo="jogador" />}
+
         <h1 className="font-display text-2xl font-extrabold text-tinta">
           Meu perfil
         </h1>
@@ -81,18 +84,6 @@ export default async function PaginaPerfil() {
             antes de a pessoa entender para quê rende um "não" que o
             navegador guarda para sempre. */}
         <AtivarNotificacoes />
-
-        {meuClube && (
-          <Link
-            href="/clube"
-            className="mt-3 block rounded-2xl bg-primaria p-5 shadow-lg transition hover:brightness-110"
-          >
-            <p className="font-display text-base font-bold text-white">
-              🏟️ Ir para o painel do clube
-            </p>
-            <p className="mt-1 text-sm text-white/80">{meuClube.nome}</p>
-          </Link>
-        )}
 
         <Link
           href="/app/perfil/editar"

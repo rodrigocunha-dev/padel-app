@@ -8,6 +8,7 @@ import { LocalizacaoClube } from "@/components/clube/LocalizacaoClube";
 import { FotosClube } from "@/components/clube/FotosClube";
 import { EditarClube } from "@/components/clube/EditarClube";
 import { BotaoSair } from "@/components/BotaoSair";
+import { TrocaDeModo } from "@/components/TrocaDeModo";
 
 export const metadata: Metadata = {
   title: "Painel do clube — padel",
@@ -50,6 +51,8 @@ export default async function PaginaClube() {
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-10">
       <div className="mx-auto w-full max-w-2xl">
+        <TrocaDeModo modo="clube" />
+
         <header className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-extrabold text-tinta">
@@ -71,20 +74,6 @@ export default async function PaginaClube() {
           </p>
           <p className="mt-1 text-sm text-white/80">
             Reservas, bloqueios e promoção de horário vazio
-          </p>
-        </Link>
-
-        {/* O caminho de volta. O dono do clube também é jogador, e até aqui
-            ia e voltava digitando o endereço na mão. */}
-        <Link
-          href="/app"
-          className="mt-3 block rounded-2xl bg-superficie p-5 shadow-lg ring-1 ring-black/5 transition hover:ring-primaria/40"
-        >
-          <p className="font-display text-lg font-bold text-tinta">
-            🎾 Ir para o app do jogador
-          </p>
-          <p className="mt-1 text-sm text-tinta-suave">
-            Suas partidas, reservas e categoria
           </p>
         </Link>
 

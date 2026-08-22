@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { VERSAO_POLITICA } from "@/lib/politica";
 
 export const metadata: Metadata = {
@@ -19,7 +20,17 @@ export default function PaginaPolitica() {
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-10">
       <article className="mx-auto w-full max-w-2xl">
-        <h1 className="font-display text-3xl font-extrabold text-tinta">
+        {/* Esta página fica FORA do /app, então não tem a barra de baixo —
+            sem este link ela era um beco sem saída, que foi o que o fundador
+            encontrou no teste. */}
+        <Link
+          href="/app/perfil/privacidade"
+          className="text-sm font-medium text-tinta-suave hover:text-tinta"
+        >
+          ← Voltar
+        </Link>
+
+        <h1 className="mt-4 font-display text-3xl font-extrabold text-tinta">
           Política de privacidade
         </h1>
 

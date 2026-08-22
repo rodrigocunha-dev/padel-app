@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { criarClienteServidor, usuarioAtual } from "@/lib/supabase/server";
+import { usuarioAtual } from "@/lib/supabase/server";
+import { mascararTelefoneBr } from "@/lib/telefone";
 import { TrocarTelefone } from "./TrocarTelefone";
 
 export const metadata: Metadata = {
@@ -9,17 +10,22 @@ export const metadata: Metadata = {
 };
 
 export default async function PaginaTelefone() {
-  const supabase = await criarClienteServidor();
   const user = await usuarioAtual();
   if (!user) redirect("/entrar");
 
-  const { data: jogador } = await supabase
-    .from("jogadores")
-    .select("telefone")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!jogador) redirect("/app/onboarding");
+  // ⚠️ O telefone vem do LOGIN, e não da tabela `jogadores`.
+  //
+  // Ler `jogadores.telefone` parecia o caminho óbvio e QUEBRAVA a tela: essa
+  // coluna está fechada por permissão desde o Sprint 4, de propósito — é o
+  // que impede um jogador de ler o telefone de outro. A consulta era negada,
+  // o app concluía que a pessoa não tinha perfil e a mandava embora, caindo
+  // na Início. Era o bug que o fundador viu.
+  //
+  // E o telefone do login é o certo aqui de qualquer forma: é ele que a
+  // pessoa usa para entrar, e é ele que a tela vai trocar.
+  const atual = user.phone
+    ? mascararTelefoneBr(user.phone.replace(/^55/, ""))
+    : "—";
 
   return (
     <main className="flex min-h-full flex-1 flex-col bg-fundo px-6 py-8">
@@ -38,7 +44,7 @@ export default async function PaginaTelefone() {
           É com este número que você entra no app.
         </p>
 
-        <TrocarTelefone atual={jogador.telefone} />
+        <TrocarTelefone atual={atual} />
 
         <p className="mt-6 text-xs text-tinta-suave">
           Se alguém já tinha te convidado pelo número novo, o convite aparece
