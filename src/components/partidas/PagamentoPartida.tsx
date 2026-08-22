@@ -56,6 +56,8 @@ export function PagamentoPartida({
     cobrancaId: string;
   } | null>(null);
   const [confirmando, setConfirmando] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+  const [mostrarCodigo, setMostrarCodigo] = useState(false);
 
   // Cada jogador paga uma parte igual; a sobra de centavos vai para os
   // primeiros da lista. Na partida aberta o divisor é o número de vagas;
@@ -343,13 +345,39 @@ export function PagamentoPartida({
             alt="QR do PIX"
             className="mx-auto mt-3 h-44 w-44"
           />
+          {/* ⚠️ Copiar precisa DIZER que copiou. Antes o botão chamava a
+              área de transferência e não mudava nada na tela — quem tocava
+              não tinha como saber se funcionou, e concluía que não. Foi o
+              que o fundador viu no teste.
+              E o navegador pode recusar (permissão, contexto): nesse caso
+              vale mostrar o texto para a pessoa copiar na mão, em vez de
+              falhar calado. */}
           <button
             type="button"
-            onClick={() => navigator.clipboard?.writeText(cobranca.copiaECola)}
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(cobranca.copiaECola);
+                setCopiado(true);
+                setTimeout(() => setCopiado(false), 2500);
+              } catch {
+                setMostrarCodigo(true);
+              }
+            }}
             className="mt-3 text-sm font-medium text-primaria hover:underline"
           >
-            Copiar PIX copia e cola
+            {copiado ? "Copiado ✓" : "Copiar PIX copia e cola"}
           </button>
+
+          {mostrarCodigo && (
+            <div className="mt-3 rounded-xl bg-fundo p-3">
+              <p className="text-xs text-tinta-suave">
+                Seu navegador não deixou copiar. Selecione o código abaixo:
+              </p>
+              <p className="mt-2 break-all rounded-lg bg-white p-2 text-left text-[11px] text-tinta">
+                {cobranca.copiaECola}
+              </p>
+            </div>
+          )}
 
           {pagamentoEhSimulado && (
             <div className="mt-4 rounded-xl bg-amber-50 p-3">
