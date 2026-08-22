@@ -48,6 +48,15 @@ create index if not exists idx_promocoes_clube
 alter table public.promocoes enable row level security;
 alter table public.promocao_horarios enable row level security;
 
+-- ⚠️ A COLUNA VEM ANTES DAS POLÍTICAS, e a ordem não é estética: as
+-- políticas abaixo consultam `avisos.promocao_id`. Na primeira versão deste
+-- script eu criei a coluna DEPOIS, e o Postgres parou em
+-- "column a.promocao_id does not exist". Objeto referenciado tem de existir
+-- na linha em que é citado — o script roda de cima para baixo, de uma vez.
+alter table public.avisos
+  add column if not exists promocao_id uuid references public.promocoes (id) on delete cascade;
+
+
 -- Quem recebeu o aviso pode ler a campanha. Sem isto o jogador teria a
 -- notificação e não conseguiria abrir os horários.
 drop policy if exists "promocoes_leitura" on public.promocoes;
@@ -63,11 +72,14 @@ create policy "promocao_horarios_leitura"
   on public.promocao_horarios for select to authenticated
   using (exists (
     select 1 from public.avisos a
-    where a.promocao_id = promocao_id and a.jogador_id = (select auth.uid())
+    -- ⚠️ A TABELA PRECISA SER NOMEADA. Escrito como `a.promocao_id =
+    -- promocao_id`, o Postgres resolve o lado direito como a coluna do
+    -- PRÓPRIO `a` — vira `a.promocao_id = a.promocao_id`, que é sempre
+    -- verdadeiro. A política pareceria certa e deixaria qualquer pessoa com
+    -- um aviso qualquer ler os horários de todas as campanhas.
+    where a.promocao_id = public.promocao_horarios.promocao_id
+      and a.jogador_id = (select auth.uid())
   ));
-
-alter table public.avisos
-  add column if not exists promocao_id uuid references public.promocoes (id) on delete cascade;
 
 alter table public.avisos drop constraint if exists avisos_tipo_check;
 alter table public.avisos
