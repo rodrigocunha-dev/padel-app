@@ -43,6 +43,7 @@ export default async function PaginaAgenda() {
         <AgendaDia
           quadras={clube.quadras}
           usuarioId={user.id}
+          clubeId={clube.id}
         />
       </div>
     </main>

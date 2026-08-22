@@ -6,6 +6,7 @@ import { AvaliarClube } from "@/components/AvaliarClube";
 import { ClubeMiniMapa } from "@/components/mapa/ClubeMiniMapa";
 import { mascararTelefoneBr } from "@/lib/telefone";
 import { MarcarAvisosLidos } from "@/components/partidas/MarcarAvisosLidos";
+import { HorariosParaMim } from "@/components/clube/HorariosParaMim";
 
 export const metadata: Metadata = {
   title: "Clube — padel",
@@ -118,6 +119,7 @@ export default async function PaginaClubeJogador({
             papel. Sem isto ele ficaria na tela para sempre: não tem partida,
             então nada o encontraria. */}
         <MarcarAvisosLidos clubeId={clube.id} />
+        <HorariosParaMim clubeId={clube.id} />
 
         <Link
           href="/app/descobrir"

@@ -23,6 +23,7 @@ const TITULO: Record<string, string> = {
   edicao_proposta: "O organizador quer mudar uma partida sua",
   chat_novas_mensagens: "Tem mensagem nova no chat da partida",
   vaga_aberta: "Abriu vaga numa partida do seu nível",
+  horarios_livres: "Um clube perto de você tem horários livres",
 };
 
 const DETALHE: Record<string, string> = {
@@ -35,6 +36,7 @@ const DETALHE: Record<string, string> = {
   edicao_proposta: "Nada muda sem a sua aprovação. Toque para ver o que ele pediu.",
   chat_novas_mensagens: "Toque para ler e responder.",
   vaga_aberta: "Alguém saiu e a vaga está livre. Toque para entrar.",
+  horarios_livres: "Separamos os que combinam com os seus dias e horários.",
 };
 
 const ICONE: Record<string, string> = {
@@ -45,6 +47,7 @@ const ICONE: Record<string, string> = {
   edicao_proposta: "✏️",
   chat_novas_mensagens: "💬",
   vaga_aberta: "🎯",
+  horarios_livres: "📣",
 };
 
 // Um bloco por TIPO, não um por aviso: com 3 resultados registrados a tela

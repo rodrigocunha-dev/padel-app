@@ -40,9 +40,11 @@ function rotuloDia(d: Date): string {
 export function AgendaDia({
   quadras,
   usuarioId,
+  clubeId,
 }: {
   quadras: Quadra[];
   usuarioId: string;
+  clubeId: string;
 }) {
   const [visao, setVisao] = useState<"dia" | "semana" | "mes">("dia");
   const [dia, setDia] = useState(() => dataISO(new Date()));
@@ -55,11 +57,20 @@ export function AgendaDia({
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   // O que o dono quer fazer com um horário livre: vender, fechar ou anunciar.
-  const [modo, setModo] = useState<"reserva" | "bloqueio" | "avisar">("reserva");
-  const [avisados, setAvisados] = useState<number | null>(null);
+  const [modo, setModo] = useState<"reserva" | "bloqueio">("reserva");
   // Clube com muitas quadras nao cabe na largura do celular. O filtro nao
   // muda o que existe na agenda, so o que a tela desenha.
   const [esporteFiltro, setEsporteFiltro] = useState<string>("todos");
+  // Campanha de horários: o clube marca vários e manda UM aviso por jogador,
+  // com os horários que servem para cada um. Substituiu o "avisar um horário
+  // por vez", que obrigava a escolher entre avisar de menos e metralhar.
+  const [modoCampanha, setModoCampanha] = useState(false);
+  const [selecionados, setSelecionados] = useState<string[]>([]);
+  const [resultadoCampanha, setResultadoCampanha] = useState<{
+    horarios: number;
+    avisados: number;
+    descartados: number;
+  } | null>(null);
 
   const carregar = useCallback(async () => {
     const supabase = criarClienteNavegador();
@@ -222,44 +233,59 @@ export function AgendaDia({
     carregar();
   }
 
-  // Avisa jogadores da cidade de que sobrou horário. O push sai sozinho pelo
-  // gatilho do banco — aqui é só o disparo.
-  async function promover(duracaoMin: number) {
-    if (!slotAberto) return;
+  // Manda a campanha. UM aviso por jogador; quem não tem nenhum horário
+  // compatível com a disponibilidade dele não recebe nada.
+  async function enviarCampanha() {
+    if (selecionados.length === 0) return;
 
     setErro(null);
     setSalvando(true);
 
-    const inicio = new Date(
-      `${dia}T${String(slotAberto.hora).padStart(2, "0")}:00:00`
-    );
-    const fim = new Date(inicio.getTime() + duracaoMin * 60_000);
+    const horarios = selecionados.map((c) => {
+      const [quadraId, hora] = c.split("|");
+      const inicio = new Date(
+        `${dia}T${String(Number(hora)).padStart(2, "0")}:00:00`
+      );
+      return {
+        quadra_id: quadraId,
+        inicio: inicio.toISOString(),
+        fim: new Date(inicio.getTime() + 60 * 60_000).toISOString(),
+      };
+    });
 
     const supabase = criarClienteNavegador();
-    const { data, error } = await supabase.rpc("promover_horario_ocioso", {
-      p_quadra_id: slotAberto.quadraId,
-      p_inicio: inicio.toISOString(),
-      p_fim: fim.toISOString(),
+    const { data, error } = await supabase.rpc("promover_horarios", {
+      p_clube_id: clubeId,
+      p_horarios: horarios,
     });
     setSalvando(false);
 
     if (error) {
       if (error.message.includes("AGUARDE_6H")) {
         setErro(
-          "Você já avisou jogadores nas últimas 6 horas. Espere um pouco para não cansar quem recebe."
+          "Você já avisou nas últimas 6 horas. Espere um pouco para não cansar quem recebe."
         );
-      } else if (error.message.includes("HORARIO_NO_PASSADO")) {
-        setErro("Esse horário já passou.");
-      } else if (error.message.includes("HORARIO_OCUPADO")) {
-        setErro("Esse horário não está mais livre.");
+      } else if (error.message.includes("HORARIOS_DEMAIS")) {
+        setErro("Escolha no máximo 12 horários por aviso.");
+      } else if (error.message.includes("NENHUM_HORARIO_VALIDO")) {
+        setErro(
+          "Nenhum dos horários escolhidos está livre e no futuro. Atualize a agenda."
+        );
       } else {
         setErro("Não conseguimos avisar agora. Tente de novo.");
       }
       return;
     }
 
-    posthog.capture("horario_ocioso_promovido", { avisados: data ?? 0 });
-    setAvisados(typeof data === "number" ? data : 0);
+    const r = data as {
+      horarios: number;
+      avisados: number;
+      descartados: number;
+    };
+    posthog.capture("campanha_horarios_enviada", r);
+    setResultadoCampanha(r);
+    setSelecionados([]);
+    setModoCampanha(false);
   }
 
   async function cancelarReserva(reservaId: string) {
@@ -404,6 +430,105 @@ export function AgendaDia({
       ) : (
         <>
         {filtroDeEsporte}
+
+        {/* Campanha de horários. Fica FORA do formulário de um horário só,
+            porque a ação é sobre vários — juntar as duas coisas no mesmo
+            lugar foi o que tornou o "avisar" antigo confuso e limitado. */}
+        <div className="mt-3">
+          {!modoCampanha ? (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setModoCampanha(true);
+                  setResultadoCampanha(null);
+                  setErro(null);
+                }}
+                className="w-full rounded-2xl bg-superficie p-4 text-left shadow ring-1 ring-black/5 transition hover:ring-primaria/40"
+              >
+                <p className="font-display text-sm font-bold text-tinta">
+                  📣 Avisar jogadores de horários livres
+                </p>
+                <p className="mt-0.5 text-xs text-tinta-suave">
+                  Escolha vários horários; cada jogador recebe um aviso só, com
+                  os que servem para ele
+                </p>
+              </button>
+
+              {resultadoCampanha && (
+                <div className="mt-2 rounded-xl bg-primaria/10 p-3 text-sm">
+                  <p className="font-bold text-primaria">
+                    {resultadoCampanha.avisados === 0
+                      ? "Nenhum jogador com disponibilidade nesses horários."
+                      : `${resultadoCampanha.avisados} ${
+                          resultadoCampanha.avisados === 1
+                            ? "jogador avisado"
+                            : "jogadores avisados"
+                        } ✓`}
+                  </p>
+                  <p className="mt-1 text-tinta-suave">
+                    {resultadoCampanha.horarios}{" "}
+                    {resultadoCampanha.horarios === 1
+                      ? "horário enviado"
+                      : "horários enviados"}
+                    {resultadoCampanha.descartados > 0 &&
+                      ` · ${resultadoCampanha.descartados} descartado${
+                        resultadoCampanha.descartados === 1 ? "" : "s"
+                      } por já estar ocupado`}
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="rounded-2xl bg-destaque p-4 shadow-lg">
+              <p className="font-display text-sm font-bold text-destaque-tinta">
+                Toque nos horários que quer anunciar
+              </p>
+              <p className="mt-0.5 text-xs text-destaque-tinta/80">
+                {selecionados.length === 0
+                  ? "Nenhum escolhido ainda · até 12"
+                  : `${selecionados.length} de 12 escolhidos`}
+              </p>
+
+              {erro && (
+                <p className="mt-2 rounded-lg bg-white/80 p-2 text-xs text-red-700">
+                  {erro}
+                </p>
+              )}
+
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModoCampanha(false);
+                    setSelecionados([]);
+                    setErro(null);
+                  }}
+                  className="flex-1 rounded-xl bg-white/80 px-3 py-2.5 text-sm font-bold text-destaque-tinta"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={
+                    selecionados.length === 0 ||
+                    selecionados.length > 12 ||
+                    salvando
+                  }
+                  onClick={enviarCampanha}
+                  className="flex-1 rounded-xl bg-primaria px-3 py-2.5 text-sm font-bold text-white disabled:opacity-40"
+                >
+                  {salvando ? "Avisando…" : "Avisar jogadores"}
+                </button>
+              </div>
+
+              <p className="mt-2 text-[11px] text-destaque-tinta/70">
+                Quem não tem disponibilidade em nenhum desses horários não
+                recebe nada.
+              </p>
+            </div>
+          )}
+        </div>
         <div className="mt-4 overflow-x-auto rounded-2xl bg-superficie p-4 shadow-lg ring-1 ring-black/5">
           <table className="w-full min-w-[32rem] border-separate border-spacing-1">
             <thead>
@@ -470,17 +595,42 @@ export function AgendaDia({
                         </td>
                       );
                     }
+                    // Em modo campanha o toque SELECIONA em vez de abrir o
+                    // formulário: o clube está montando uma lista, não
+                    // agindo num horário só.
+                    const chave = `${q.id}|${hora}`;
+                    const marcado = selecionados.includes(chave);
+                    const passou =
+                      new Date(
+                        `${dia}T${String(hora).padStart(2, "0")}:00:00`
+                      ) <= new Date();
+
                     return (
                       <td key={q.id} className="align-top">
                         <button
                           type="button"
+                          disabled={modoCampanha && passou}
                           onClick={() => {
                             setErro(null);
+                            if (modoCampanha) {
+                              setSelecionados((atual) =>
+                                atual.includes(chave)
+                                  ? atual.filter((c) => c !== chave)
+                                  : [...atual, chave]
+                              );
+                              return;
+                            }
                             setSlotAberto({ quadraId: q.id, hora });
                           }}
-                          className="w-full rounded-lg border border-dashed border-black/10 px-2 py-1.5 text-xs text-tinta-suave/60 transition hover:border-primaria hover:text-primaria"
+                          className={`w-full rounded-lg px-2 py-1.5 text-xs transition ${
+                            marcado
+                              ? "bg-destaque font-bold text-destaque-tinta"
+                              : modoCampanha && passou
+                                ? "border border-dashed border-black/5 text-tinta-suave/30"
+                                : "border border-dashed border-black/10 text-tinta-suave/60 hover:border-primaria hover:text-primaria"
+                          }`}
                         >
-                          livre
+                          {marcado ? "✓ escolhido" : "livre"}
                         </button>
                       </td>
                     );
@@ -516,7 +666,6 @@ export function AgendaDia({
                 [
                   ["reserva", "Reservar"],
                   ["bloqueio", "Bloquear"],
-                  ["avisar", "Avisar"],
                 ] as const
               ).map(([id, rotulo]) => (
                 <button
@@ -525,7 +674,6 @@ export function AgendaDia({
                   onClick={() => {
                     setModo(id);
                     setErro(null);
-                    setAvisados(null);
                   }}
                   className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-bold transition ${
                     modo === id
@@ -590,26 +738,6 @@ export function AgendaDia({
               </label>
             )}
 
-            {modo === "avisar" && (
-              <div className="mt-4">
-                <p className="text-sm text-tinta">
-                  Avisamos os jogadores da sua cidade que esta quadra está
-                  livre neste horário.
-                </p>
-                <p className="mt-2 text-xs text-tinta-suave">
-                  Só dá para avisar uma vez a cada 6 horas, para não cansar
-                  quem recebe. O horário continua livre até alguém reservar.
-                </p>
-                {avisados !== null && (
-                  <p className="mt-3 rounded-xl bg-primaria/10 p-3 text-sm font-bold text-primaria">
-                    {avisados === 0
-                      ? "Nenhum jogador da sua cidade para avisar ainda."
-                      : `${avisados} ${avisados === 1 ? "jogador avisado" : "jogadores avisados"} ✓`}
-                  </p>
-                )}
-              </div>
-            )}
-
             <label className="mt-3 flex flex-col gap-1.5">
               <span className="text-sm font-medium text-tinta">Duração</span>
               <select
@@ -628,32 +756,6 @@ export function AgendaDia({
             )}
 
             <div className="mt-4 flex gap-2">
-              {modo === "avisar" ? (
-                // Fora do fluxo do formulário: avisar não cria nada na
-                // agenda, então não é "enviar" o mesmo formulário.
-                <button
-                  type="button"
-                  disabled={salvando || avisados !== null}
-                  onClick={() =>
-                    promover(
-                      Number(
-                        (
-                          document.querySelector(
-                            'select[name="duracao"]'
-                          ) as HTMLSelectElement | null
-                        )?.value ?? 60
-                      )
-                    )
-                  }
-                  className="flex-1 rounded-full bg-destaque px-4 py-2.5 font-display font-bold text-destaque-tinta transition hover:brightness-95 disabled:opacity-60"
-                >
-                  {salvando
-                    ? "Avisando..."
-                    : avisados !== null
-                      ? "Avisado ✓"
-                      : "Avisar jogadores"}
-                </button>
-              ) : (
                 <button
                   type="submit"
                   disabled={salvando}
@@ -665,7 +767,6 @@ export function AgendaDia({
                       ? "Bloquear horário"
                       : "Confirmar reserva"}
                 </button>
-              )}
               <button
                 type="button"
                 onClick={() => setSlotAberto(null)}
