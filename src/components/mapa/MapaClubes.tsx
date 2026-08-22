@@ -1,6 +1,7 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { divIcon } from "leaflet";
 import Link from "next/link";
 import {
@@ -51,6 +52,52 @@ type Props = {
   minhaPosicao: [number, number] | null;
 };
 
+// ============================================================
+// CENTRALIZAR QUANDO A LOCALIZAÇÃO CHEGAR
+// ============================================================
+// ⚠️ O `center` do MapContainer só vale NA MONTAGEM — o Leaflet ignora
+// mudanças nele depois disso. Como a localização do celular demora um ou dois
+// segundos para responder, o mapa já tinha aberto centrado em outro lugar; o
+// ponto azul aparecia e o mapa não se mexia. Era o que o fundador via.
+//
+// Este componente não desenha nada: ele existe para mover o mapa quando a
+// posição finalmente chega.
+//
+// ⚠️ E move UMA VEZ SÓ. Sem o controle, qualquer redesenho puxaria o mapa de
+// volta — a pessoa arrastaria para ver outro bairro e o mapa a traria de
+// volta sozinha, que é pior do que nunca centralizar.
+function CentralizarEm({ posicao }: { posicao: [number, number] | null }) {
+  const mapa = useMap();
+  const jaCentralizou = useRef(false);
+
+  useEffect(() => {
+    if (!posicao || jaCentralizou.current) return;
+    jaCentralizou.current = true;
+
+    // ⚠️ `invalidateSize()` ANTES do `setView`, e não é supérfluo.
+    //
+    // O mapa vive num contêiner `position: absolute; inset: 0` que só ganha
+    // tamanho depois que a tela se acomoda. Chamando `setView` enquanto o
+    // Leaflet ainda acha que tem tamanho zero, ele aceita a coordenada e não
+    // desenha nada diferente — foi o que aconteceu no primeiro teste: a
+    // função rodava, dizia que ia centralizar, e o mapa não saía do lugar.
+    //
+    // `invalidateSize` faz o Leaflet remedir o contêiner antes de mover.
+    //
+    // Sem animação, de propósito: a distância pode ser de milhares de
+    // quilômetros (o mapa abre nos clubes, a pessoa pode estar longe), e
+    // animar isso é uma varredura tonta pelo mapa-múndi.
+    const id = setTimeout(() => {
+      mapa.invalidateSize();
+      mapa.setView(posicao, 14, { animate: false });
+    }, 100);
+
+    return () => clearTimeout(id);
+  }, [posicao, mapa]);
+
+  return null;
+}
+
 export default function MapaClubes({ clubes, minhaPosicao }: Props) {
   const centro =
     minhaPosicao ??
@@ -68,6 +115,7 @@ export default function MapaClubes({ clubes, minhaPosicao }: Props) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      <CentralizarEm posicao={minhaPosicao} />
       {minhaPosicao && <Marker position={minhaPosicao} icon={iconeEu} />}
       {clubes.map((clube) => (
         <Marker
