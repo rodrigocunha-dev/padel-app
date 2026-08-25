@@ -22,6 +22,13 @@ type Reserva = {
   jogador_nome?: string | null;
 };
 
+const ROTULO_ESPORTE: Record<string, string> = {
+  padel: "Padel",
+  beach_tennis: "Beach tennis",
+  tenis: "Tênis",
+  futebol_society: "Society",
+};
+
 const HORA_INICIAL = 6;
 const HORA_FINAL = 24;
 
@@ -337,7 +344,7 @@ export function AgendaDia({
               : "bg-superficie text-tinta-suave ring-1 ring-black/10"
           }`}
         >
-          {e === "todos" ? "Todas as quadras" : e}
+          {e === "todos" ? "Todas as quadras" : (ROTULO_ESPORTE[e] ?? e)}
         </button>
       ))}
     </div>
@@ -534,12 +541,17 @@ export function AgendaDia({
             <thead>
               <tr>
                 <th className="w-14" />
+                {/* ⚠️ O ESPORTE aparece junto do nome. No Clube Teste
+                    existem DUAS quadras chamadas "Quadra 1" — uma de padel e
+                    uma de beach tennis — e a agenda mostrava duas colunas
+                    iguais, sem como distinguir. Nome de quadra não é único
+                    dentro de um clube, e a tela precisa refletir isso. */}
                 {quadrasVisiveis.map((q) => (
-                  <th
-                    key={q.id}
-                    className="pb-1 text-sm font-bold text-tinta"
-                  >
-                    {q.nome}
+                  <th key={q.id} className="pb-1 text-tinta">
+                    <span className="block text-sm font-bold">{q.nome}</span>
+                    <span className="block text-[11px] font-medium text-tinta-suave">
+                      {ROTULO_ESPORTE[q.esporte] ?? q.esporte}
+                    </span>
                   </th>
                 ))}
               </tr>
@@ -613,11 +625,21 @@ export function AgendaDia({
                           onClick={() => {
                             setErro(null);
                             if (modoCampanha) {
-                              setSelecionados((atual) =>
-                                atual.includes(chave)
-                                  ? atual.filter((c) => c !== chave)
-                                  : [...atual, chave]
-                              );
+                              setSelecionados((atual) => {
+                                if (atual.includes(chave)) {
+                                  return atual.filter((c) => c !== chave);
+                                }
+                                // Trava no 12, com aviso. Antes dava para
+                                // marcar mais e o botao so ficava morto, sem
+                                // dizer por que — o clube ficava tentando.
+                                if (atual.length >= 12) {
+                                  setErro(
+                                    "Você já escolheu 12 horários, que é o máximo por aviso. Desmarque algum para trocar."
+                                  );
+                                  return atual;
+                                }
+                                return [...atual, chave];
+                              });
                               return;
                             }
                             setSlotAberto({ quadraId: q.id, hora });

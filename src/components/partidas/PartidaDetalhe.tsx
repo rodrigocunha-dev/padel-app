@@ -319,7 +319,7 @@ export function PartidaDetalhe({
               type="button"
               onClick={() => chamar("sair_da_partida", "partida_saiu")}
               disabled={acao}
-              className="rounded-full px-4 py-3 text-sm font-medium text-tinta-suave hover:text-red-600"
+              className="rounded-full border border-red-200 bg-red-50 px-5 py-3 text-sm font-bold text-red-700 transition hover:bg-red-100"
             >
               {/* Quem está na fila não está numa partida — está esperando
                   uma. O botão é o mesmo, o texto não pode ser. */}

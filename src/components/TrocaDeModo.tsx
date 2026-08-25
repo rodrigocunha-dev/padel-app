@@ -15,8 +15,10 @@ export function TrocaDeModo({ modo }: { modo: "jogador" | "clube" }) {
 
   return (
     <div className="mb-4 flex gap-1 rounded-full bg-superficie p-1 ring-1 ring-black/10">
+      {/* Volta para o PERFIL, e nao para a Inicio: e de la que a pessoa
+          saiu, e cair na Inicio faz parecer que o app se perdeu. */}
       <Link
-        href="/app"
+        href="/app/perfil"
         className={`${base} ${
           modo === "jogador"
             ? "bg-primaria text-white"

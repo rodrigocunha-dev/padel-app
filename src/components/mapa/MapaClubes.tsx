@@ -98,6 +98,35 @@ function CentralizarEm({ posicao }: { posicao: [number, number] | null }) {
   return null;
 }
 
+// Depois de arrastar o mapa procurando outro bairro, voltar para onde você
+// está é trabalhoso. Como o mapa só centraliza sozinho UMA vez (de
+// propósito, para não brigar com quem arrasta), o caminho de volta precisa
+// ser explícito.
+//
+// Fica sobre o mapa, no canto, no lugar onde esse botão vive em todo app de
+// mapa — não é hora de inventar convenção.
+function BotaoVoltarParaMim({ posicao }: { posicao: [number, number] | null }) {
+  const mapa = useMap();
+  if (!posicao) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        mapa.invalidateSize();
+        mapa.setView(posicao, 15, { animate: true });
+      }}
+      title="Voltar para a minha localização"
+      // zIndex acima dos painéis do Leaflet, senão fica atrás dos controles.
+      style={{ position: "absolute", right: 12, bottom: 24, zIndex: 500 }}
+      className="rounded-full bg-superficie px-3 py-2.5 text-lg shadow-lg ring-1 ring-black/10 transition hover:brightness-95"
+      aria-label="Voltar para a minha localização"
+    >
+      📍
+    </button>
+  );
+}
+
 export default function MapaClubes({ clubes, minhaPosicao }: Props) {
   const centro =
     minhaPosicao ??
@@ -116,6 +145,7 @@ export default function MapaClubes({ clubes, minhaPosicao }: Props) {
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <CentralizarEm posicao={minhaPosicao} />
+      <BotaoVoltarParaMim posicao={minhaPosicao} />
       {minhaPosicao && <Marker position={minhaPosicao} icon={iconeEu} />}
       {clubes.map((clube) => (
         <Marker
