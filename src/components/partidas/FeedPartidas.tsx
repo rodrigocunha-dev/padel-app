@@ -126,11 +126,17 @@ export function FeedPartidas({
             const jogadores = p.partida_jogadores.filter(
               (j) => j.papel === "jogador" && j.estado === "aceito"
             ).length;
-            const vagas = p.max_jogadores - jogadores;
             const jaEstou = p.partida_jogadores.some(
               (j) => j.jogador_id === meuId
             );
             const clube = p.quadras.clubes;
+
+            // Na sessão privada com vaga ("falta um") quem manda no número
+            // de vagas é o anúncio do organizador, não `max_jogadores` —
+            // essa coluna é sempre 4 na sessão e não descreve o grupo.
+            const ehGrupo = p.tipo === "privada";
+            const vagas = ehGrupo ? p.vagas_abertas : p.max_jogadores - jogadores;
+            const tamanho = ehGrupo ? jogadores + p.vagas_abertas : p.max_jogadores;
 
             return (
               <div
@@ -155,6 +161,14 @@ export function FeedPartidas({
                 </div>
 
                 <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-bold">
+                  {/* Quem chega de fora precisa saber que ali já existe um
+                      grupo formado — é uma experiência diferente de entrar
+                      numa partida montada por desconhecidos. */}
+                  {ehGrupo && (
+                    <span className="rounded-full bg-destaque px-2 py-0.5 text-destaque-tinta">
+                      🎾 Grupo precisa de {vagas}
+                    </span>
+                  )}
                   <span className="rounded-full bg-fundo px-2 py-0.5 text-tinta-suave">
                     {p.competitiva ? "Competitiva" : "Amistosa"}
                   </span>
@@ -165,7 +179,7 @@ export function FeedPartidas({
                     Cat. {faixaCategoria(p.categoria_min, p.categoria_max)}
                   </span>
                   <span className="rounded-full bg-fundo px-2 py-0.5 text-tinta-suave">
-                    {jogadores}/{p.max_jogadores} jogadores
+                    {jogadores}/{tamanho} jogadores
                   </span>
                 </div>
 
@@ -185,9 +199,11 @@ export function FeedPartidas({
                         disabled={entrando === p.id}
                         className="rounded-full bg-destaque px-5 py-2 font-display text-sm font-bold text-destaque-tinta transition hover:brightness-95 disabled:opacity-60"
                       >
+                        {/* Sessão de grupo não tem fila de substitutos: ou
+                            existe vaga anunciada, ou ela nem aparece aqui. */}
                         {entrando === p.id
                           ? "Entrando..."
-                          : vagas > 0
+                          : vagas > 0 || ehGrupo
                             ? "Entrar"
                             : "Entrar na fila"}
                       </button>

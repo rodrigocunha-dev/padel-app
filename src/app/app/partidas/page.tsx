@@ -29,15 +29,22 @@ export default async function PaginaFeed() {
     // "aberta" (tem vaga) e "completa" (cheia, mas dá para entrar na fila de
     // substitutos) aparecem no feed. Canceladas não.
     //
-    // O filtro por `tipo` não é detalhe: sem ele as SESSÕES PRIVADAS de todo
-    // mundo apareciam aqui como se fossem partidas abertas, com botão de
-    // entrar. O feed é anterior à sessão privada existir e nunca foi relido.
+    // ⚠️ O filtro por `tipo` não é detalhe: sem ele as SESSÕES PRIVADAS de
+    // todo mundo apareciam aqui como se fossem partidas abertas, com botão
+    // de entrar. O feed é anterior à sessão privada existir e nunca foi
+    // relido.
+    //
+    // Agora ele deixa passar UM caso a mais, e só ele: a sessão privada que
+    // anunciou vaga ("falta um"). Continua sendo o organizador quem decide —
+    // sessão sem vaga anunciada tem `vagas_abertas = 0` e segue invisível.
+    // O banco concorda com esta tela: `posso_ver_partida` (`053`) só abre a
+    // sessão privada para estranhos enquanto houver vaga.
     supabase
       .from("partidas")
       .select(
-        "id, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, status, organizador_id, inicio, fim, quadras ( nome, clubes ( id, nome, cidade ) ), partida_jogadores ( jogador_id, papel, estado )"
+        "id, tipo, vagas_abertas, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, status, organizador_id, inicio, fim, quadras ( nome, clubes ( id, nome, cidade ) ), partida_jogadores ( jogador_id, papel, estado )"
       )
-      .eq("tipo", "aberta")
+      .or("tipo.eq.aberta,vagas_abertas.gt.0")
       .in("status", ["aberta", "completa"])
       .order("inicio", { ascending: true }),
   ]);

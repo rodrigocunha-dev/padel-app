@@ -24,6 +24,7 @@ const TITULO: Record<string, string> = {
   chat_novas_mensagens: "Tem mensagem nova no chat da partida",
   vaga_aberta: "Abriu vaga numa partida do seu nível",
   horarios_livres: "Um clube perto de você tem horários livres",
+  entrou_na_vaga: "Entrou alguém no jogo do seu grupo",
 };
 
 const DETALHE: Record<string, string> = {
@@ -37,6 +38,8 @@ const DETALHE: Record<string, string> = {
   chat_novas_mensagens: "Toque para ler e responder.",
   vaga_aberta: "Alguém saiu e a vaga está livre. Toque para entrar.",
   horarios_livres: "Separamos os que combinam com os seus dias e horários.",
+  entrou_na_vaga:
+    "A vaga que vocês anunciaram foi preenchida. Toque para ver quem é.",
 };
 
 const ICONE: Record<string, string> = {
@@ -48,6 +51,7 @@ const ICONE: Record<string, string> = {
   chat_novas_mensagens: "💬",
   vaga_aberta: "🎯",
   horarios_livres: "📣",
+  entrou_na_vaga: "🤝",
 };
 
 // Um bloco por TIPO, não um por aviso: com 3 resultados registrados a tela

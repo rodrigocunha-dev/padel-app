@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { criarClienteServidor, usuarioAtual } from "@/lib/supabase/server";
+import {
+  criarClienteServidor,
+  perfilAtual,
+  usuarioAtual,
+} from "@/lib/supabase/server";
 import { PartidaDetalhe } from "@/components/partidas/PartidaDetalhe";
 import { ConvidarParticipantes } from "@/components/partidas/ConvidarParticipantes";
 import { SetsDaSessao } from "@/components/partidas/SetsDaSessao";
@@ -9,6 +13,7 @@ import { PagamentoPartida } from "@/components/partidas/PagamentoPartida";
 import { MarcarAvisosLidos } from "@/components/partidas/MarcarAvisosLidos";
 import { EditarPartidaAberta } from "@/components/partidas/EditarPartidaAberta";
 import { ChatPartida } from "@/components/partidas/ChatPartida";
+import { VagasNaSessao } from "@/components/partidas/VagasNaSessao";
 import { statusDaPartida, partidaComecou } from "@/lib/partidas";
 
 export const metadata: Metadata = {
@@ -36,7 +41,7 @@ export default async function PaginaPartida({
       supabase
         .from("partidas")
         .select(
-          "id, tipo, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, status, organizador_id, inicio, fim, preco_centavos, quadras ( nome, clubes ( id, nome, cidade ) ), partida_jogadores ( jogador_id, papel, ordem, estado, desistiu_em )"
+          "id, tipo, categoria_min, categoria_max, competitiva, sexo_jogo, max_jogadores, vagas_abertas, status, organizador_id, inicio, fim, preco_centavos, quadras ( nome, clubes ( id, nome, cidade ) ), partida_jogadores ( jogador_id, papel, ordem, estado, desistiu_em, entrou_pela_vaga )"
         )
         .eq("id", id)
         .maybeSingle(),
@@ -207,8 +212,8 @@ export default async function PaginaPartida({
       clubes: { id: string; nome: string; cidade: string };
     };
 
-    // ONDA 3 — só da sessão privada, e as duas juntas.
-    const [{ data: divisor }, { data: pagamentosDaPartida }] =
+    // ONDA 3 — só da sessão privada, e as três juntas.
+    const [{ data: divisor }, { data: pagamentosDaPartida }, meuPerfil] =
       await Promise.all([
         // O divisor vem do servidor: mínimo 4 e congelado no 1º pagamento.
         // A tela não recalcula por conta própria — foi assim que a conta de
@@ -222,6 +227,10 @@ export default async function PaginaPartida({
           .from("pagamentos")
           .select("jogador_id, status")
           .eq("partida_id", partida.id),
+
+        // Só para sugerir a faixa de categoria quando o organizador for
+        // anunciar uma vaga. Vem do cache do layout, sem ida ao banco.
+        perfilAtual(user.id),
       ]);
 
     const jaPagaram = (pagamentosDaPartida ?? [])
@@ -263,8 +272,13 @@ export default async function PaginaPartida({
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
+            {/* O cadeado vira porta quando o grupo anuncia vaga. É a única
+                coisa na tela que diz, para quem chega de fora, que aquele
+                jogo de grupo aceita gente nova. */}
             <span className="rounded-full bg-superficie px-3 py-1 text-xs font-bold text-tinta-suave ring-1 ring-black/5">
-              🔒 Jogo entre convidados
+              {partida.vagas_abertas > 0
+                ? `🔓 Grupo com ${partida.vagas_abertas === 1 ? "1 vaga" : `${partida.vagas_abertas} vagas`}`
+                : "🔒 Jogo entre convidados"}
             </span>
             <span
               className={`rounded-full px-3 py-1 text-xs font-bold ${
@@ -295,6 +309,22 @@ export default async function PaginaPartida({
               resumoPartida={`${local.nome}, ${quando}`}
             />
           )}
+
+          <VagasNaSessao
+            partidaId={partida.id}
+            souOrganizador={partida.organizador_id === user.id}
+            jaEstou={jogadores.some((j) => j.jogador_id === user.id)}
+            entreiPelaVaga={jogadores.some(
+              (j) => j.jogador_id === user.id && j.entrou_pela_vaga
+            )}
+            jaComecou={jaComecou}
+            cancelada={partida.status === "cancelada"}
+            vagasAbertas={partida.vagas_abertas ?? 0}
+            categoriaMin={partida.categoria_min}
+            categoriaMax={partida.categoria_max}
+            sexoJogo={partida.sexo_jogo}
+            minhaCategoria={meuPerfil?.categoria ?? null}
+          />
 
           <ConvidarParticipantes
             partidaId={partida.id}

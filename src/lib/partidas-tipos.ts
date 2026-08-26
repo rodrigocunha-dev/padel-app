@@ -4,6 +4,11 @@
 
 export type PartidaFeed = {
   id: string;
+  // O feed deixou de ser só de partida aberta: a sessão privada que anuncia
+  // vaga ("falta um") também aparece aqui. É a mesma tabela, e quem separa
+  // os dois casos na tela é este campo.
+  tipo: string;
+  vagas_abertas: number;
   categoria_min: number;
   categoria_max: number;
   competitiva: boolean;
