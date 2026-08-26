@@ -39,7 +39,7 @@ export default async function PaginaOnboarding() {
             Sair nao deixa nada pela metade: enquanto o perfil nao e salvo,
             nao existe nada no banco para limpar. */}
         <div className="mb-6 flex justify-end">
-          <BotaoSair />
+          <BotaoSair destaque />
         </div>
 
         <OnboardingJogador
