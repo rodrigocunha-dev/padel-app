@@ -21,9 +21,15 @@ export default async function PaginaReservar({
   // Vem do aviso de horarios livres: abre a tela ja na quadra, no dia e na
   // hora anunciados. So vale se os TRES vierem — meio caminho levaria a
   // pessoa para um horario que ela nao escolheu.
+  const horaNum = Number(hora);
   const sugestao =
-    quadra && dia && hora && /^d{4}-d{2}-d{2}$/.test(dia)
-      ? { quadraId: quadra, dia, hora: Number(hora) }
+    quadra &&
+    dia &&
+    /^\d{4}-\d{2}-\d{2}$/.test(dia) &&
+    Number.isInteger(horaNum) &&
+    horaNum >= 0 &&
+    horaNum <= 23
+      ? { quadraId: quadra, dia, hora: horaNum }
       : null;
   const supabase = await criarClienteServidor();
   const {
