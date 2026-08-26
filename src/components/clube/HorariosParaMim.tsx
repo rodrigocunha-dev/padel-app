@@ -5,12 +5,25 @@ import Link from "next/link";
 import { criarClienteNavegador } from "@/lib/supabase/client";
 
 type Horario = {
+  quadra_id: string;
   quadra: string;
   esporte: string;
   coberta: boolean;
   inicio: string;
   fim: string;
 };
+
+// O dia e a hora que a pessoa VE na tela — no fuso dela, nao no do servidor.
+// Mandar o horario cru levaria a reserva para outro dia quando o jogo fosse
+// de noite.
+function diaISO(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function horaLocal(iso: string): number {
+  return new Date(iso).getHours();
+}
 
 function quando(iso: string): string {
   const d = new Date(iso);
@@ -76,7 +89,10 @@ export function HorariosParaMim({ clubeId }: { clubeId: string }) {
         {horarios.map((h) => (
           <li key={`${h.quadra}-${h.inicio}`}>
             <Link
-              href={`/app/clubes/${clubeId}/reservar`}
+              // Leva a quadra, o dia e a hora ANUNCIADOS. Sem eles a tela
+              // abria em hoje e na primeira quadra, e a pessoa tinha de
+              // procurar de novo o horario que o aviso acabara de mostrar.
+              href={`/app/clubes/${clubeId}/reservar?quadra=${h.quadra_id}&dia=${diaISO(h.inicio)}&hora=${horaLocal(h.inicio)}`}
               className="flex items-center justify-between gap-3 rounded-xl bg-white/80 px-3 py-2.5 transition hover:bg-white"
             >
               <span className="text-sm font-medium text-destaque-tinta">

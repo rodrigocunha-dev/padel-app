@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { criarClienteNavegador } from "@/lib/supabase/client";
@@ -52,16 +52,26 @@ export function ReservarQuadra({
   horasLimiteCancelamento,
   politicaTexto,
   remarcarId,
+  sugestao,
 }: {
   clubeNome: string;
   quadras: Quadra[];
   horasLimiteCancelamento: number;
   politicaTexto: string | null;
   remarcarId: string | null;
+  // Quadra, dia e hora que vieram prontos de outro lugar — hoje, do aviso
+  // de horarios livres do clube. A tela abre JA neles.
+  sugestao: { quadraId: string; dia: string; hora: number } | null;
 }) {
   const router = useRouter();
-  const [quadraId, setQuadraId] = useState(quadras[0]?.id ?? "");
-  const [dia, setDia] = useState(() => dataISO(new Date()));
+  // ⚠️ A sugestao entra no estado INICIAL, nao num efeito depois.
+  // Aplicada depois, a tela abriria em hoje/primeira quadra e pularia para o
+  // horario certo na frente da pessoa — e, pior, buscaria os ocupados do dia
+  // errado antes de corrigir.
+  const [quadraId, setQuadraId] = useState(
+    sugestao?.quadraId ?? quadras[0]?.id ?? ""
+  );
+  const [dia, setDia] = useState(() => sugestao?.dia ?? dataISO(new Date()));
   const [duracao, setDuracao] = useState(60);
   const [ocupados, setOcupados] = useState<PeriodoOcupado[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -119,6 +129,20 @@ export function ReservarQuadra({
   }, [quadra, dia, duracao, ocupados]);
 
   const livres = horarios.filter((h) => h.livre);
+
+  // Marca sozinho o horario sugerido, uma unica vez. Sem isto a pessoa
+  // chegaria no dia e na quadra certos e ainda teria de caçar a hora na
+  // lista — que era exatamente a queixa.
+  const jaAplicouSugestao = useRef(false);
+  useEffect(() => {
+    if (!sugestao || jaAplicouSugestao.current || horarios.length === 0) return;
+    const alvo = horarios.find(
+      (h) => h.livre && h.inicio.getHours() === sugestao.hora
+    );
+    if (!alvo) return;              // ocupado nesse meio tempo: deixa escolher
+    jaAplicouSugestao.current = true;
+    setEscolhido(alvo);
+  }, [horarios, sugestao]);
 
   // Distingue "clube fechado" de "não cabe nessa duração" e de "tudo cheio".
   const abreNesteDia = useMemo(() => {

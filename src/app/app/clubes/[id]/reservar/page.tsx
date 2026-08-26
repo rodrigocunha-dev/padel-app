@@ -13,10 +13,18 @@ export default async function PaginaReservar({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ remarcar?: string }>;
+  searchParams: Promise<{ remarcar?: string; quadra?: string; dia?: string; hora?: string }>;
 }) {
   const { id } = await params;
-  const { remarcar } = await searchParams;
+  const { remarcar, quadra, dia, hora } = await searchParams;
+
+  // Vem do aviso de horarios livres: abre a tela ja na quadra, no dia e na
+  // hora anunciados. So vale se os TRES vierem — meio caminho levaria a
+  // pessoa para um horario que ela nao escolheu.
+  const sugestao =
+    quadra && dia && hora && /^d{4}-d{2}-d{2}$/.test(dia)
+      ? { quadraId: quadra, dia, hora: Number(hora) }
+      : null;
   const supabase = await criarClienteServidor();
   const {
     data: { user },
@@ -57,6 +65,7 @@ export default async function PaginaReservar({
           horasLimiteCancelamento={clube.horas_limite_cancelamento ?? 12}
           politicaTexto={clube.politica_cancelamento}
           remarcarId={remarcar ?? null}
+          sugestao={sugestao}
         />
       </div>
     </main>
