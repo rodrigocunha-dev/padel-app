@@ -14,6 +14,9 @@ export type Participante = {
   estado: string;
   papel: string;
   desistiu_em: string | null;
+  // Quem veio da vaga pública não pode ser removido pelo organizador — ele
+  // não tem vínculo com ninguém do grupo para acertar nada por fora.
+  entrou_pela_vaga?: boolean;
   perfil: { nome: string; foto_url: string | null; categoria: number } | null;
 };
 
@@ -289,10 +292,13 @@ export function ConvidarParticipantes({
               </span>
 
               {/* Tirar alguém convidado por engano. Quem já pagou não some:
-                  o dinheiro dele está naquela vaga e não há estorno. */}
+                  o dinheiro dele está naquela vaga e não há estorno. Quem
+                  veio da vaga pública também não: a vaga não é do
+                  organizador para dar e tirar, e o servidor recusa. */}
               {souOrganizador &&
                 !jaComecou &&
                 p.jogador_id !== meuId &&
+                !p.entrou_pela_vaga &&
                 !jaPagaram.includes(p.jogador_id ?? "") &&
                 (p.estado === "convidado" || p.estado === "aceito") && (
                   <button
@@ -341,6 +347,22 @@ export function ConvidarParticipantes({
                 <strong>não sai do jogo</strong> — só sai se alguém assumir
                 seu lugar.
               </p>
+              {/* Quem já pagou precisa saber ANTES de tocar no botão. A
+                  quadra continua quitada para o clube: se alguém assumir seu
+                  lugar, essa pessoa paga a parte dela e o seu dinheiro não
+                  volta sozinho. Decisão do fundador (26/08/2026): avisar em
+                  vez de travar — travar não devolveria o dinheiro e ainda
+                  deixaria a pessoa como quem sumiu sem avisar. */}
+              {jaPagaram.includes(meuId) && (
+                <p className="mt-3 rounded-xl bg-fundo p-3 text-xs text-tinta-suave ring-1 ring-black/5">
+                  <strong className="text-tinta">
+                    Você já pagou sua parte.
+                  </strong>{" "}
+                  Avisar não devolve o valor automaticamente — a quadra segue
+                  paga para o clube. Se alguém assumir seu lugar, combine a
+                  devolução direto com o organizador.
+                </p>
+              )}
               <button
                 type="button"
                 disabled={ocupado}

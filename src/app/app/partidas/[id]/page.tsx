@@ -14,6 +14,7 @@ import { MarcarAvisosLidos } from "@/components/partidas/MarcarAvisosLidos";
 import { EditarPartidaAberta } from "@/components/partidas/EditarPartidaAberta";
 import { ChatPartida } from "@/components/partidas/ChatPartida";
 import { VagasNaSessao } from "@/components/partidas/VagasNaSessao";
+import { DeclaracaoDaSessao } from "@/components/partidas/DeclaracaoDaSessao";
 import { statusDaPartida, partidaComecou } from "@/lib/partidas";
 
 export const metadata: Metadata = {
@@ -291,6 +292,32 @@ export default async function PaginaPartida({
             </span>
           </div>
 
+          {/* Fica colado na etiqueta de propósito: mudar a declaração é
+              mudar o que aquela etiqueta diz, e não uma ação à parte. */}
+          <DeclaracaoDaSessao
+            partidaId={partida.id}
+            competitiva={partida.competitiva}
+            souOrganizador={partida.organizador_id === user.id}
+            souParticipante={souParticipante}
+            jaComecou={jaComecou}
+            cancelada={partida.status === "cancelada"}
+            meuId={user.id}
+            proposta={
+              edicaoAberta
+                ? {
+                    id: edicaoAberta.id,
+                    competitiva: edicaoAberta.competitiva,
+                    proposta_por: edicaoAberta.proposta_por,
+                    jaVotei: (
+                      (edicaoAberta.partida_edicao_votos ?? []) as {
+                        jogador_id: string;
+                      }[]
+                    ).some((v) => v.jogador_id === user.id),
+                  }
+                : null
+            }
+          />
+
           {/* Se EU ainda não paguei, a divisão sobe para antes de tudo:
               quem chega aqui por um aviso de cobrança quer pagar, e não
               deve ter que rolar a tela para achar o botão. */}
@@ -342,6 +369,7 @@ export default async function PaginaPartida({
                     estado: j.estado,
                     papel: j.papel,
                     desistiu_em: j.desistiu_em,
+                    entrou_pela_vaga: j.entrou_pela_vaga,
                     perfil: j.perfil,
                   }))
               )

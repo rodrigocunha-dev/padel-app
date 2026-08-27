@@ -289,7 +289,21 @@ export function VagasNaSessao({
         ))}
       </div>
 
-      <div className="mt-6 flex gap-2">
+      {/* ⚠️ O jogo era invisível para quem não foi convidado. Anunciar muda
+          isso, e quem foi convidado não escolheu — o organizador escolhe
+          por todos. Decisão do fundador (26/08/2026): avisar em vez de
+          pedir aprovação, porque "falta um" é urgente por natureza e uma
+          votação chegaria depois do jogo. */}
+      <div className="mt-5 rounded-xl bg-fundo p-3 ring-1 ring-black/5">
+        <p className="text-xs text-tinta-suave">
+          <strong className="text-tinta">Enquanto a vaga estiver aberta</strong>
+          , qualquer jogador do app vê este jogo e quem está nele — nome, foto
+          e categoria, como em qualquer partida aberta. Telefone, valores e a
+          conversa continuam só para quem está dentro.
+        </p>
+      </div>
+
+      <div className="mt-5 flex gap-2">
         <button
           type="button"
           onClick={() =>
