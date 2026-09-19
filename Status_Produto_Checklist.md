@@ -124,7 +124,12 @@ Sessão com convite e aceite, sets com contestação e votação, divisão do va
   - **Testado de ponta a ponta com 4 contas:** Carlos propôs → a partida NÃO mudou → Rodrigo aprovou ("falta o resto") → Diego aprovou ("faltam 1") → Eduardo aprovou → aplicada, e só aí a partida mudou
   - **Travas:** uma proposta por vez (índice único), não dá para encolher abaixo de quem já está dentro, e **competitiva só com 4** — a mesma regra que `criar_partida` tem desde o `008`, repetida aqui para a edição não virar a porta dos fundos
 - [ ] ⏳ **Editar HORÁRIO e QUADRA da partida aberta** — fora do recorte por decisão do fundador (17/08/2026), que quer pensar melhor. Mexe na reserva por baixo, no preço, na trava de overbooking e no divisor congelado de quem já pagou. Detalhe no CLAUDE.md
-- [ ] ⏳ **Partida "grupo de amigos + vagas abertas"** — convidar 1–3 conhecidos e deixar o resto aberto. ✅ Aprovada no CLAUDE.md
+- [x] ✅ 🔍 **Partida híbrida — "falta um"** (`053` + `054`, rodados em 26/08/2026) — a sessão privada anuncia 1–3 vagas no feed, com faixa de categoria e sexo, **a qualquer momento** (não só na criação). Quem entra vira participante por inteiro (chat, sets, divisão). ⚠️ **Scripts rodados, mas o roteiro de teste no celular AINDA NÃO FOI FEITO** — o fundador pausou antes. Não tratar como testado.
+  - **Divisor estável por construção:** `tamanho = ocupadas + vagas abertas`, então alguém entrar não muda a conta de ninguém
+  - **Grupo inteiro recebe aviso + push** quando um estranho entra
+  - **Organizador não remove quem veio da vaga pública** (`054`); a tela avisa que anunciar torna o jogo e os participantes visíveis; quem já pagou vê, antes de desistir, que o valor não volta sozinho
+  - **Sessão privada pode ser amistosa** (`054`, reverte a decisão de 08/08) — mesma lógica da partida aberta: sozinho vale na hora, com gente dentro todos aprovam, congela no início
+  - ⏳ **Falta:** fila de substitutos na vaga pública (item separado, por mexer em `vagas_ocupadas`); pagar-para-entrar e reembolsos (sprint do gateway — **hoje ainda dá para entrar sem pagar**, é o caderninho provisório; detalhe no CLAUDE.md)
 - [ ] ⏳ Filtros gerais no feed (esporte, quadra, categoria, dia, cidade) — ✅ Aprovada, mesmo travamento do filtro por região
 
 > Chat da partida e notificações: ver **Módulo 1.6** (lugar canônico, para não contar duas vezes).
